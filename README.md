@@ -16,18 +16,23 @@ Web app for managing a small taxi fleet (~15 vehicles/drivers) with two roles:
 
 **Booking**
 - The public booking form now supports **round trips**, **passenger/luggage counts**, and two new non-ride **"other services"** — battery boost and lockout — which flow through the same driver-dispatch pipeline as a regular ride.
-- A live, non-binding **price estimate** now appears as you fill out a ride booking, computed server-side from Quebec's officially regulated taxi tariff (Commission des transports du Québec) — flag-drop + per-km rate, with the correct day/night rate applied automatically. Requires the **Routes API** enabled + billing on the Google Cloud project (separate key, server-side only — see `.env.example`); the estimate silently hides itself if that's not configured, rather than blocking booking.
-- A small route-preview map now shows on the booking form once pickup and dropoff are both set.
+- A live, non-binding **price estimate** appears as you fill out a ride booking, computed server-side from Quebec's officially regulated taxi tariff (Commission des transports du Québec) — flag-drop + per-km rate, with the correct day/night rate applied automatically. Requires the **Routes API** enabled + billing on the Google Cloud project (separate key, server-side only — see `.env.example`); confirmed working end-to-end. Degrades gracefully (hides itself, doesn't block booking) if that key isn't configured.
+- A small route-preview map shows on the booking form once pickup and dropoff are both set.
+- A "Prefer to call?" phone link sits below the booking form subtitle.
+- **Speech-to-text dictation** (mic buttons) on address/name fields in the driver trip-entry form, admin dispatch form, and admin reservations edit form — lets drivers and admins dictate instead of typing on a small screen. Browser-native (Chrome/Android); hides itself on unsupported browsers like iOS Safari.
 
 **Admin console**
 - Every record type — trips, drivers, client accounts, reservations, dispatch jobs — can now be edited or deleted, each gated behind a confirm dialog.
 - Deleting anything now moves it to a new **Trash** page instead of erasing it: restore it back to where it came from, or delete it permanently (a separate, stronger confirmation). Permanently deleting a driver or client account that still has trip/invoice history is blocked with a clear error rather than breaking billing records. Trips already included on a generated invoice are protected from edit/delete entirely.
 - Dispatch page now shows a "Recent jobs" list (previously a sent job was invisible to admin once dispatched), and live map markers are labeled with the driver's name instead of unlabeled pins.
+- Driver position staleness is now visible: a driver's last-known position is flagged (red on the list, dimmed "(last seen)" on the map) once it's more than 90 seconds old, so a stale pin can't be mistaken for a live one. This only makes the limitation visible — it doesn't fix it (see "Known limitations" below).
 - Reservations calendar now fits the visible window without scrolling, including bookings at the very end of the day.
+- Dispatch jobs now carry a **type** (ride / battery boost / lockout) matching the new booking service types, shown on both the admin dispatch table and the driver's job cards.
 
 **Data**
-- Google Places autocomplete on every address field (booking form pickup/dropoff, driver trip-entry departure/arrival, admin dispatch address) — suggestions dropdown styled to match the app rather than Google's default widget. Requires **Places API (New)** enabled with billing on the Google Cloud project (separate from the Maps JavaScript API already used for the live map).
+- Google Places autocomplete on every address field (booking form pickup/dropoff, driver trip-entry departure/arrival, admin dispatch address) — suggestions dropdown styled to match the app rather than Google's default widget. Requires **Places API (New)** enabled with billing on the Google Cloud project (separate from the Maps JavaScript API already used for the live map); confirmed working.
 - "Export data" button (admin, always visible in the sidebar) downloads one Excel workbook with a sheet per data type — Trips, Invoices, Reservations, Dispatch Jobs, Drivers, Client Accounts — with proper column headers and currency/date formatting.
+- The app is installable as a PWA (Add to Home Screen) for a standalone launch on mobile — helps a driver's session survive a bit better in the background on Android, though true background GPS tracking still needs a native wrapper (not built).
 
 **Fixes**
 - Invoice dates were rendering as raw timestamps instead of readable dates — fixed on both the invoice list and the printable invoice.
@@ -47,9 +52,10 @@ Web app for managing a small taxi fleet (~15 vehicles/drivers) with two roles:
 - **Frontend**: React
 - **Backend**: Node.js / Express
 - **Database**: PostgreSQL
-- **Maps/Geolocation**: Google Maps API
-- **SMS**: Twilio
+- **Maps/Geolocation**: Google Maps API (Maps JavaScript API, Places API (New), Routes API)
+- **SMS**: [SMS Gate](https://sms-gate.app) — self-hosted, free; a dedicated Android phone running the SMS Gate app acts as the SMS sender (cloud relay mode, works from anywhere the phone has data/wifi)
 - **Auth**: JWT-based admin login + driver access codes
+- **i18n**: English/French, hand-rolled (see `frontend/src/i18n/`)
 
 ## Project Structure
 
@@ -86,16 +92,24 @@ npm run dev
 ```
 
 ### Environment Variables
-See `.env.example` at the repo root for backend variables (database URL, JWT secret, Twilio credentials), and `frontend/.env.example` for frontend variables (API URL, Google Maps key).
+See `.env.example` at the repo root for backend variables (database URL, JWT secret, Google Maps server key, SMS Gate credentials), and `frontend/.env.example` for frontend variables (API URL, Google Maps key). Without SMS Gate configured, confirmations log to the console instead of sending (`[sms:stub] ...`) — fine for local dev.
+
+**SMS Gate setup**: install the [SMS Gateway for Android](https://github.com/capcom6/android-sms-gateway/releases) app on a phone with an active texting plan, enable Cloud Server mode in the app, and copy the auto-generated username/password into `SMS_GATE_USERNAME`/`SMS_GATE_PASSWORD` (`SMS_GATE_BASE_URL` defaults to the public cloud relay, `https://api.sms-gate.app/3rdparty/v1`). On Android 13+, if the app was sideloaded rather than installed from Google Play, you may also need **Settings → Apps → SMS Gateway → ⋮ → Allow restricted settings** before it can actually send — Android silently blocks the SMS permission for sideloaded apps otherwise. A local-network mode (`http://<phone-ip>:8080`) also works as a fallback if the phone and backend share a LAN.
 
 ## Development Status
 
 All three modules have working backend APIs and frontend pages:
 
 - **Billing**: client accounts, driver trip entry with receipt upload, invoice generation, and a printable invoice view
-- **Dispatching**: driver position tracking, live Google Maps view with driver markers, job assignment
-- **Reservations**: public booking form, SMS confirmation (stubs to console log if Twilio isn't configured), FullCalendar-based admin calendar
+- **Dispatching**: driver position tracking (with staleness indicators), live Google Maps view with driver markers, job assignment (typed: ride / battery boost / lockout)
+- **Reservations**: public booking form (round trips, passenger/luggage counts, live price estimate, roadside services), SMS confirmation via SMS Gate, FullCalendar-based admin calendar
 
-Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, the edit/delete/trash/restore flows for every record type, and the Excel export (see "What's New" above). Places autocomplete is implemented and gracefully degrades to a plain text field, but hasn't been visually confirmed working yet — pending Places API (New) + billing being enabled on the Google Cloud project. The booking-form price estimate is implemented and degrades the same way (hides itself, doesn't block booking) — pending Routes API + billing being enabled on the same project.
+Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, the edit/delete/trash/restore flows for every record type, and the Excel export. Places autocomplete, the Routes API price estimate, and SMS Gate confirmations (cloud *and* local mode) have all been confirmed working against live requests — a real booking generates an accurate estimate and a real text message actually arrives on a phone.
 
-Not yet done: production deployment, and real device testing of driver GPS sharing.
+The app is bilingual (English/French) throughout, including admin-only pages.
+
+**Known limitations**:
+- Receipt-photo upload has been verified via the UI, but not through browser automation (tooling limitation in this dev environment, not an app bug).
+- Driver GPS sharing and the mic-dictation buttons require a secure context (HTTPS or `localhost`) — both silently no-op when the app is accessed over plain HTTP from another device on the LAN.
+- True background GPS tracking (site closed, phone locked) isn't implemented — the app is a PWA-installable web app, not a native app with a background location service. The current staleness indicators make this limitation visible rather than solving it.
+- No production deployment yet.
