@@ -1037,6 +1037,24 @@ textarea {
         border-right: none;
     }
 
+    /* Price meter would otherwise scroll out of view once you scroll down
+       to the form below it — pin it to the bottom of the screen instead. */
+    .booking-panel {
+        padding-bottom: 110px;
+    }
+
+    .meter-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+        margin: 0;
+        border-radius: 20px 20px 0 0;
+        padding-bottom: calc(18px + env(safe-area-inset-bottom));
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+    }
+
     .route-visual__map,
     .route-visual__placeholder,
     .route-visual__skeleton {

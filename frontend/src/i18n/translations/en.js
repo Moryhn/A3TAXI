@@ -69,6 +69,7 @@ export default {
         useMyLocation: 'Use my location',
         locating: 'Locating…',
         locationError: 'Couldn\'t get your location — enter it manually.',
+        locationInsecure: 'Location needs a secure (HTTPS) connection — enter it manually for now.',
         recentLabel: 'Recent',
     },
     nav: {

@@ -9,15 +9,19 @@ const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
 
 export default function TripStep({ form, setForm, isRide, t }) {
     const [locating, setLocating] = useState(false);
-    const [locError, setLocError] = useState(false);
+    const [locError, setLocError] = useState(null);
 
     function useMyLocation() {
+        if (!window.isSecureContext) {
+            setLocError('insecure');
+            return;
+        }
         if (!navigator.geolocation) {
-            setLocError(true);
+            setLocError('generic');
             return;
         }
         setLocating(true);
-        setLocError(false);
+        setLocError(null);
         navigator.geolocation.getCurrentPosition(
             async (pos) => {
                 try {
@@ -28,16 +32,16 @@ export default function TripStep({ form, setForm, isRide, t }) {
                     if (results?.[0]) {
                         setForm((f) => ({ ...f, pickupLocation: results[0].formatted_address }));
                     } else {
-                        setLocError(true);
+                        setLocError('generic');
                     }
                 } catch {
-                    setLocError(true);
+                    setLocError('generic');
                 } finally {
                     setLocating(false);
                 }
             },
             () => {
-                setLocError(true);
+                setLocError('generic');
                 setLocating(false);
             },
             { timeout: 8000 }
@@ -71,7 +75,11 @@ export default function TripStep({ form, setForm, isRide, t }) {
                         <LocateFixed size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
                         {locating ? t('booking.locating') : t('booking.useMyLocation')}
                     </button>
-                    {locError && <span className="subtle" style={{ fontSize: 11, color: 'var(--danger)' }}>{t('booking.locationError')}</span>}
+                    {locError && (
+                        <span className="subtle" style={{ fontSize: 11, color: 'var(--danger)' }}>
+                            {locError === 'insecure' ? t('booking.locationInsecure') : t('booking.locationError')}
+                        </span>
+                    )}
                 </div>
                 <RecentAddressChips value={form.pickupLocation} onSelect={(v) => setForm({ ...form, pickupLocation: v })} label={t('booking.recentLabel')} />
             </div>
