@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Phone, MapPin, BatteryCharging, KeyRound } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, MapPin } from 'lucide-react';
 import { api } from '../../api/client.js';
+import { GOOGLE_MAPS_API_KEY } from '../../lib/googleMaps.js';
 import { useTheme } from '../../hooks/useTheme.js';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
+import { addRecentAddress } from '../../lib/recentAddresses.js';
 import RoutePreviewMap from '../../components/RoutePreviewMap.jsx';
 import ProgressTrail from '../../components/booking/ProgressTrail.jsx';
 import MeterPanel from '../../components/booking/MeterPanel.jsx';
@@ -17,8 +19,6 @@ const INITIAL_FORM = {
     pickupLocation: '', dropoffLocation: '', requestedTime: '',
     isRoundTrip: false, passengerCount: 1, carryOnCount: 0, checkedLuggageCount: 0,
 };
-
-const SERVICE_PLACEHOLDER_ICON = { battery_boost: BatteryCharging, lockout: KeyRound };
 
 export default function ReservationForm() {
     const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
@@ -92,6 +92,8 @@ export default function ReservationForm() {
         setStatus(null);
         try {
             await api.createReservation(form);
+            addRecentAddress(form.pickupLocation);
+            addRecentAddress(form.dropoffLocation);
             setStatus({ ok: true, message: t('booking.successMessage') });
             setForm(INITIAL_FORM);
             setQuote(null);
@@ -100,9 +102,6 @@ export default function ReservationForm() {
             setStatus({ ok: false, message: err.message });
         }
     }
-
-    const showRoute = isRide && form.pickupLocation && form.dropoffLocation;
-    const PlaceholderIcon = SERVICE_PLACEHOLDER_ICON[form.serviceType] || MapPin;
 
     return (
         <div className={`theme-${theme} storefront`}>
@@ -180,12 +179,12 @@ export default function ReservationForm() {
 
                     <div className="booking-visual">
                         <div className="route-visual">
-                            {showRoute ? (
-                                <RoutePreviewMap pickup={form.pickupLocation} dropoff={form.dropoffLocation} />
+                            {GOOGLE_MAPS_API_KEY ? (
+                                <RoutePreviewMap pickup={form.pickupLocation} dropoff={isRide ? form.dropoffLocation : null} />
                             ) : (
                                 <div className="route-visual__placeholder">
-                                    <PlaceholderIcon size={26} />
-                                    <span>{isRide ? t('booking.mapPlaceholderRide') : t('booking.mapPlaceholderService')}</span>
+                                    <MapPin size={26} />
+                                    <span>{t('booking.mapPlaceholderService')}</span>
                                 </div>
                             )}
                         </div>
@@ -193,7 +192,7 @@ export default function ReservationForm() {
                         {isRide && quoting && !quote && (
                             <div className="meter-panel">
                                 <div className="meter-panel__label">{t('booking.estimatedPriceLabel')}</div>
-                                <div className="meter-panel__value" style={{ opacity: 0.4 }}>{t('booking.calculatingPrice')}</div>
+                                <div className="meter-panel__skeleton" />
                             </div>
                         )}
                         {isRide && quote && (

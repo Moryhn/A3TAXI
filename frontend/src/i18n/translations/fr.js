@@ -65,8 +65,11 @@ export default {
         stepContact: 'Vous',
         back: 'Retour',
         next: 'Suivant',
-        mapPlaceholderRide: 'Entrez la prise en charge et la destination pour prévisualiser le trajet.',
-        mapPlaceholderService: 'Nous viendrons à vous.',
+        mapPlaceholderService: 'Aperçu de la carte indisponible.',
+        useMyLocation: 'Utiliser ma position',
+        locating: 'Localisation…',
+        locationError: "Impossible d'obtenir votre position — entrez-la manuellement.",
+        recentLabel: 'Récent',
     },
     nav: {
         dispatch: 'Répartition',

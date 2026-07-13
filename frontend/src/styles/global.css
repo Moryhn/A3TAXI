@@ -972,6 +972,7 @@ textarea {
 }
 
 .route-visual {
+    position: relative;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -981,6 +982,7 @@ textarea {
 .route-visual__map {
     width: 100%;
     height: 280px;
+    transition: opacity 0.3s ease;
 }
 
 .route-visual__placeholder {
@@ -994,6 +996,58 @@ textarea {
     padding: 24px;
     gap: 10px;
     flex-direction: column;
+}
+
+.route-visual__skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%);
+    background-size: 250% 100%;
+    animation: shimmer 1.6s ease infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+.meter-panel__skeleton {
+    height: 34px;
+    width: 130px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(100deg, rgba(245, 183, 0, 0.08) 30%, rgba(245, 183, 0, 0.22) 50%, rgba(245, 183, 0, 0.08) 70%);
+    background-size: 250% 100%;
+    animation: shimmer 1.6s ease infinite;
+}
+
+@media (max-width: 860px) {
+    .booking-visual {
+        order: -1;
+    }
+
+    .route-visual {
+        margin: 0 -24px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .route-visual__map,
+    .route-visual__placeholder,
+    .route-visual__skeleton {
+        height: 200px;
+    }
+
+    .booking-panel {
+        margin-top: -18px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .booking-panel > .card:first-child {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+    }
 }
 
 /* Wizard progress trail */

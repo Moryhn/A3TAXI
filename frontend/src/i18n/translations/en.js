@@ -65,8 +65,11 @@ export default {
         stepContact: 'You',
         back: 'Back',
         next: 'Next',
-        mapPlaceholderRide: 'Enter pickup and drop-off to preview your route.',
-        mapPlaceholderService: 'We\'ll come to you.',
+        mapPlaceholderService: 'Map preview unavailable.',
+        useMyLocation: 'Use my location',
+        locating: 'Locating…',
+        locationError: 'Couldn\'t get your location — enter it manually.',
+        recentLabel: 'Recent',
     },
     nav: {
         dispatch: 'Dispatch',

@@ -1,10 +1,49 @@
-import { Car, BatteryCharging, KeyRound, MapPin, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Car, BatteryCharging, KeyRound, MapPin, Clock, LocateFixed } from 'lucide-react';
 import PlaceAutocompleteInput from '../PlaceAutocompleteInput.jsx';
+import RecentAddressChips from './RecentAddressChips.jsx';
+import { loadGoogleMapsLibrary } from '../../lib/googleMaps.js';
 
 const SERVICE_ICONS = { ride: Car, battery_boost: BatteryCharging, lockout: KeyRound };
 const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
 
 export default function TripStep({ form, setForm, isRide, t }) {
+    const [locating, setLocating] = useState(false);
+    const [locError, setLocError] = useState(false);
+
+    function useMyLocation() {
+        if (!navigator.geolocation) {
+            setLocError(true);
+            return;
+        }
+        setLocating(true);
+        setLocError(false);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const { Geocoder } = await loadGoogleMapsLibrary('geocoding');
+                    const { results } = await new Geocoder().geocode({
+                        location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+                    });
+                    if (results?.[0]) {
+                        setForm((f) => ({ ...f, pickupLocation: results[0].formatted_address }));
+                    } else {
+                        setLocError(true);
+                    }
+                } catch {
+                    setLocError(true);
+                } finally {
+                    setLocating(false);
+                }
+            },
+            () => {
+                setLocError(true);
+                setLocating(false);
+            },
+            { timeout: 8000 }
+        );
+    }
+
     return (
         <div className="wizard-step" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div className="tabbar" style={{ width: '100%' }}>
@@ -27,12 +66,21 @@ export default function TripStep({ form, setForm, isRide, t }) {
             <div className="field">
                 <label htmlFor="pickup"><MapPin size={12} style={{ verticalAlign: -2, marginRight: 4 }} />{isRide ? t('booking.pickupLabel') : t('booking.serviceLocationLabel')}</label>
                 <PlaceAutocompleteInput id="pickup" className="input" value={form.pickupLocation} onChange={(v) => setForm({ ...form, pickupLocation: v })} required />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <button type="button" className="btn btn--ghost" style={{ fontSize: 11, padding: '6px 10px' }} onClick={useMyLocation} disabled={locating}>
+                        <LocateFixed size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
+                        {locating ? t('booking.locating') : t('booking.useMyLocation')}
+                    </button>
+                    {locError && <span className="subtle" style={{ fontSize: 11, color: 'var(--danger)' }}>{t('booking.locationError')}</span>}
+                </div>
+                <RecentAddressChips value={form.pickupLocation} onSelect={(v) => setForm({ ...form, pickupLocation: v })} label={t('booking.recentLabel')} />
             </div>
 
             {isRide && (
                 <div className="field">
                     <label htmlFor="dropoff"><MapPin size={12} style={{ verticalAlign: -2, marginRight: 4 }} />{t('booking.dropoffLabel')}</label>
                     <PlaceAutocompleteInput id="dropoff" className="input" value={form.dropoffLocation} onChange={(v) => setForm({ ...form, dropoffLocation: v })} required />
+                    <RecentAddressChips value={form.dropoffLocation} onSelect={(v) => setForm({ ...form, dropoffLocation: v })} label={t('booking.recentLabel')} />
                 </div>
             )}
 
