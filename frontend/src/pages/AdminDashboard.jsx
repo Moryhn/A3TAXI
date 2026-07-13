@@ -1,5 +1,6 @@
 import { NavLink, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../hooks/useTheme.js';
 import ClientAccounts from './admin/ClientAccounts.jsx';
 import Drivers from './admin/Drivers.jsx';
 import Trips from './admin/Trips.jsx';
@@ -20,6 +21,7 @@ const tabs = [
 export default function AdminDashboard() {
     const { auth, logout } = useAuth();
     const location = useLocation();
+    const [theme, toggleTheme] = useTheme('a3taxi-admin-theme', 'dark');
 
     if (location.pathname.endsWith('/print')) {
         return (
@@ -30,7 +32,7 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="theme-dark app-shell">
+        <div className={`theme-${theme} app-shell`}>
             <aside className="rail">
                 <div className="rail__brand">
                     <div className="rail__mark">A3</div>
@@ -51,6 +53,9 @@ export default function AdminDashboard() {
 
                 <div className="rail__foot">
                     <div className="subtle" style={{ marginBottom: 10 }}>{auth.user.name}</div>
+                    <button onClick={toggleTheme} className="btn btn--ghost" style={{ width: '100%', marginBottom: 8 }}>
+                        {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                    </button>
                     <button onClick={logout} className="btn btn--ghost" style={{ width: '100%' }}>Log out</button>
                 </div>
             </aside>

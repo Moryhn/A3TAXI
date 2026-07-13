@@ -20,6 +20,38 @@ function loadGoogleMaps() {
     return loaderPromise;
 }
 
+function createMarkerContent(name) {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.flexDirection = 'column';
+    wrap.style.alignItems = 'center';
+    wrap.style.gap = '3px';
+
+    const label = document.createElement('div');
+    label.textContent = name;
+    label.style.background = '#1d2127';
+    label.style.color = '#f5b700';
+    label.style.fontFamily = "'IBM Plex Mono', ui-monospace, monospace";
+    label.style.fontSize = '11px';
+    label.style.fontWeight = '600';
+    label.style.padding = '3px 7px';
+    label.style.borderRadius = '4px';
+    label.style.boxShadow = '0 1px 4px rgba(0,0,0,0.45)';
+    label.style.whiteSpace = 'nowrap';
+
+    const pin = document.createElement('div');
+    pin.style.width = '14px';
+    pin.style.height = '14px';
+    pin.style.borderRadius = '50%';
+    pin.style.background = '#f5b700';
+    pin.style.border = '2px solid #1d2127';
+    pin.style.boxShadow = '0 1px 4px rgba(0,0,0,0.45)';
+
+    wrap.appendChild(label);
+    wrap.appendChild(pin);
+    return wrap;
+}
+
 // Renders driver positions as markers on a live Google Map.
 // Falls back to a message if VITE_GOOGLE_MAPS_API_KEY isn't configured.
 export default function GoogleMapView({ positions }) {
@@ -66,6 +98,7 @@ export default function GoogleMapView({ positions }) {
                     map: mapRef.current,
                     position,
                     title: p.driver_name,
+                    content: createMarkerContent(p.driver_name),
                 });
                 markersRef.current.set(p.driver_id, marker);
             } else {
