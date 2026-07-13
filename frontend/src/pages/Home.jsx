@@ -1,45 +1,56 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme.js';
-
-const options = [
-    {
-        to: '/book',
-        eyebrow: 'Customer',
-        title: 'Book a ride',
-        description: 'Request a pickup online — we\'ll confirm by text.',
-    },
-    {
-        to: '/login?mode=driver',
-        eyebrow: 'Driver',
-        title: 'Driver login',
-        description: 'Log a trip, view dispatched jobs, share your location.',
-    },
-    {
-        to: '/login?mode=admin',
-        eyebrow: 'Admin',
-        title: 'Admin login',
-        description: 'Dispatch, billing, reservations, and fleet management.',
-    },
-];
+import { useLanguage } from '../i18n/LanguageContext.jsx';
 
 export default function Home() {
     const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
+    const { t, lang, toggleLang } = useLanguage();
+
+    const options = [
+        {
+            to: '/book',
+            eyebrow: t('home.eyebrowCustomer'),
+            title: t('home.titleBook'),
+            description: t('home.descBook'),
+        },
+        {
+            to: '/login?mode=driver',
+            eyebrow: t('home.eyebrowDriver'),
+            title: t('home.titleDriverLogin'),
+            description: t('home.descDriverLogin'),
+        },
+        {
+            to: '/login?mode=admin',
+            eyebrow: t('home.eyebrowAdmin'),
+            title: t('home.titleAdminLogin'),
+            description: t('home.descAdminLogin'),
+        },
+    ];
 
     return (
         <div className={`theme-${theme}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, position: 'relative' }}>
-            <button
-                onClick={toggleTheme}
-                className="btn btn--ghost"
-                style={{ position: 'absolute', top: 20, right: 20, padding: '8px 14px', fontSize: 12 }}
-            >
-                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            </button>
+            <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 8 }}>
+                <button
+                    onClick={toggleTheme}
+                    className="btn btn--ghost"
+                    style={{ padding: '8px 14px', fontSize: 12 }}
+                >
+                    {theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
+                </button>
+                <button
+                    onClick={toggleLang}
+                    className="btn btn--ghost"
+                    style={{ padding: '8px 14px', fontSize: 12 }}
+                >
+                    {lang === 'en' ? 'FR' : 'EN'}
+                </button>
+            </div>
             <div style={{ width: '100%', maxWidth: 720 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36, justifyContent: 'center' }}>
                     <div className="rail__mark" style={{ width: 44, height: 44, fontSize: 20 }}>A3</div>
                     <div>
                         <div className="h1" style={{ fontSize: 24 }}>A3TAXI</div>
-                        <div className="subtle" style={{ marginTop: -2 }}>Fleet dispatch console</div>
+                        <div className="subtle" style={{ marginTop: -2 }}>{t('home.tagline')}</div>
                     </div>
                 </div>
 

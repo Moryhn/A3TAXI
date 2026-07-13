@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 export default function Drivers() {
     const { auth } = useAuth();
+    const { t } = useLanguage();
     const [drivers, setDrivers] = useState([]);
     const [form, setForm] = useState({ name: '', phone: '' });
     const [editingId, setEditingId] = useState(null);
@@ -45,37 +47,37 @@ export default function Drivers() {
         <div>
             <div className="page__head">
                 <div>
-                    <div className="eyebrow">Fleet</div>
-                    <h1 className="h1">Drivers</h1>
+                    <div className="eyebrow">{t('admin.drivers.eyebrow')}</div>
+                    <h1 className="h1">{t('admin.drivers.title')}</h1>
                 </div>
-                <div className="meter meter--sm">{drivers.length}<span className="meter__unit">on roster</span></div>
+                <div className="meter meter--sm">{drivers.length}<span className="meter__unit">{t('admin.drivers.onRoster')}</span></div>
             </div>
 
             <div className="card" style={{ marginBottom: 20 }}>
-                <div className="eyebrow">Add driver</div>
+                <div className="eyebrow">{t('admin.drivers.addEyebrow')}</div>
                 <form onSubmit={handleCreate} className="form-row" style={{ marginTop: 10 }}>
                     <div className="field">
-                        <label>Name</label>
+                        <label>{t('admin.drivers.nameLabel')}</label>
                         <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                     </div>
                     <div className="field">
-                        <label>Phone</label>
+                        <label>{t('admin.drivers.phoneLabel')}</label>
                         <input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                     </div>
-                    <button type="submit" className="btn btn--primary">Add driver</button>
+                    <button type="submit" className="btn btn--primary">{t('admin.drivers.addDriverBtn')}</button>
                 </form>
-                <p className="subtle" style={{ marginTop: 10 }}>An access code is generated automatically — the driver logs in with it, no password needed.</p>
+                <p className="subtle" style={{ marginTop: 10 }}>{t('admin.drivers.helperText')}</p>
             </div>
 
             {drivers.length === 0 ? (
                 <div className="card empty">
-                    <div className="empty__title">No drivers yet</div>
-                    <p>Add a driver above to generate their login access code.</p>
+                    <div className="empty__title">{t('admin.drivers.emptyTitle')}</div>
+                    <p>{t('admin.drivers.emptyBody')}</p>
                 </div>
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>{t('admin.drivers.colName')}</th><th>{t('admin.drivers.colPhone')}</th><th>{t('admin.drivers.colAccessCode')}</th><th>{t('admin.drivers.colActions')}</th></tr></thead>
                         <tbody>
                             {drivers.map((d) => (
                                 <tr key={d.id}>
@@ -86,8 +88,8 @@ export default function Drivers() {
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
-                                                    <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
-                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                    <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.save')}</button>
+                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.cancel')}</button>
                                                 </div>
                                             </td>
                                         </>
@@ -98,8 +100,8 @@ export default function Drivers() {
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
-                                                    <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                    <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                    <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.edit')}</button>
+                                                    <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.delete')}</button>
                                                 </div>
                                             </td>
                                         </>
@@ -113,8 +115,8 @@ export default function Drivers() {
 
             <ConfirmDialog
                 open={!!pendingDelete}
-                title={`Delete ${pendingDelete?.name}?`}
-                message="This moves the driver to the trash and revokes their access code. Their trip history is kept, and you can restore them from Trash later."
+                title={t('admin.drivers.confirmDeleteTitle', { name: pendingDelete?.name })}
+                message={t('admin.drivers.confirmDeleteMessage')}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
             />

@@ -2,46 +2,49 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useLanguage } from '../../i18n/LanguageContext.jsx';
+import { formatDate, formatCurrency } from '../../lib/format.js';
 
 export default function InvoicePrint() {
     const { auth } = useAuth();
     const { id } = useParams();
+    const { t, lang } = useLanguage();
     const [invoice, setInvoice] = useState(null);
 
     useEffect(() => {
         api.getInvoice(auth.token, id).then(setInvoice);
     }, [id]);
 
-    if (!invoice) return <div className="theme-light" style={{ minHeight: '100vh', padding: 40 }}>Loading…</div>;
+    if (!invoice) return <div className="theme-light" style={{ minHeight: '100vh', padding: 40 }}>{t('admin.invoicePrint.loading')}</div>;
 
     return (
         <div className="theme-light invoice-print" style={{ minHeight: '100vh', padding: '40px 20px' }}>
             <div style={{ maxWidth: 720, margin: '0 auto' }}>
                 <div className="no-print" style={{ marginBottom: 24 }}>
-                    <button onClick={() => window.print()} className="btn btn--primary">Print / Save as PDF</button>
+                    <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoicePrint.printButton')}</button>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
                     <div>
-                        <div className="eyebrow">A3TAXI · Invoice</div>
+                        <div className="eyebrow">{t('admin.invoicePrint.eyebrow')}</div>
                         <h1 className="h1" style={{ fontSize: 28 }}>#{String(invoice.id).padStart(4, '0')}</h1>
                     </div>
                     <div className="meter meter--lg">
-                        ${Number(invoice.total_amount).toFixed(2)}
+                        {formatCurrency(invoice.total_amount, lang)}
                     </div>
                 </div>
 
                 <div className="card" style={{ marginBottom: 24 }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         <div>
-                            <div className="eyebrow">Billed to</div>
+                            <div className="eyebrow">{t('admin.invoicePrint.billedTo')}</div>
                             <div style={{ fontWeight: 600 }}>{invoice.client_name}</div>
                             <div className="subtle">{invoice.client_code}</div>
                         </div>
                         <div>
-                            <div className="eyebrow">Period</div>
-                            <div>{new Date(invoice.period_start).toLocaleDateString()} — {new Date(invoice.period_end).toLocaleDateString()}</div>
-                            <div className="subtle">Generated {new Date(invoice.generated_at).toLocaleDateString()}</div>
+                            <div className="eyebrow">{t('admin.invoicePrint.period')}</div>
+                            <div>{formatDate(invoice.period_start, lang)} — {formatDate(invoice.period_end, lang)}</div>
+                            <div className="subtle">{t('admin.invoicePrint.generated', { date: formatDate(invoice.generated_at, lang) })}</div>
                         </div>
                     </div>
                 </div>
@@ -50,32 +53,32 @@ export default function InvoicePrint() {
                     <table className="table">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Driver</th>
-                                <th>Route</th>
-                                <th style={{ textAlign: 'right' }}>Amount</th>
+                                <th>{t('admin.invoicePrint.colDate')}</th>
+                                <th>{t('admin.invoicePrint.colDriver')}</th>
+                                <th>{t('admin.invoicePrint.colRoute')}</th>
+                                <th style={{ textAlign: 'right' }}>{t('admin.invoicePrint.colAmount')}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {invoice.trips.map((t) => (
-                                <tr key={t.id}>
-                                    <td className="subtle">{new Date(t.trip_date).toLocaleDateString()}</td>
-                                    <td>{t.driver_name}</td>
-                                    <td>{t.departure_location} → {t.arrival_location}</td>
-                                    <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>${Number(t.amount).toFixed(2)}</td>
+                            {invoice.trips.map((trip) => (
+                                <tr key={trip.id}>
+                                    <td className="subtle">{formatDate(trip.trip_date, lang)}</td>
+                                    <td>{trip.driver_name}</td>
+                                    <td>{trip.departure_location} → {trip.arrival_location}</td>
+                                    <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>{formatCurrency(trip.amount, lang)}</td>
                                 </tr>
                             ))}
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={3} style={{ textAlign: 'right', fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total</td>
-                                <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>${Number(invoice.total_amount).toFixed(2)}</td>
+                                <td colSpan={3} style={{ textAlign: 'right', fontFamily: 'var(--font-display)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('admin.invoicePrint.total')}</td>
+                                <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{formatCurrency(invoice.total_amount, lang)}</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
 
-                <p className="subtle" style={{ marginTop: 16 }}>Receipt photos are retained internally and are not included on this invoice.</p>
+                <p className="subtle" style={{ marginTop: 16 }}>{t('admin.invoicePrint.disclaimer')}</p>
             </div>
 
             <style>{`
