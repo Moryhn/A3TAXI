@@ -828,6 +828,9 @@ textarea {
 .storefront__main {
     flex: 1;
     padding: 0 24px 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 /* Hero */
@@ -1227,4 +1230,62 @@ textarea {
     font-size: 12px;
     margin-top: 8px;
     line-height: 1.5;
+}
+
+/* Trust reinforcement card (booking visual column, always present) */
+.trust-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+}
+
+.trust-card__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.trust-card__row svg {
+    color: var(--amber-dim);
+    flex-shrink: 0;
+}
+
+.theme-dark .trust-card__row svg {
+    color: var(--amber);
+}
+
+/* Recent-address quick-select chip (distinct from .pill status badges —
+   these hold real street addresses, so no uppercase transform). */
+.address-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 220px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.address-chip:hover {
+    background: var(--chip-bg);
+    border-color: var(--amber);
+    color: var(--text);
+}
+
+/* Native datetime-local picker icon is invisible against dark backgrounds
+   without this — browsers render it as a dark glyph regardless of theme. */
+.theme-dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
 }

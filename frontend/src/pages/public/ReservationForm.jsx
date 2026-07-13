@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Phone, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, MapPin, ShieldCheck, MessageCircle } from 'lucide-react';
 import { api } from '../../api/client.js';
 import { GOOGLE_MAPS_API_KEY } from '../../lib/googleMaps.js';
 import { useTheme } from '../../hooks/useTheme.js';
@@ -180,7 +180,7 @@ export default function ReservationForm() {
                     <div className="booking-visual">
                         <div className="route-visual">
                             {GOOGLE_MAPS_API_KEY ? (
-                                <RoutePreviewMap pickup={form.pickupLocation} dropoff={isRide ? form.dropoffLocation : null} />
+                                <RoutePreviewMap pickup={form.pickupLocation} dropoff={isRide ? form.dropoffLocation : null} theme={theme} />
                             ) : (
                                 <div className="route-visual__placeholder">
                                     <MapPin size={26} />
@@ -203,6 +203,11 @@ export default function ReservationForm() {
                                 note={[quote.isNightRate ? t('booking.nightRateNote') : null, t('booking.priceDisclaimer')].filter(Boolean).join(' · ')}
                             />
                         )}
+
+                        <div className="card trust-card">
+                            <div className="trust-card__row"><ShieldCheck size={16} /> {t('home.trustNoSurge')}</div>
+                            <div className="trust-card__row"><MessageCircle size={16} /> {t('home.trustSms')}</div>
+                        </div>
                     </div>
                 </div>
             </div>

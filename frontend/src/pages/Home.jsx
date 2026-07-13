@@ -37,7 +37,7 @@ export default function Home() {
                     </Link>
 
                     <div className="trust-strip">
-                        <span className="trust-badge"><ShieldCheck size={15} /> {t('home.trustTariff')}</span>
+                        <span className="trust-badge"><ShieldCheck size={15} /> {t('home.trustNoSurge')}</span>
                         <span className="trust-badge"><Globe2 size={15} /> {t('home.trustArea')}</span>
                         <span className="trust-badge"><MessageCircle size={15} /> {t('home.trustSms')}</span>
                     </div>
