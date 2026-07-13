@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { LanguageProvider } from './i18n/LanguageContext.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
@@ -12,7 +12,7 @@ export default function App() {
     return (
         <LanguageProvider>
             <AuthProvider>
-                <BrowserRouter>
+                <HashRouter>
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/book" element={<ReservationForm />} />
@@ -35,7 +35,7 @@ export default function App() {
                         />
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
-                </BrowserRouter>
+                </HashRouter>
             </AuthProvider>
         </LanguageProvider>
     );
