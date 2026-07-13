@@ -2,18 +2,24 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import GoogleMapView from '../../components/GoogleMapView.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 export default function DispatchMap() {
     const { auth } = useAuth();
     const [positions, setPositions] = useState([]);
     const [drivers, setDrivers] = useState([]);
+    const [jobs, setJobs] = useState([]);
     const [job, setJob] = useState({ driverId: '', address: '', notes: '' });
     const [sending, setSending] = useState(false);
     const [status, setStatus] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState({ address: '', notes: '' });
+    const [pendingDelete, setPendingDelete] = useState(null);
 
     async function refresh() {
         setPositions(await api.getDriverPositions(auth.token));
         setDrivers(await api.listDrivers(auth.token));
+        setJobs(await api.listAllDispatchJobs(auth.token));
     }
 
     useEffect(() => {
@@ -30,11 +36,29 @@ export default function DispatchMap() {
             await api.createDispatchJob(auth.token, job);
             setJob({ driverId: '', address: '', notes: '' });
             setStatus({ ok: true, message: 'Job sent.' });
+            refresh();
         } catch (err) {
             setStatus({ ok: false, message: err.message });
         } finally {
             setSending(false);
         }
+    }
+
+    function startEdit(j) {
+        setEditingId(j.id);
+        setEditForm({ address: j.address, notes: j.notes || '' });
+    }
+
+    async function saveEdit(id) {
+        await api.updateDispatchJob(auth.token, id, editForm);
+        setEditingId(null);
+        refresh();
+    }
+
+    async function confirmDelete() {
+        await api.deleteDispatchJob(auth.token, pendingDelete.id);
+        setPendingDelete(null);
+        refresh();
     }
 
     return (
@@ -100,6 +124,55 @@ export default function DispatchMap() {
                     </div>
                 </div>
             </div>
+
+            <div className="card" style={{ marginTop: 20 }}>
+                <div className="eyebrow">Recent jobs</div>
+                {jobs.length === 0 ? (
+                    <p className="subtle" style={{ marginTop: 10 }}>No jobs dispatched yet.</p>
+                ) : (
+                    <div className="table-wrap" style={{ marginTop: 10 }}>
+                        <table className="table">
+                            <thead><tr><th>Driver</th><th>Address</th><th>Notes</th><th>Status</th><th></th></tr></thead>
+                            <tbody>
+                                {jobs.map((j) => (
+                                    <tr key={j.id}>
+                                        <td>{j.driver_name}</td>
+                                        {editingId === j.id ? (
+                                            <>
+                                                <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} /></td>
+                                                <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} /></td>
+                                                <td><span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{j.status}</span></td>
+                                                <td style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => saveEdit(j.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td>{j.address}</td>
+                                                <td className="subtle">{j.notes || '—'}</td>
+                                                <td><span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{j.status}</span></td>
+                                                <td style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => startEdit(j)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                    <button onClick={() => setPendingDelete(j)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                </td>
+                                            </>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            <ConfirmDialog
+                open={!!pendingDelete}
+                title="Delete this job?"
+                message={pendingDelete ? `${pendingDelete.address} — assigned to ${pendingDelete.driver_name}. This can't be undone.` : ''}
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDelete(null)}
+            />
         </div>
     );
 }

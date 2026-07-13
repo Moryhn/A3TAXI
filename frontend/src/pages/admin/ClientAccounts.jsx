@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 export default function ClientAccounts() {
     const { auth } = useAuth();
     const [accounts, setAccounts] = useState([]);
     const [form, setForm] = useState({ name: '', code: '' });
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState({ name: '' });
+    const [pendingDelete, setPendingDelete] = useState(null);
 
     async function refresh() {
         setAccounts(await api.listClientAccounts(auth.token));
@@ -17,6 +21,28 @@ export default function ClientAccounts() {
         e.preventDefault();
         await api.createClientAccount(auth.token, form);
         setForm({ name: '', code: '' });
+        refresh();
+    }
+
+    function startEdit(a) {
+        setEditingId(a.id);
+        setEditForm({ name: a.name });
+    }
+
+    async function saveEdit(id) {
+        await api.updateClientAccount(auth.token, id, editForm);
+        setEditingId(null);
+        refresh();
+    }
+
+    async function confirmDelete() {
+        await api.deleteClientAccount(auth.token, pendingDelete.id);
+        setPendingDelete(null);
+        refresh();
+    }
+
+    async function reactivate(a) {
+        await api.updateClientAccount(auth.token, a.id, { isActive: true });
         refresh();
     }
 
@@ -52,19 +78,48 @@ export default function ClientAccounts() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Code</th><th>Name</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Code</th><th>Name</th><th>Status</th><th></th></tr></thead>
                         <tbody>
                             {accounts.map((a) => (
                                 <tr key={a.id}>
                                     <td style={{ fontFamily: 'var(--font-mono)' }}>{a.code}</td>
-                                    <td>{a.name}</td>
-                                    <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
+                                    {editingId === a.id ? (
+                                        <>
+                                            <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></td>
+                                            <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
+                                            <td style={{ display: 'flex', gap: 8 }}>
+                                                <button onClick={() => saveEdit(a.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td>{a.name}</td>
+                                            <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
+                                            <td style={{ display: 'flex', gap: 8 }}>
+                                                <button onClick={() => startEdit(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                {a.is_active ? (
+                                                    <button onClick={() => setPendingDelete(a)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                ) : (
+                                                    <button onClick={() => reactivate(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
+                                                )}
+                                            </td>
+                                        </>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={!!pendingDelete}
+                title={`Delete ${pendingDelete?.name}?`}
+                message="This deactivates the client account so drivers can no longer log trips against it. Past trips and invoices are kept, and you can reactivate it later."
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDelete(null)}
+            />
         </div>
     );
 }

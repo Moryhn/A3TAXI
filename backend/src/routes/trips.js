@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { uploadReceipt } from '../middleware/upload.js';
-import { createTrip, searchTrips } from '../models/trip.js';
+import { createTrip, searchTrips, findTripById, updateTrip, deleteTrip } from '../models/trip.js';
 
 const router = Router();
 
@@ -45,6 +45,27 @@ router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
     });
 
     res.json(trips);
+});
+
+// Admin edits a trip (blocked once it's been invoiced, to protect billing history)
+router.patch('/:id', requireAuth('admin'), async (req, res) => {
+    const trip = await findTripById(req.params.id);
+    if (!trip) return res.status(404).json({ error: 'Trip not found' });
+    if (trip.invoice_id) return res.status(409).json({ error: 'This trip has already been invoiced and can no longer be edited' });
+
+    const { departureLocation, arrivalLocation, amount } = req.body;
+    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount });
+    res.json(updated);
+});
+
+// Admin deletes a trip (blocked once it's been invoiced)
+router.delete('/:id', requireAuth('admin'), async (req, res) => {
+    const trip = await findTripById(req.params.id);
+    if (!trip) return res.status(404).json({ error: 'Trip not found' });
+    if (trip.invoice_id) return res.status(409).json({ error: 'This trip has already been invoiced and can no longer be deleted' });
+
+    await deleteTrip(req.params.id);
+    res.status(204).end();
 });
 
 export default router;

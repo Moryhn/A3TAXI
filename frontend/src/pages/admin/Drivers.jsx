@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 export default function Drivers() {
     const { auth } = useAuth();
     const [drivers, setDrivers] = useState([]);
     const [form, setForm] = useState({ name: '', phone: '' });
+    const [editingId, setEditingId] = useState(null);
+    const [editForm, setEditForm] = useState({ name: '', phone: '' });
+    const [pendingDelete, setPendingDelete] = useState(null);
 
     async function refresh() {
         setDrivers(await api.listDrivers(auth.token));
@@ -20,6 +24,28 @@ export default function Drivers() {
         refresh();
     }
 
+    function startEdit(d) {
+        setEditingId(d.id);
+        setEditForm({ name: d.name, phone: d.phone || '' });
+    }
+
+    async function saveEdit(id) {
+        await api.updateDriver(auth.token, id, editForm);
+        setEditingId(null);
+        refresh();
+    }
+
+    async function confirmDelete() {
+        await api.deleteDriver(auth.token, pendingDelete.id);
+        setPendingDelete(null);
+        refresh();
+    }
+
+    async function reactivate(d) {
+        await api.updateDriver(auth.token, d.id, { isActive: true });
+        refresh();
+    }
+
     return (
         <div>
             <div className="page__head">
@@ -27,7 +53,7 @@ export default function Drivers() {
                     <div className="eyebrow">Fleet</div>
                     <h1 className="h1">Drivers</h1>
                 </div>
-                <div className="meter meter--sm">{drivers.length}<span className="meter__unit">on roster</span></div>
+                <div className="meter meter--sm">{drivers.filter((d) => d.is_active).length}<span className="meter__unit">on roster</span></div>
             </div>
 
             <div className="card" style={{ marginBottom: 20 }}>
@@ -54,19 +80,51 @@ export default function Drivers() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th><th>Status</th><th></th></tr></thead>
                         <tbody>
                             {drivers.map((d) => (
                                 <tr key={d.id}>
-                                    <td>{d.name}</td>
-                                    <td className="subtle">{d.phone || '—'}</td>
-                                    <td><span className="meter meter--sm">{d.access_code}</span></td>
+                                    {editingId === d.id ? (
+                                        <>
+                                            <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></td>
+                                            <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></td>
+                                            <td><span className="meter meter--sm">{d.access_code}</span></td>
+                                            <td><span className={`pill ${d.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{d.is_active ? 'Active' : 'Inactive'}</span></td>
+                                            <td style={{ display: 'flex', gap: 8 }}>
+                                                <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td>{d.name}</td>
+                                            <td className="subtle">{d.phone || '—'}</td>
+                                            <td><span className="meter meter--sm">{d.access_code}</span></td>
+                                            <td><span className={`pill ${d.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{d.is_active ? 'Active' : 'Inactive'}</span></td>
+                                            <td style={{ display: 'flex', gap: 8 }}>
+                                                <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                {d.is_active ? (
+                                                    <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                ) : (
+                                                    <button onClick={() => reactivate(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
+                                                )}
+                                            </td>
+                                        </>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             )}
+
+            <ConfirmDialog
+                open={!!pendingDelete}
+                title={`Delete ${pendingDelete?.name}?`}
+                message="This deactivates the driver and revokes their access code. Their trip history is kept, and you can reactivate them later."
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDelete(null)}
+            />
         </div>
     );
 }

@@ -33,10 +33,22 @@ export async function listReservations({ dateFrom, dateTo } = {}) {
     return rows;
 }
 
-export async function updateReservationStatus(id, status) {
+export async function updateReservation(id, { clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status }) {
     const { rows } = await query(
-        'UPDATE reservations SET status = $2 WHERE id = $1 RETURNING *',
-        [id, status]
+        `UPDATE reservations SET
+            client_name = COALESCE($2, client_name),
+            client_phone = COALESCE($3, client_phone),
+            client_email = COALESCE($4, client_email),
+            pickup_location = COALESCE($5, pickup_location),
+            dropoff_location = COALESCE($6, dropoff_location),
+            requested_time = COALESCE($7, requested_time),
+            status = COALESCE($8, status)
+         WHERE id = $1 RETURNING *`,
+        [id, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status]
     );
     return rows[0] || null;
+}
+
+export async function deleteReservation(id) {
+    await query('DELETE FROM reservations WHERE id = $1', [id]);
 }

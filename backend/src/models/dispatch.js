@@ -50,3 +50,32 @@ export async function updateDispatchJobStatus(jobId, status) {
     );
     return rows[0] || null;
 }
+
+// Admin view: every dispatched job across all drivers
+export async function listAllDispatchJobs(limit = 50) {
+    const { rows } = await query(
+        `SELECT j.*, d.name AS driver_name
+         FROM dispatch_jobs j
+         JOIN drivers d ON d.id = j.driver_id
+         ORDER BY j.created_at DESC
+         LIMIT $1`,
+        [limit]
+    );
+    return rows;
+}
+
+export async function updateDispatchJob(jobId, { address, notes }) {
+    const { rows } = await query(
+        `UPDATE dispatch_jobs SET
+            address = COALESCE($2, address),
+            notes = COALESCE($3, notes),
+            updated_at = now()
+         WHERE id = $1 RETURNING *`,
+        [jobId, address, notes]
+    );
+    return rows[0] || null;
+}
+
+export async function deleteDispatchJob(jobId) {
+    await query('DELETE FROM dispatch_jobs WHERE id = $1', [jobId]);
+}

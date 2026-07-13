@@ -6,6 +6,9 @@ import {
     createDispatchJob,
     listDispatchJobsForDriver,
     updateDispatchJobStatus,
+    listAllDispatchJobs,
+    updateDispatchJob,
+    deleteDispatchJob,
 } from '../models/dispatch.js';
 
 const router = Router();
@@ -42,15 +45,34 @@ router.get('/jobs', requireAuth('driver'), async (req, res) => {
     res.json(jobs);
 });
 
-// Driver accepts/completes a job
-router.patch('/jobs/:id', requireAuth('driver'), async (req, res) => {
-    const { status } = req.body;
-    if (!['accepted', 'completed', 'cancelled'].includes(status)) {
-        return res.status(400).json({ error: 'status must be accepted, completed, or cancelled' });
+// Admin view: every dispatched job across all drivers
+router.get('/jobs/all', requireAuth('admin'), async (req, res) => {
+    const jobs = await listAllDispatchJobs();
+    res.json(jobs);
+});
+
+// Driver accepts/completes a job, or admin edits its address/notes
+router.patch('/jobs/:id', requireAuth('admin', 'driver'), async (req, res) => {
+    if (req.user.role === 'driver') {
+        const { status } = req.body;
+        if (!['accepted', 'completed', 'cancelled'].includes(status)) {
+            return res.status(400).json({ error: 'status must be accepted, completed, or cancelled' });
+        }
+        const job = await updateDispatchJobStatus(req.params.id, status);
+        if (!job) return res.status(404).json({ error: 'Job not found' });
+        return res.json(job);
     }
-    const job = await updateDispatchJobStatus(req.params.id, status);
+
+    const { address, notes } = req.body;
+    const job = await updateDispatchJob(req.params.id, { address, notes });
     if (!job) return res.status(404).json({ error: 'Job not found' });
     res.json(job);
+});
+
+// Admin removes a dispatched job
+router.delete('/jobs/:id', requireAuth('admin'), async (req, res) => {
+    await deleteDispatchJob(req.params.id);
+    res.status(204).end();
 });
 
 export default router;

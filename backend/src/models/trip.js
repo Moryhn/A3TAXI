@@ -53,3 +53,24 @@ export async function searchTrips({ driverId, clientAccountId, dateFrom, dateTo,
 export async function markTripsInvoiced(tripIds, invoiceId) {
     await query('UPDATE trips SET invoice_id = $1 WHERE id = ANY($2::int[])', [invoiceId, tripIds]);
 }
+
+export async function findTripById(id) {
+    const { rows } = await query('SELECT * FROM trips WHERE id = $1', [id]);
+    return rows[0] || null;
+}
+
+export async function updateTrip(id, { departureLocation, arrivalLocation, amount }) {
+    const { rows } = await query(
+        `UPDATE trips SET
+            departure_location = COALESCE($2, departure_location),
+            arrival_location = COALESCE($3, arrival_location),
+            amount = COALESCE($4, amount)
+         WHERE id = $1 RETURNING *`,
+        [id, departureLocation, arrivalLocation, amount]
+    );
+    return rows[0] || null;
+}
+
+export async function deleteTrip(id) {
+    await query('DELETE FROM trips WHERE id = $1', [id]);
+}

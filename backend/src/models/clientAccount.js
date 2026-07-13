@@ -1,7 +1,8 @@
 import { query } from '../config/db.js';
 
-export async function listClientAccounts() {
-    const { rows } = await query('SELECT * FROM client_accounts ORDER BY name');
+export async function listClientAccounts({ activeOnly = false } = {}) {
+    const where = activeOnly ? 'WHERE is_active = true' : '';
+    const { rows } = await query(`SELECT * FROM client_accounts ${where} ORDER BY name`);
     return rows;
 }
 

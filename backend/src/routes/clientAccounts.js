@@ -9,9 +9,9 @@ import {
 
 const router = Router();
 
-// Any authenticated user (admin or driver) can list active client accounts to select from
+// Drivers only see active accounts to log trips against; admin sees everything
 router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
-    const accounts = await listClientAccounts();
+    const accounts = await listClientAccounts({ activeOnly: req.user.role === 'driver' });
     res.json(accounts);
 });
 
@@ -30,6 +30,15 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
 
     const { name, contactName, contactEmail, contactPhone, isActive } = req.body;
     const updated = await updateClientAccount(req.params.id, { name, contactName, contactEmail, contactPhone, isActive });
+    res.json(updated);
+});
+
+// Deactivates the client rather than a hard delete, since past trips
+// and invoices stay referenced to it.
+router.delete('/:id', requireAuth('admin'), async (req, res) => {
+    const existing = await findClientAccountById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Client account not found' });
+    const updated = await updateClientAccount(req.params.id, { isActive: false });
     res.json(updated);
 });
 

@@ -4,7 +4,8 @@ import {
     createReservation,
     markReservationSmsSent,
     listReservations,
-    updateReservationStatus,
+    updateReservation,
+    deleteReservation,
 } from '../models/reservation.js';
 import { sendReservationConfirmationSms } from '../services/sms.js';
 
@@ -47,13 +48,20 @@ router.get('/', requireAuth('admin'), async (req, res) => {
 });
 
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
-    const { status } = req.body;
-    if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
+    const { status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime } = req.body;
+    if (status && !['pending', 'confirmed', 'cancelled'].includes(status)) {
         return res.status(400).json({ error: 'status must be pending, confirmed, or cancelled' });
     }
-    const reservation = await updateReservationStatus(req.params.id, status);
+    const reservation = await updateReservation(req.params.id, {
+        status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
+    });
     if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
     res.json(reservation);
+});
+
+router.delete('/:id', requireAuth('admin'), async (req, res) => {
+    await deleteReservation(req.params.id);
+    res.status(204).end();
 });
 
 export default router;
