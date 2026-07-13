@@ -96,6 +96,7 @@ export default function Reservations() {
                         height="100%"
                         expandRows
                         slotDuration="02:00:00"
+                        slotMaxTime="24:30:00"
                         eventClick={(info) => { setSelected(info.event.extendedProps); setEditing(false); }}
                     />
                 </div>
