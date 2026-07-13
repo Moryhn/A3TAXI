@@ -1,29 +1,48 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Phone, MapPin, BatteryCharging, KeyRound } from 'lucide-react';
 import { api } from '../../api/client.js';
 import { useTheme } from '../../hooks/useTheme.js';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
-import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 import RoutePreviewMap from '../../components/RoutePreviewMap.jsx';
-import Stepper from '../../components/Stepper.jsx';
-import { formatCurrency } from '../../lib/format.js';
+import ProgressTrail from '../../components/booking/ProgressTrail.jsx';
+import MeterPanel from '../../components/booking/MeterPanel.jsx';
+import TripStep from '../../components/booking/TripStep.jsx';
+import DetailsStep from '../../components/booking/DetailsStep.jsx';
+import ContactStep from '../../components/booking/ContactStep.jsx';
 
-const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
+const INITIAL_FORM = {
+    serviceType: 'ride',
+    clientName: '', clientPhone: '', clientEmail: '',
+    pickupLocation: '', dropoffLocation: '', requestedTime: '',
+    isRoundTrip: false, passengerCount: 1, carryOnCount: 0, checkedLuggageCount: 0,
+};
+
+const SERVICE_PLACEHOLDER_ICON = { battery_boost: BatteryCharging, lockout: KeyRound };
 
 export default function ReservationForm() {
     const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
     const { t, lang, toggleLang } = useLanguage();
-    const [form, setForm] = useState({
-        serviceType: 'ride',
-        clientName: '', clientPhone: '', clientEmail: '',
-        pickupLocation: '', dropoffLocation: '', requestedTime: '',
-        isRoundTrip: false, passengerCount: 1, carryOnCount: 0, checkedLuggageCount: 0,
-    });
+    const [form, setForm] = useState(INITIAL_FORM);
     const [status, setStatus] = useState(null);
     const [quote, setQuote] = useState(null);
     const [quoting, setQuoting] = useState(false);
+    const [step, setStep] = useState(0);
 
     const isRide = form.serviceType === 'ride';
+
+    const steps = isRide
+        ? [
+            { key: 'trip', label: t('booking.stepTrip') },
+            { key: 'details', label: t('booking.stepDetails') },
+            { key: 'contact', label: t('booking.stepContact') },
+        ]
+        : [
+            { key: 'trip', label: t('booking.stepTrip') },
+            { key: 'contact', label: t('booking.stepContact') },
+        ];
+    const activeIndex = Math.min(step, steps.length - 1);
+    const activeKey = steps[activeIndex].key;
 
     useEffect(() => {
         if (!isRide || !form.pickupLocation || !form.dropoffLocation) {
@@ -46,151 +65,146 @@ export default function ReservationForm() {
         return () => clearTimeout(timer);
     }, [isRide, form.pickupLocation, form.dropoffLocation, form.requestedTime, form.isRoundTrip, form.serviceType]);
 
+    function canAdvance() {
+        if (activeKey === 'trip') {
+            if (!form.pickupLocation || !form.requestedTime) return false;
+            if (isRide && !form.dropoffLocation) return false;
+        }
+        return true;
+    }
+
+    function goNext() {
+        if (canAdvance()) setStep(activeIndex + 1);
+    }
+
+    function goBack() {
+        setStep(Math.max(0, activeIndex - 1));
+    }
+
+    function handleFormKeyDown(e) {
+        if (e.key !== 'Enter' || activeIndex >= steps.length - 1) return;
+        e.preventDefault();
+        goNext();
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
         setStatus(null);
         try {
             await api.createReservation(form);
             setStatus({ ok: true, message: t('booking.successMessage') });
-            setForm({
-                serviceType: 'ride',
-                clientName: '', clientPhone: '', clientEmail: '',
-                pickupLocation: '', dropoffLocation: '', requestedTime: '',
-                isRoundTrip: false, passengerCount: 1, carryOnCount: 0, checkedLuggageCount: 0,
-            });
+            setForm(INITIAL_FORM);
             setQuote(null);
+            setStep(0);
         } catch (err) {
             setStatus({ ok: false, message: err.message });
         }
     }
 
+    const showRoute = isRide && form.pickupLocation && form.dropoffLocation;
+    const PlaceholderIcon = SERVICE_PLACEHOLDER_ICON[form.serviceType] || MapPin;
+
     return (
-        <div className={`theme-${theme}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 8 }}>
-                <button
-                    onClick={toggleTheme}
-                    className="btn btn--ghost"
-                    style={{ padding: '8px 14px', fontSize: 12 }}
-                >
-                    {theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
-                </button>
-                <button
-                    onClick={toggleLang}
-                    className="btn btn--ghost"
-                    style={{ padding: '8px 14px', fontSize: 12 }}
-                >
-                    {lang === 'en' ? 'FR' : 'EN'}
-                </button>
-            </div>
-            <div style={{ width: '100%', maxWidth: 440 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                    <div className="rail__mark" style={{ width: 40, height: 40, fontSize: 18 }}>A3</div>
+        <div className={`theme-${theme} storefront`}>
+            <div className="storefront__topbar">
+                <Link to="/" className="storefront__brand">
+                    <div className="rail__mark">A3</div>
                     <div className="eyebrow" style={{ margin: 0 }}>A3TAXI</div>
+                </Link>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={toggleTheme} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                        {theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
+                    </button>
+                    <button onClick={toggleLang} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                        {lang === 'en' ? 'FR' : 'EN'}
+                    </button>
                 </div>
-                <h1 className="h1" style={{ fontSize: 32, marginBottom: 4 }}>{t('booking.title')}</h1>
-                <p className="subtle" style={{ marginBottom: 12 }}>{t('booking.subtitle')}</p>
-                <a
-                    href="tel:+14504442000"
-                    className="subtle"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 24, textDecoration: 'none', fontFamily: 'var(--font-mono)' }}
-                >
-                    📞 {t('booking.callUsLabel')} 450-444-2000
-                </a>
+            </div>
 
-                <div className="tabbar" style={{ width: '100%', marginBottom: 16 }}>
-                    {SERVICE_TYPES.map((s) => (
-                        <button
-                            key={s}
-                            type="button"
-                            className={`tabbar__btn ${form.serviceType === s ? 'tabbar__btn--active' : ''}`}
-                            style={{ flex: 1, fontSize: 12 }}
-                            onClick={() => setForm({ ...form, serviceType: s })}
-                        >
-                            {t(`booking.service.${s}`)}
-                        </button>
-                    ))}
+            <div className="storefront__main">
+                <div style={{ maxWidth: 1040, margin: '0 auto', paddingBottom: 20 }}>
+                    <h1 className="h1" style={{ fontSize: 30, marginBottom: 4 }}>{t('booking.title')}</h1>
+                    <p className="subtle" style={{ marginBottom: 8 }}>{t('booking.subtitle')}</p>
+                    <a href="tel:+14504442000" className="subtle" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontFamily: 'var(--font-mono)' }}>
+                        <Phone size={13} /> {t('booking.callUsLabel')} 450-444-2000
+                    </a>
                 </div>
 
-                <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div className="field">
-                        <label htmlFor="clientName">{t('booking.nameLabel')}</label>
-                        <input id="clientName" name="name" className="input" autoComplete="name" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required />
-                    </div>
-                    <div className="field">
-                        <label htmlFor="clientPhone">{t('booking.phoneLabel')}</label>
-                        <input id="clientPhone" name="tel" className="input" type="tel" autoComplete="tel" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} required />
-                    </div>
-                    <div className="field">
-                        <label htmlFor="clientEmail">{t('booking.emailLabel')}</label>
-                        <input id="clientEmail" name="email" className="input" type="email" autoComplete="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} />
-                    </div>
-                    <div className="field">
-                        <label htmlFor="pickup">{isRide ? t('booking.pickupLabel') : t('booking.serviceLocationLabel')}</label>
-                        <PlaceAutocompleteInput id="pickup" className="input" value={form.pickupLocation} onChange={(v) => setForm({ ...form, pickupLocation: v })} required />
-                    </div>
-
-                    {isRide && (
-                        <div className="field">
-                            <label htmlFor="dropoff">{t('booking.dropoffLabel')}</label>
-                            <PlaceAutocompleteInput id="dropoff" className="input" value={form.dropoffLocation} onChange={(v) => setForm({ ...form, dropoffLocation: v })} required />
+                <div className="booking-grid">
+                    <div className="booking-panel">
+                        <div className="card">
+                            <ProgressTrail steps={steps} currentIndex={activeIndex} />
                         </div>
-                    )}
 
-                    <div className="field">
-                        <label htmlFor="requestedTime">{t('booking.dateTimeLabel')}</label>
-                        <input id="requestedTime" className="input" type="datetime-local" value={form.requestedTime} onChange={(e) => setForm({ ...form, requestedTime: e.target.value })} required />
-                    </div>
+                        <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            {activeKey === 'trip' && <TripStep form={form} setForm={setForm} isRide={isRide} t={t} />}
+                            {activeKey === 'details' && <DetailsStep form={form} setForm={setForm} t={t} />}
+                            {activeKey === 'contact' && <ContactStep form={form} setForm={setForm} t={t} />}
 
-                    {isRide && (
-                        <>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
-                                <input type="checkbox" checked={form.isRoundTrip} onChange={(e) => setForm({ ...form, isRoundTrip: e.target.checked })} />
-                                {t('booking.roundTripLabel')}
-                            </label>
-
-                            <Stepper label={t('booking.passengersLabel')} value={form.passengerCount} onChange={(v) => setForm({ ...form, passengerCount: v })} min={1} max={8} />
-                            <Stepper label={t('booking.carryOnLabel')} value={form.carryOnCount} onChange={(v) => setForm({ ...form, carryOnCount: v })} />
-                            <Stepper label={t('booking.checkedLuggageLabel')} value={form.checkedLuggageCount} onChange={(v) => setForm({ ...form, checkedLuggageCount: v })} />
-
-                            <RoutePreviewMap pickup={form.pickupLocation} dropoff={form.dropoffLocation} />
-
-                            {(quoting || quote) && (
-                                <div className="card" style={{ padding: 14 }}>
-                                    <div className="eyebrow">{t('booking.estimatedPriceLabel')}</div>
-                                    {quoting && !quote ? (
-                                        <p className="subtle" style={{ marginTop: 6 }}>{t('booking.calculatingPrice')}</p>
-                                    ) : quote ? (
-                                        <>
-                                            <div className="meter meter--sm" style={{ marginTop: 6 }}>{formatCurrency(quote.estimatedPrice, lang)}</div>
-                                            {quote.isNightRate && <p className="subtle" style={{ marginTop: 6, fontSize: 12 }}>{t('booking.nightRateNote')}</p>}
-                                            <p className="subtle" style={{ marginTop: 6, fontSize: 12 }}>{t('booking.priceDisclaimer')}</p>
-                                        </>
-                                    ) : null}
+                            {status && (
+                                <div
+                                    className="pill"
+                                    style={{
+                                        justifyContent: 'center',
+                                        padding: '10px 14px',
+                                        color: status.ok ? '#0f8a5f' : 'var(--danger)',
+                                        background: status.ok ? 'rgba(52,211,153,0.15)' : 'rgba(240,85,76,0.12)',
+                                    }}
+                                >
+                                    {status.message}
                                 </div>
                             )}
-                        </>
-                    )}
 
-                    <button type="submit" className="btn btn--primary" style={{ marginTop: 8, padding: '14px 18px', fontSize: 15 }}>
-                        {t('booking.submit')}
-                    </button>
+                            <div className="wizard-nav">
+                                {activeIndex > 0 && (
+                                    <button type="button" className="btn btn--ghost" onClick={goBack}>
+                                        <ChevronLeft size={16} style={{ verticalAlign: -3 }} /> {t('booking.back')}
+                                    </button>
+                                )}
+                                {activeIndex < steps.length - 1 ? (
+                                    <button type="button" className="btn btn--primary" onClick={goNext} disabled={!canAdvance()}>
+                                        {t('booking.next')} <ChevronRight size={16} style={{ verticalAlign: -3 }} />
+                                    </button>
+                                ) : (
+                                    <button type="submit" className="btn btn--primary">
+                                        {t('booking.submit')}
+                                    </button>
+                                )}
+                            </div>
+                        </form>
 
-                    {status && (
-                        <div
-                            className="pill"
-                            style={{
-                                justifyContent: 'center',
-                                padding: '10px 14px',
-                                color: status.ok ? '#0f8a5f' : 'var(--danger)',
-                                background: status.ok ? 'rgba(52,211,153,0.15)' : 'rgba(240,85,76,0.12)',
-                            }}
-                        >
-                            {status.message}
+                        <div style={{ textAlign: 'center' }}>
+                            <Link to="/" className="subtle" style={{ textDecoration: 'none' }}>{t('booking.backToHome')}</Link>
                         </div>
-                    )}
-                </form>
-                <div style={{ textAlign: 'center', marginTop: 16 }}>
-                    <Link to="/" className="subtle" style={{ textDecoration: 'none' }}>{t('booking.backToHome')}</Link>
+                    </div>
+
+                    <div className="booking-visual">
+                        <div className="route-visual">
+                            {showRoute ? (
+                                <RoutePreviewMap pickup={form.pickupLocation} dropoff={form.dropoffLocation} />
+                            ) : (
+                                <div className="route-visual__placeholder">
+                                    <PlaceholderIcon size={26} />
+                                    <span>{isRide ? t('booking.mapPlaceholderRide') : t('booking.mapPlaceholderService')}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {isRide && quoting && !quote && (
+                            <div className="meter-panel">
+                                <div className="meter-panel__label">{t('booking.estimatedPriceLabel')}</div>
+                                <div className="meter-panel__value" style={{ opacity: 0.4 }}>{t('booking.calculatingPrice')}</div>
+                            </div>
+                        )}
+                        {isRide && quote && (
+                            <MeterPanel
+                                value={quote.estimatedPrice}
+                                lang={lang}
+                                label={t('booking.estimatedPriceLabel')}
+                                note={[quote.isNightRate ? t('booking.nightRateNote') : null, t('booking.priceDisclaimer')].filter(Boolean).join(' · ')}
+                            />
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
