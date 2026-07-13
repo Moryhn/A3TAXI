@@ -15,7 +15,7 @@ Web app for managing a small taxi fleet (~15 vehicles/drivers) with two roles:
 
 **Admin console**
 - Every record type — trips, drivers, client accounts, reservations, dispatch jobs — can now be edited or deleted, each gated behind a confirm dialog.
-- Deleting a driver or client account deactivates them rather than erasing history: their past trips/invoices stay intact and they can be reactivated later. Trips already included on a generated invoice are protected from edit/delete.
+- Deleting anything now moves it to a new **Trash** page instead of erasing it: restore it back to where it came from, or delete it permanently (a separate, stronger confirmation). Permanently deleting a driver or client account that still has trip/invoice history is blocked with a clear error rather than breaking billing records. Trips already included on a generated invoice are protected from edit/delete entirely.
 - Dispatch page now shows a "Recent jobs" list (previously a sent job was invisible to admin once dispatched), and live map markers are labeled with the driver's name instead of unlabeled pins.
 - Reservations calendar now fits the visible window without scrolling, including bookings at the very end of the day.
 
@@ -23,8 +23,9 @@ Web app for managing a small taxi fleet (~15 vehicles/drivers) with two roles:
 - Invoice dates were rendering as raw timestamps instead of readable dates — fixed on both the invoice list and the printable invoice.
 - The printable invoice was rendering trapped inside the admin sidebar instead of as a clean full-page printout — fixed.
 - Unknown URLs rendered a blank page — now redirect to the home page.
+- Table action columns (Edit/Delete buttons) were misaligned on some rows — fixed.
 
-**Still planned**: Google Places autocomplete on address fields, a trash bin with restore for deleted records, and an Excel export of all data.
+**Still planned**: Google Places autocomplete on address fields, and an Excel export of all data.
 
 ## Modules
 
@@ -86,6 +87,6 @@ All three modules have working backend APIs and frontend pages:
 - **Dispatching**: driver position tracking, live Google Maps view with driver markers, job assignment
 - **Reservations**: public booking form, SMS confirmation (stubs to console log if Twilio isn't configured), FullCalendar-based admin calendar
 
-Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, and the edit/delete flows for every record type (see "What's New" above).
+Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, and the edit/delete/trash/restore flows for every record type (see "What's New" above).
 
-Not yet done: Google Places autocomplete on address fields, a trash bin/restore for deleted records, Excel data export, production deployment, and real device testing of driver GPS sharing.
+Not yet done: Google Places autocomplete on address fields, Excel data export, production deployment, and real device testing of driver GPS sharing.
