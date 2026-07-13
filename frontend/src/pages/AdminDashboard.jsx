@@ -9,34 +9,47 @@ import DispatchMap from './admin/DispatchMap.jsx';
 import Reservations from './admin/Reservations.jsx';
 
 const tabs = [
-    { path: 'clients', label: 'Clients', element: <ClientAccounts /> },
-    { path: 'drivers', label: 'Drivers', element: <Drivers /> },
+    { path: 'dispatch', label: 'Dispatch', element: <DispatchMap /> },
     { path: 'trips', label: 'Trips', element: <Trips /> },
     { path: 'invoices', label: 'Invoices', element: <Invoices /> },
-    { path: 'dispatch', label: 'Dispatch', element: <DispatchMap /> },
     { path: 'reservations', label: 'Reservations', element: <Reservations /> },
+    { path: 'clients', label: 'Clients', element: <ClientAccounts /> },
+    { path: 'drivers', label: 'Drivers', element: <Drivers /> },
 ];
 
 export default function AdminDashboard() {
     const { auth, logout } = useAuth();
 
     return (
-        <div style={{ fontFamily: 'sans-serif', padding: 16 }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h1>A3TAXI Admin — {auth.user.name}</h1>
-                <button onClick={logout}>Log out</button>
-            </header>
+        <div className="theme-dark app-shell">
+            <aside className="rail">
+                <div className="rail__brand">
+                    <div className="rail__mark">A3</div>
+                    <div className="rail__name">A3TAXI</div>
+                </div>
 
-            <nav style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '1px solid #ddd', paddingBottom: 8 }}>
-                {tabs.map((t) => (
-                    <NavLink key={t.path} to={t.path}>{t.label}</NavLink>
-                ))}
-            </nav>
+                <nav className="rail__nav">
+                    {tabs.map((t) => (
+                        <NavLink
+                            key={t.path}
+                            to={t.path}
+                            className={({ isActive }) => `rail__link ${isActive ? 'rail__link--active' : ''}`}
+                        >
+                            {t.label}
+                        </NavLink>
+                    ))}
+                </nav>
+
+                <div className="rail__foot">
+                    <div className="subtle" style={{ marginBottom: 10 }}>{auth.user.name}</div>
+                    <button onClick={logout} className="btn btn--ghost" style={{ width: '100%' }}>Log out</button>
+                </div>
+            </aside>
 
             <Routes>
-                <Route index element={<Navigate to="clients" replace />} />
+                <Route index element={<Navigate to="dispatch" replace />} />
                 {tabs.map((t) => (
-                    <Route key={t.path} path={t.path} element={t.element} />
+                    <Route key={t.path} path={t.path} element={<div className="page">{t.element}</div>} />
                 ))}
                 <Route path="invoices/:id/print" element={<InvoicePrint />} />
             </Routes>

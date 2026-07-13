@@ -8,6 +8,7 @@ export default function DispatchMap() {
     const [positions, setPositions] = useState([]);
     const [drivers, setDrivers] = useState([]);
     const [job, setJob] = useState({ driverId: '', address: '', notes: '' });
+    const [sending, setSending] = useState(false);
 
     async function refresh() {
         setPositions(await api.getDriverPositions(auth.token));
@@ -22,40 +23,65 @@ export default function DispatchMap() {
 
     async function handleDispatch(e) {
         e.preventDefault();
-        await api.createDispatchJob(auth.token, job);
-        setJob({ driverId: '', address: '', notes: '' });
+        setSending(true);
+        try {
+            await api.createDispatchJob(auth.token, job);
+            setJob({ driverId: '', address: '', notes: '' });
+        } finally {
+            setSending(false);
+        }
     }
 
     return (
         <div>
-            <h2>Dispatch</h2>
-            <div style={{ marginBottom: 16 }}>
-                <GoogleMapView positions={positions} />
+            <div className="page__head">
+                <div>
+                    <div className="eyebrow">Live board</div>
+                    <h1 className="h1">Dispatch</h1>
+                </div>
+                <div className="meter meter--sm">
+                    {positions.length}<span className="meter__unit">on shift</span>
+                </div>
             </div>
 
-            <h3>Live Driver Positions</h3>
-            <table>
-                <thead><tr><th>Driver</th><th>Lat</th><th>Lng</th><th>Last update</th></tr></thead>
-                <tbody>
-                    {positions.map((p) => (
-                        <tr key={p.driver_id}>
-                            <td>{p.driver_name}</td><td>{p.lat}</td><td>{p.lng}</td>
-                            <td>{new Date(p.recorded_at).toLocaleTimeString()}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    <GoogleMapView positions={positions} />
+                </div>
 
-            <h3>Dispatch a Job</h3>
-            <form onSubmit={handleDispatch} style={{ display: 'flex', gap: 8 }}>
-                <select value={job.driverId} onChange={(e) => setJob({ ...job, driverId: e.target.value })} required>
-                    <option value="">Select driver</option>
-                    {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-                <input placeholder="Address" value={job.address} onChange={(e) => setJob({ ...job, address: e.target.value })} required />
-                <input placeholder="Notes" value={job.notes} onChange={(e) => setJob({ ...job, notes: e.target.value })} />
-                <button type="submit">Send job</button>
-            </form>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div className="card">
+                        <div className="eyebrow">Send a job</div>
+                        <form onSubmit={handleDispatch} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                            <select className="select" value={job.driverId} onChange={(e) => setJob({ ...job, driverId: e.target.value })} required>
+                                <option value="">Select driver</option>
+                                {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </select>
+                            <input className="input" placeholder="Address" value={job.address} onChange={(e) => setJob({ ...job, address: e.target.value })} required />
+                            <input className="input" placeholder="Notes (optional)" value={job.notes} onChange={(e) => setJob({ ...job, notes: e.target.value })} />
+                            <button type="submit" className="btn btn--primary" disabled={sending}>{sending ? 'Sending…' : 'Send job'}</button>
+                        </form>
+                    </div>
+
+                    <div className="card">
+                        <div className="eyebrow">Live positions</div>
+                        {positions.length === 0 ? (
+                            <p className="subtle" style={{ marginTop: 10 }}>No drivers are sharing location right now.</p>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                                {positions.map((p) => (
+                                    <div key={p.driver_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>{p.driver_name}</span>
+                                        <span className="subtle" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                                            {new Date(p.recorded_at).toLocaleTimeString()}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

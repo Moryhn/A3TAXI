@@ -44,21 +44,42 @@ export default function MyJobs() {
 
     return (
         <div>
-            <h2>My Jobs</h2>
-            <button onClick={toggleSharing} style={{ marginBottom: 16 }}>
-                {sharing ? 'Stop sharing location' : 'Start sharing location'}
+            <div className="eyebrow">On shift</div>
+            <h1 className="h1" style={{ fontSize: 26, marginBottom: 16 }}>My jobs</h1>
+
+            <button
+                onClick={toggleSharing}
+                className={`btn ${sharing ? 'btn--primary' : 'btn--ghost'}`}
+                style={{ width: '100%', padding: '13px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: sharing ? 'var(--amber-ink)' : 'var(--text-muted)', display: 'inline-block' }} />
+                {sharing ? 'Sharing location' : 'Start sharing location'}
             </button>
 
-            <ul>
-                {jobs.map((j) => (
-                    <li key={j.id} style={{ marginBottom: 8 }}>
-                        <strong>{j.address}</strong> — {j.status}
-                        {j.notes && <div>{j.notes}</div>}
-                        {j.status === 'pending' && <button onClick={() => updateStatus(j.id, 'accepted')}>Accept</button>}
-                        {j.status === 'accepted' && <button onClick={() => updateStatus(j.id, 'completed')}>Mark complete</button>}
-                    </li>
-                ))}
-            </ul>
+            {jobs.length === 0 ? (
+                <div className="card empty">
+                    <div className="empty__title">No jobs yet</div>
+                    <p>Dispatched jobs will show up here.</p>
+                </div>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {jobs.map((j) => (
+                        <div key={j.id} className="card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                                <div style={{ fontWeight: 600 }}>{j.address}</div>
+                                <span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{j.status}</span>
+                            </div>
+                            {j.notes && <p className="subtle" style={{ marginBottom: 10 }}>{j.notes}</p>}
+                            {j.status === 'pending' && (
+                                <button onClick={() => updateStatus(j.id, 'accepted')} className="btn btn--primary" style={{ width: '100%' }}>Accept</button>
+                            )}
+                            {j.status === 'accepted' && (
+                                <button onClick={() => updateStatus(j.id, 'completed')} className="btn btn--primary" style={{ width: '100%' }}>Mark complete</button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

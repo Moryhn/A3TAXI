@@ -85,15 +85,20 @@ export default function GoogleMapView({ positions }) {
 
     if (!apiKey) {
         return (
-            <div style={{ border: '1px dashed #999', padding: 16, color: '#666' }}>
-                Set VITE_GOOGLE_MAPS_API_KEY in frontend/.env to enable the live map. Driver positions are still
-                tracked and listed below.
+            <div className="empty" style={{ height: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="empty__title">Map not configured</div>
+                <p>Set VITE_GOOGLE_MAPS_API_KEY in frontend/.env to enable the live map. Driver positions are still tracked and listed alongside.</p>
             </div>
         );
     }
 
     if (error) {
-        return <div style={{ border: '1px solid #c00', padding: 16, color: '#c00' }}>Failed to load Google Maps: {error}</div>;
+        return (
+            <div className="empty" style={{ height: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="empty__title" style={{ color: 'var(--danger)' }}>Map failed to load</div>
+                <p>{error}</p>
+            </div>
+        );
     }
 
     return <div ref={mapDivRef} style={{ width: '100%', height: 420, borderRadius: 8 }} />;

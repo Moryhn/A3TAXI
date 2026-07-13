@@ -22,20 +22,51 @@ export default function Drivers() {
 
     return (
         <div>
-            <h2>Drivers</h2>
-            <form onSubmit={handleCreate} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-                <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                <button type="submit">Add driver (generates access code)</button>
-            </form>
-            <table>
-                <thead><tr><th>Name</th><th>Phone</th><th>Access Code</th></tr></thead>
-                <tbody>
-                    {drivers.map((d) => (
-                        <tr key={d.id}><td>{d.name}</td><td>{d.phone}</td><td>{d.access_code}</td></tr>
-                    ))}
-                </tbody>
-            </table>
+            <div className="page__head">
+                <div>
+                    <div className="eyebrow">Fleet</div>
+                    <h1 className="h1">Drivers</h1>
+                </div>
+                <div className="meter meter--sm">{drivers.length}<span className="meter__unit">on roster</span></div>
+            </div>
+
+            <div className="card" style={{ marginBottom: 20 }}>
+                <div className="eyebrow">Add driver</div>
+                <form onSubmit={handleCreate} className="form-row" style={{ marginTop: 10 }}>
+                    <div className="field">
+                        <label>Name</label>
+                        <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                    </div>
+                    <div className="field">
+                        <label>Phone</label>
+                        <input className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                    </div>
+                    <button type="submit" className="btn btn--primary">Add driver</button>
+                </form>
+                <p className="subtle" style={{ marginTop: 10 }}>An access code is generated automatically — the driver logs in with it, no password needed.</p>
+            </div>
+
+            {drivers.length === 0 ? (
+                <div className="card empty">
+                    <div className="empty__title">No drivers yet</div>
+                    <p>Add a driver above to generate their login access code.</p>
+                </div>
+            ) : (
+                <div className="table-wrap">
+                    <table className="table">
+                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th></tr></thead>
+                        <tbody>
+                            {drivers.map((d) => (
+                                <tr key={d.id}>
+                                    <td>{d.name}</td>
+                                    <td className="subtle">{d.phone || '—'}</td>
+                                    <td><span className="meter meter--sm">{d.access_code}</span></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }

@@ -7,22 +7,30 @@ export default function DriverDashboard() {
     const { auth, logout } = useAuth();
 
     return (
-        <div style={{ fontFamily: 'sans-serif', padding: 16 }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h1>A3TAXI — {auth.user.name}</h1>
-                <button onClick={logout}>Log out</button>
-            </header>
+        <div className="theme-light mobile-shell">
+            <div className="mobile-topbar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div className="rail__mark" style={{ width: 32, height: 32, fontSize: 14 }}>A3</div>
+                    <div>
+                        <div className="eyebrow" style={{ margin: 0 }}>Driver</div>
+                        <div style={{ fontWeight: 600, fontSize: 14 }}>{auth.user.name}</div>
+                    </div>
+                </div>
+                <button onClick={logout} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>Log out</button>
+            </div>
 
-            <nav style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '1px solid #ddd', paddingBottom: 8 }}>
-                <NavLink to="trip-entry">New Trip</NavLink>
-                <NavLink to="jobs">My Jobs</NavLink>
+            <div className="mobile-content">
+                <Routes>
+                    <Route index element={<Navigate to="trip-entry" replace />} />
+                    <Route path="trip-entry" element={<TripEntry />} />
+                    <Route path="jobs" element={<MyJobs />} />
+                </Routes>
+            </div>
+
+            <nav className="bottom-nav">
+                <NavLink to="trip-entry" className={({ isActive }) => `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`}>New Trip</NavLink>
+                <NavLink to="jobs" className={({ isActive }) => `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`}>My Jobs</NavLink>
             </nav>
-
-            <Routes>
-                <Route index element={<Navigate to="trip-entry" replace />} />
-                <Route path="trip-entry" element={<TripEntry />} />
-                <Route path="jobs" element={<MyJobs />} />
-            </Routes>
         </div>
     );
 }
