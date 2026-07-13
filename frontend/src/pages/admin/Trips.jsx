@@ -139,7 +139,7 @@ export default function Trips() {
             <ConfirmDialog
                 open={!!pendingDelete}
                 title="Delete this trip?"
-                message={pendingDelete ? `${pendingDelete.departure_location} → ${pendingDelete.arrival_location}, $${Number(pendingDelete.amount).toFixed(2)}. This can't be undone.` : ''}
+                message={pendingDelete ? `${pendingDelete.departure_location} → ${pendingDelete.arrival_location}, $${Number(pendingDelete.amount).toFixed(2)}. It'll move to Trash, where you can restore it later.` : ''}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
             />

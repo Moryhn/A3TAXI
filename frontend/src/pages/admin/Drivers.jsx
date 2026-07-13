@@ -41,11 +41,6 @@ export default function Drivers() {
         refresh();
     }
 
-    async function reactivate(d) {
-        await api.updateDriver(auth.token, d.id, { isActive: true });
-        refresh();
-    }
-
     return (
         <div>
             <div className="page__head">
@@ -53,7 +48,7 @@ export default function Drivers() {
                     <div className="eyebrow">Fleet</div>
                     <h1 className="h1">Drivers</h1>
                 </div>
-                <div className="meter meter--sm">{drivers.filter((d) => d.is_active).length}<span className="meter__unit">on roster</span></div>
+                <div className="meter meter--sm">{drivers.length}<span className="meter__unit">on roster</span></div>
             </div>
 
             <div className="card" style={{ marginBottom: 20 }}>
@@ -80,7 +75,7 @@ export default function Drivers() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th><th>Actions</th></tr></thead>
                         <tbody>
                             {drivers.map((d) => (
                                 <tr key={d.id}>
@@ -89,7 +84,6 @@ export default function Drivers() {
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></td>
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></td>
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
-                                            <td><span className={`pill ${d.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{d.is_active ? 'Active' : 'Inactive'}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
@@ -102,15 +96,10 @@ export default function Drivers() {
                                             <td>{d.name}</td>
                                             <td className="subtle">{d.phone || '—'}</td>
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
-                                            <td><span className={`pill ${d.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{d.is_active ? 'Active' : 'Inactive'}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                    {d.is_active ? (
-                                                        <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
-                                                    ) : (
-                                                        <button onClick={() => reactivate(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
-                                                    )}
+                                                    <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
                                                 </div>
                                             </td>
                                         </>
@@ -125,7 +114,7 @@ export default function Drivers() {
             <ConfirmDialog
                 open={!!pendingDelete}
                 title={`Delete ${pendingDelete?.name}?`}
-                message="This deactivates the driver and revokes their access code. Their trip history is kept, and you can reactivate them later."
+                message="This moves the driver to the trash and revokes their access code. Their trip history is kept, and you can restore them from Trash later."
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
             />

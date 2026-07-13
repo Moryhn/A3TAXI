@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import { requireAuth } from '../middleware/auth.js';
-import { listDrivers, createDriver, updateDriver } from '../models/driver.js';
+import { listDrivers, createDriver, updateDriver, deleteDriver } from '../models/driver.js';
 
 const router = Router();
 
@@ -26,10 +26,10 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     res.json(driver);
 });
 
-// Deactivates the driver rather than a hard delete, since their trip
-// history stays referenced from past invoices.
+// Soft-deletes the driver into the trash bin (restorable) rather than a
+// hard delete, since their trip history stays referenced from invoices.
 router.delete('/:id', requireAuth('admin'), async (req, res) => {
-    const driver = await updateDriver(req.params.id, { isActive: false });
+    const driver = await deleteDriver(req.params.id);
     if (!driver) return res.status(404).json({ error: 'Driver not found' });
     res.json(driver);
 });

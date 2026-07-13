@@ -14,7 +14,7 @@ export async function markReservationSmsSent(id) {
 }
 
 export async function listReservations({ dateFrom, dateTo } = {}) {
-    const conditions = [];
+    const conditions = ['deleted_at IS NULL'];
     const params = [];
     let i = 1;
     if (dateFrom) {
@@ -50,5 +50,19 @@ export async function updateReservation(id, { clientName, clientPhone, clientEma
 }
 
 export async function deleteReservation(id) {
+    await query('UPDATE reservations SET deleted_at = now() WHERE id = $1', [id]);
+}
+
+export async function restoreReservation(id) {
+    const { rows } = await query('UPDATE reservations SET deleted_at = NULL WHERE id = $1 RETURNING *', [id]);
+    return rows[0] || null;
+}
+
+export async function permanentlyDeleteReservation(id) {
     await query('DELETE FROM reservations WHERE id = $1', [id]);
+}
+
+export async function listDeletedReservations() {
+    const { rows } = await query('SELECT * FROM reservations WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC');
+    return rows;
 }

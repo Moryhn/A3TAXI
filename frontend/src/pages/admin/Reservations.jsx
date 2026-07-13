@@ -164,7 +164,7 @@ export default function Reservations() {
             <ConfirmDialog
                 open={!!pendingDelete}
                 title="Delete this reservation?"
-                message={pendingDelete ? `${pendingDelete.client_name} — ${pendingDelete.pickup_location} → ${pendingDelete.dropoff_location}. This can't be undone.` : ''}
+                message={pendingDelete ? `${pendingDelete.client_name} — ${pendingDelete.pickup_location} → ${pendingDelete.dropoff_location}. It'll move to Trash, where you can restore it later.` : ''}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
             />

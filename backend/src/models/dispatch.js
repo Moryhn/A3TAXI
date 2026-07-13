@@ -31,7 +31,7 @@ export async function createDispatchJob({ driverId, address, notes, assignedBy }
 
 export async function listDispatchJobsForDriver(driverId, status) {
     const params = [driverId];
-    let where = 'driver_id = $1';
+    let where = 'driver_id = $1 AND deleted_at IS NULL';
     if (status) {
         params.push(status);
         where += ` AND status = $2`;
@@ -57,6 +57,7 @@ export async function listAllDispatchJobs(limit = 50) {
         `SELECT j.*, d.name AS driver_name
          FROM dispatch_jobs j
          JOIN drivers d ON d.id = j.driver_id
+         WHERE j.deleted_at IS NULL
          ORDER BY j.created_at DESC
          LIMIT $1`,
         [limit]
@@ -77,5 +78,25 @@ export async function updateDispatchJob(jobId, { address, notes }) {
 }
 
 export async function deleteDispatchJob(jobId) {
+    await query('UPDATE dispatch_jobs SET deleted_at = now() WHERE id = $1', [jobId]);
+}
+
+export async function restoreDispatchJob(jobId) {
+    const { rows } = await query('UPDATE dispatch_jobs SET deleted_at = NULL WHERE id = $1 RETURNING *', [jobId]);
+    return rows[0] || null;
+}
+
+export async function permanentlyDeleteDispatchJob(jobId) {
     await query('DELETE FROM dispatch_jobs WHERE id = $1', [jobId]);
+}
+
+export async function listDeletedDispatchJobs() {
+    const { rows } = await query(
+        `SELECT j.*, d.name AS driver_name
+         FROM dispatch_jobs j
+         JOIN drivers d ON d.id = j.driver_id
+         WHERE j.deleted_at IS NOT NULL
+         ORDER BY j.deleted_at DESC`
+    );
+    return rows;
 }

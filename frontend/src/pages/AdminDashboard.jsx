@@ -8,6 +8,7 @@ import Invoices from './admin/Invoices.jsx';
 import InvoicePrint from './admin/InvoicePrint.jsx';
 import DispatchMap from './admin/DispatchMap.jsx';
 import Reservations from './admin/Reservations.jsx';
+import Trash from './admin/Trash.jsx';
 
 const tabs = [
     { path: 'dispatch', label: 'Dispatch', element: <DispatchMap /> },
@@ -16,6 +17,7 @@ const tabs = [
     { path: 'reservations', label: 'Reservations', element: <Reservations /> },
     { path: 'clients', label: 'Clients', element: <ClientAccounts /> },
     { path: 'drivers', label: 'Drivers', element: <Drivers /> },
+    { path: 'trash', label: 'Trash', element: <Trash /> },
 ];
 
 export default function AdminDashboard() {

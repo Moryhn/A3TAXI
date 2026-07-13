@@ -173,7 +173,7 @@ export default function DispatchMap() {
             <ConfirmDialog
                 open={!!pendingDelete}
                 title="Delete this job?"
-                message={pendingDelete ? `${pendingDelete.address} — assigned to ${pendingDelete.driver_name}. This can't be undone.` : ''}
+                message={pendingDelete ? `${pendingDelete.address} — assigned to ${pendingDelete.driver_name}. It'll move to Trash, where you can restore it later.` : ''}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
             />

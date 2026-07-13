@@ -41,11 +41,6 @@ export default function ClientAccounts() {
         refresh();
     }
 
-    async function reactivate(a) {
-        await api.updateClientAccount(auth.token, a.id, { isActive: true });
-        refresh();
-    }
-
     return (
         <div>
             <div className="page__head">
@@ -78,7 +73,7 @@ export default function ClientAccounts() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Code</th><th>Name</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>Code</th><th>Name</th><th>Actions</th></tr></thead>
                         <tbody>
                             {accounts.map((a) => (
                                 <tr key={a.id}>
@@ -86,7 +81,6 @@ export default function ClientAccounts() {
                                     {editingId === a.id ? (
                                         <>
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></td>
-                                            <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     <button onClick={() => saveEdit(a.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
@@ -97,15 +91,10 @@ export default function ClientAccounts() {
                                     ) : (
                                         <>
                                             <td>{a.name}</td>
-                                            <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     <button onClick={() => startEdit(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                    {a.is_active ? (
-                                                        <button onClick={() => setPendingDelete(a)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
-                                                    ) : (
-                                                        <button onClick={() => reactivate(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
-                                                    )}
+                                                    <button onClick={() => setPendingDelete(a)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
                                                 </div>
                                             </td>
                                         </>
@@ -120,7 +109,7 @@ export default function ClientAccounts() {
             <ConfirmDialog
                 open={!!pendingDelete}
                 title={`Delete ${pendingDelete?.name}?`}
-                message="This deactivates the client account so drivers can no longer log trips against it. Past trips and invoices are kept, and you can reactivate it later."
+                message="This moves the client account to the trash so drivers can no longer log trips against it. Past trips and invoices are kept, and you can restore it from Trash later."
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
             />

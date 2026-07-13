@@ -10,7 +10,7 @@ export async function createTrip({ driverId, clientAccountId, departureLocation,
 }
 
 export async function searchTrips({ driverId, clientAccountId, dateFrom, dateTo, invoiced }) {
-    const conditions = [];
+    const conditions = ['t.deleted_at IS NULL'];
     const params = [];
     let i = 1;
 
@@ -72,5 +72,26 @@ export async function updateTrip(id, { departureLocation, arrivalLocation, amoun
 }
 
 export async function deleteTrip(id) {
+    await query('UPDATE trips SET deleted_at = now() WHERE id = $1', [id]);
+}
+
+export async function restoreTrip(id) {
+    const { rows } = await query('UPDATE trips SET deleted_at = NULL WHERE id = $1 RETURNING *', [id]);
+    return rows[0] || null;
+}
+
+export async function permanentlyDeleteTrip(id) {
     await query('DELETE FROM trips WHERE id = $1', [id]);
+}
+
+export async function listDeletedTrips() {
+    const { rows } = await query(
+        `SELECT t.*, d.name AS driver_name, c.name AS client_name
+         FROM trips t
+         JOIN drivers d ON d.id = t.driver_id
+         JOIN client_accounts c ON c.id = t.client_account_id
+         WHERE t.deleted_at IS NOT NULL
+         ORDER BY t.deleted_at DESC`
+    );
+    return rows;
 }

@@ -5,6 +5,7 @@ import {
     createClientAccount,
     updateClientAccount,
     findClientAccountById,
+    deleteClientAccount,
 } from '../models/clientAccount.js';
 
 const router = Router();
@@ -33,12 +34,12 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     res.json(updated);
 });
 
-// Deactivates the client rather than a hard delete, since past trips
-// and invoices stay referenced to it.
+// Soft-deletes the client into the trash bin (restorable) rather than a
+// hard delete, since past trips and invoices stay referenced to it.
 router.delete('/:id', requireAuth('admin'), async (req, res) => {
     const existing = await findClientAccountById(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Client account not found' });
-    const updated = await updateClientAccount(req.params.id, { isActive: false });
+    const updated = await deleteClientAccount(req.params.id);
     res.json(updated);
 });
 

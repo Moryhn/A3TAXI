@@ -65,4 +65,8 @@ export const api = {
     updateReservationStatus: (token, id, status) => request(`/reservations/${id}`, { method: 'PATCH', body: { status }, token }),
     updateReservation: (token, id, body) => request(`/reservations/${id}`, { method: 'PATCH', body, token }),
     deleteReservation: (token, id) => request(`/reservations/${id}`, { method: 'DELETE', token }),
+
+    listTrash: (token) => request('/trash', { token }),
+    restoreTrashItem: (token, type, id) => request(`/trash/${type}/${id}/restore`, { method: 'POST', token }),
+    permanentlyDeleteTrashItem: (token, type, id) => request(`/trash/${type}/${id}`, { method: 'DELETE', token }),
 };

@@ -14,7 +14,7 @@ export async function findDriverById(id) {
 }
 
 export async function listDrivers() {
-    const { rows } = await query('SELECT id, name, phone, access_code, is_active, created_at FROM drivers ORDER BY name');
+    const { rows } = await query('SELECT id, name, phone, access_code, is_active, created_at FROM drivers WHERE deleted_at IS NULL ORDER BY name');
     return rows;
 }
 
@@ -36,4 +36,29 @@ export async function updateDriver(id, { name, phone, isActive }) {
         [id, name, phone, isActive]
     );
     return rows[0] || null;
+}
+
+export async function deleteDriver(id) {
+    const { rows } = await query(
+        'UPDATE drivers SET deleted_at = now(), is_active = false WHERE id = $1 RETURNING *',
+        [id]
+    );
+    return rows[0] || null;
+}
+
+export async function restoreDriver(id) {
+    const { rows } = await query(
+        'UPDATE drivers SET deleted_at = NULL, is_active = true WHERE id = $1 RETURNING *',
+        [id]
+    );
+    return rows[0] || null;
+}
+
+export async function permanentlyDeleteDriver(id) {
+    await query('DELETE FROM drivers WHERE id = $1', [id]);
+}
+
+export async function listDeletedDrivers() {
+    const { rows } = await query('SELECT * FROM drivers WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC');
+    return rows;
 }
