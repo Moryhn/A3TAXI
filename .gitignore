@@ -27,3 +27,6 @@ backend/uploads/
 .claude/
 .agents/
 skills-lock.json
+
+# Local dev on/off toggle script state
+.dev-pids.json
