@@ -73,7 +73,7 @@ export default function Invoices() {
                             {invoices.map((inv) => (
                                 <tr key={inv.id}>
                                     <td>{inv.client_name}</td>
-                                    <td className="subtle">{inv.period_start} → {inv.period_end}</td>
+                                    <td className="subtle">{new Date(inv.period_start).toLocaleDateString()} → {new Date(inv.period_end).toLocaleDateString()}</td>
                                     <td><span className="meter meter--sm">${Number(inv.total_amount).toFixed(2)}</span></td>
                                     <td className="subtle">{new Date(inv.generated_at).toLocaleDateString()}</td>
                                     <td><Link to={`${inv.id}/print`} style={{ color: 'var(--amber)' }}>View / Print</Link></td>
