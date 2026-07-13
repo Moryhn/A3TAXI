@@ -227,6 +227,21 @@ textarea {
     overflow-y: auto;
 }
 
+.dispatch-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+.reservations-row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+}
+
 .page__head {
     display: flex;
     justify-content: space-between;
@@ -287,6 +302,120 @@ textarea {
 .bottom-nav__link--active {
     color: var(--amber-dim);
     border-top: 2px solid var(--amber);
+}
+
+/* Admin's own bottom tab bar — hidden on desktop, shown below the
+   mobile breakpoint instead of the vertical rail nav. */
+.admin-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    overflow-x: auto;
+    z-index: 20;
+}
+
+.admin-bottom-nav .rail__link {
+    flex-shrink: 0;
+    border-left: none;
+    border-top: 2px solid transparent;
+    border-radius: 0;
+    padding: 12px 16px;
+    font-size: 12px;
+}
+
+.admin-bottom-nav .rail__link--active {
+    border-top: 2px solid var(--amber);
+    background: none;
+}
+
+@media (max-width: 860px) {
+    .app-shell {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        overflow: visible;
+    }
+
+    .rail {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 12px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+    }
+
+    .rail__brand {
+        padding: 0;
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .rail__nav {
+        display: none;
+    }
+
+    .rail__foot {
+        padding-top: 0;
+        border-top: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rail__foot .subtle {
+        display: none;
+    }
+
+    .rail__foot .btn {
+        margin: 0 !important;
+        width: auto !important;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .page {
+        padding: 16px 16px 84px;
+        max-width: 100%;
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .page__head {
+        flex-wrap: wrap;
+    }
+
+    .dispatch-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .reservations-row {
+        flex-direction: column;
+        flex: none;
+        min-height: 0;
+    }
+
+    .reservations-row > .card:first-child {
+        height: 520px !important;
+        flex: none !important;
+    }
+
+    .reservations-row > .card + .card {
+        width: 100% !important;
+    }
+
+    .admin-bottom-nav {
+        display: flex;
+    }
 }
 
 /* ========== Components ========== */

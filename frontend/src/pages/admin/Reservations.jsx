@@ -86,7 +86,7 @@ export default function Reservations() {
                 <div className="meter meter--sm">{pendingCount}<span className="meter__unit">pending</span></div>
             </div>
 
-            <div style={{ display: 'flex', gap: 20, alignItems: 'stretch', flex: 1, minHeight: 0 }}>
+            <div className="reservations-row">
                 <div className="card" style={{ flex: 1, padding: 10, minHeight: 0 }}>
                     <FullCalendar
                         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

@@ -60,6 +60,18 @@ export default function AdminDashboard() {
                 </div>
             </aside>
 
+            <nav className="admin-bottom-nav">
+                {tabs.map((t) => (
+                    <NavLink
+                        key={t.path}
+                        to={t.path}
+                        className={({ isActive }) => `rail__link ${isActive ? 'rail__link--active' : ''}`}
+                    >
+                        {t.label}
+                    </NavLink>
+                ))}
+            </nav>
+
             <Routes>
                 <Route index element={<Navigate to="dispatch" replace />} />
                 {tabs.map((t) => (

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTheme } from '../hooks/useTheme.js';
 
 const options = [
     {
@@ -22,8 +23,17 @@ const options = [
 ];
 
 export default function Home() {
+    const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
+
     return (
-        <div className="theme-light" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div className={`theme-${theme}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, position: 'relative' }}>
+            <button
+                onClick={toggleTheme}
+                className="btn btn--ghost"
+                style={{ position: 'absolute', top: 20, right: 20, padding: '8px 14px', fontSize: 12 }}
+            >
+                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
             <div style={{ width: '100%', maxWidth: 720 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36, justifyContent: 'center' }}>
                     <div className="rail__mark" style={{ width: 44, height: 44, fontSize: 20 }}>A3</div>

@@ -73,7 +73,7 @@ export default function DispatchMap() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
+            <div className="dispatch-grid">
                 <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                     <GoogleMapView positions={positions} />
                 </div>
