@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useTheme } from '../../hooks/useTheme.js';
+import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 
 export default function ReservationForm() {
     const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
@@ -55,11 +56,11 @@ export default function ReservationForm() {
                     </div>
                     <div className="field">
                         <label htmlFor="pickup">Pickup location</label>
-                        <input id="pickup" className="input" value={form.pickupLocation} onChange={(e) => setForm({ ...form, pickupLocation: e.target.value })} required />
+                        <PlaceAutocompleteInput id="pickup" className="input" value={form.pickupLocation} onChange={(v) => setForm({ ...form, pickupLocation: v })} required />
                     </div>
                     <div className="field">
                         <label htmlFor="dropoff">Drop-off location</label>
-                        <input id="dropoff" className="input" value={form.dropoffLocation} onChange={(e) => setForm({ ...form, dropoffLocation: e.target.value })} required />
+                        <PlaceAutocompleteInput id="dropoff" className="input" value={form.dropoffLocation} onChange={(v) => setForm({ ...form, dropoffLocation: v })} required />
                     </div>
                     <div className="field">
                         <label htmlFor="requestedTime">Pickup date &amp; time</label>

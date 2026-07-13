@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { GOOGLE_MAPS_API_KEY as apiKey, loadGoogleMapsLibrary } from '../lib/googleMaps.js';
 
-const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 let loaderPromise = null;
 
 function loadGoogleMaps() {
     if (!loaderPromise) {
-        setOptions({ key: apiKey, v: 'weekly' });
         loaderPromise = Promise.all([
-            importLibrary('maps'),
-            importLibrary('marker'),
-            importLibrary('core'),
+            loadGoogleMapsLibrary('maps'),
+            loadGoogleMapsLibrary('marker'),
+            loadGoogleMapsLibrary('core'),
         ]).then(([{ Map }, { AdvancedMarkerElement }, { LatLngBounds }]) => ({
             Map,
             AdvancedMarkerElement,

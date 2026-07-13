@@ -3,6 +3,7 @@ import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import GoogleMapView from '../../components/GoogleMapView.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 
 export default function DispatchMap() {
     const { auth } = useAuth();
@@ -86,7 +87,7 @@ export default function DispatchMap() {
                                 <option value="">Select driver</option>
                                 {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                             </select>
-                            <input className="input" placeholder="Address" value={job.address} onChange={(e) => setJob({ ...job, address: e.target.value })} required />
+                            <PlaceAutocompleteInput className="input" placeholder="Address" value={job.address} onChange={(v) => setJob({ ...job, address: v })} required />
                             <input className="input" placeholder="Notes (optional)" value={job.notes} onChange={(e) => setJob({ ...job, notes: e.target.value })} />
                             <button type="submit" className="btn btn--primary" disabled={sending}>{sending ? 'Sending…' : 'Send job'}</button>
                             {status && (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 
 export default function TripEntry() {
     const { auth } = useAuth();
@@ -68,12 +69,12 @@ export default function TripEntry() {
 
                 <div className="field">
                     <label>Departure</label>
-                    <input className="input" placeholder="Where the trip started" value={form.departureLocation} onChange={(e) => setForm({ ...form, departureLocation: e.target.value })} required />
+                    <PlaceAutocompleteInput className="input" placeholder="Where the trip started" value={form.departureLocation} onChange={(v) => setForm({ ...form, departureLocation: v })} required />
                 </div>
 
                 <div className="field">
                     <label>Arrival</label>
-                    <input className="input" placeholder="Where the trip ended" value={form.arrivalLocation} onChange={(e) => setForm({ ...form, arrivalLocation: e.target.value })} required />
+                    <PlaceAutocompleteInput className="input" placeholder="Where the trip ended" value={form.arrivalLocation} onChange={(v) => setForm({ ...form, arrivalLocation: v })} required />
                 </div>
 
                 <div className="field">
