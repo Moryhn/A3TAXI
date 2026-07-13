@@ -4,6 +4,7 @@ import ClientAccounts from './admin/ClientAccounts.jsx';
 import Drivers from './admin/Drivers.jsx';
 import Trips from './admin/Trips.jsx';
 import Invoices from './admin/Invoices.jsx';
+import InvoicePrint from './admin/InvoicePrint.jsx';
 import DispatchMap from './admin/DispatchMap.jsx';
 import Reservations from './admin/Reservations.jsx';
 
@@ -37,6 +38,7 @@ export default function AdminDashboard() {
                 {tabs.map((t) => (
                     <Route key={t.path} path={t.path} element={t.element} />
                 ))}
+                <Route path="invoices/:id/print" element={<InvoicePrint />} />
             </Routes>
         </div>
     );

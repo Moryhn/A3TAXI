@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -41,7 +42,7 @@ export default function Invoices() {
             </form>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <table>
-                <thead><tr><th>Client</th><th>Period</th><th>Total</th><th>Generated</th></tr></thead>
+                <thead><tr><th>Client</th><th>Period</th><th>Total</th><th>Generated</th><th></th></tr></thead>
                 <tbody>
                     {invoices.map((inv) => (
                         <tr key={inv.id}>
@@ -49,11 +50,12 @@ export default function Invoices() {
                             <td>{inv.period_start} → {inv.period_end}</td>
                             <td>${Number(inv.total_amount).toFixed(2)}</td>
                             <td>{new Date(inv.generated_at).toLocaleDateString()}</td>
+                            <td><Link to={`${inv.id}/print`}>View / Print</Link></td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-            <p style={{ color: '#666', fontSize: 14 }}>Open an invoice's print view (future work) to print/send. Receipt photos are never included on the printed invoice.</p>
+            <p style={{ color: '#666', fontSize: 14 }}>Receipt photos are never included on the printed invoice — they remain in the system for internal verification only.</p>
         </div>
     );
 }

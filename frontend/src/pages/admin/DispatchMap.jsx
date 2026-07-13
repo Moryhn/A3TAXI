@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import GoogleMapView from '../../components/GoogleMapView.jsx';
 
-// Skeleton dispatch view. Wire up Google Maps JS API (VITE_GOOGLE_MAPS_API_KEY)
-// to render `positions` as markers once the map module is prioritized.
 export default function DispatchMap() {
     const { auth } = useAuth();
     const [positions, setPositions] = useState([]);
@@ -30,9 +29,8 @@ export default function DispatchMap() {
     return (
         <div>
             <h2>Dispatch</h2>
-            <div style={{ border: '1px dashed #999', padding: 16, marginBottom: 16, color: '#666' }}>
-                Map placeholder — integrate Google Maps JavaScript API here using VITE_GOOGLE_MAPS_API_KEY,
-                plotting a marker per entry in the driver positions list below.
+            <div style={{ marginBottom: 16 }}>
+                <GoogleMapView positions={positions} />
             </div>
 
             <h3>Live Driver Positions</h3>

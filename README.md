@@ -40,6 +40,9 @@ A3TAXI/
 cd backend
 npm install
 cp ../.env.example .env   # fill in values
+npm run migrate           # create schema
+npm run seed              # optional: dev sample data
+node src/config/seedAdmin.js <email> <password> "<name>"   # create your first admin login
 npm run dev
 ```
 
@@ -47,12 +50,21 @@ npm run dev
 ```bash
 cd frontend
 npm install
+cp .env.example .env      # fill in VITE_GOOGLE_MAPS_API_KEY, etc.
 npm run dev
 ```
 
 ### Environment Variables
-See `.env.example` at the repo root for all required variables (database URL, JWT secret, Google Maps API key, Twilio credentials).
+See `.env.example` at the repo root for backend variables (database URL, JWT secret, Twilio credentials), and `frontend/.env.example` for frontend variables (API URL, Google Maps key).
 
 ## Development Status
 
-Early scaffold — billing module first, then dispatching, then reservations.
+All three modules have working backend APIs and frontend pages:
+
+- **Billing**: client accounts, driver trip entry with receipt upload, invoice generation, and a printable invoice view
+- **Dispatching**: driver position tracking, live Google Maps view with driver markers, job assignment
+- **Reservations**: public booking form, SMS confirmation (stubs to console log if Twilio isn't configured), FullCalendar-based admin calendar
+
+Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, and public reservations.
+
+Not yet done: visual design pass (current UI is functional but unstyled), production deployment, and real device testing of driver GPS sharing.
