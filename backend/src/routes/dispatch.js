@@ -29,13 +29,18 @@ router.get('/positions', requireAuth('admin'), async (req, res) => {
     res.json(positions);
 });
 
+const JOB_TYPES = ['ride', 'battery_boost', 'lockout'];
+
 // Admin sends a job/address to a specific driver
 router.post('/jobs', requireAuth('admin'), async (req, res) => {
-    const { driverId, address, notes } = req.body;
+    const { driverId, address, notes, jobType } = req.body;
     if (!driverId || !address) {
         return res.status(400).json({ error: 'driverId and address are required' });
     }
-    const job = await createDispatchJob({ driverId, address, notes, assignedBy: req.user.sub });
+    if (jobType && !JOB_TYPES.includes(jobType)) {
+        return res.status(400).json({ error: `jobType must be one of ${JOB_TYPES.join(', ')}` });
+    }
+    const job = await createDispatchJob({ driverId, address, notes, assignedBy: req.user.sub, jobType });
     res.status(201).json(job);
 });
 
@@ -63,8 +68,11 @@ router.patch('/jobs/:id', requireAuth('admin', 'driver'), async (req, res) => {
         return res.json(job);
     }
 
-    const { address, notes } = req.body;
-    const job = await updateDispatchJob(req.params.id, { address, notes });
+    const { address, notes, jobType } = req.body;
+    if (jobType && !JOB_TYPES.includes(jobType)) {
+        return res.status(400).json({ error: `jobType must be one of ${JOB_TYPES.join(', ')}` });
+    }
+    const job = await updateDispatchJob(req.params.id, { address, notes, jobType });
     if (!job) return res.status(404).json({ error: 'Job not found' });
     res.json(job);
 });

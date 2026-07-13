@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { GOOGLE_MAPS_API_KEY as apiKey, loadGoogleMapsLibrary } from '../lib/googleMaps.js';
+import { isStale } from '../lib/time.js';
+import { useLanguage } from '../i18n/LanguageContext.jsx';
 
 let loaderPromise = null;
 
@@ -18,17 +20,20 @@ function loadGoogleMaps() {
     return loaderPromise;
 }
 
-function createMarkerContent(name) {
+function createMarkerContent(name, stale, lastSeenLabel) {
+    const accent = stale ? '#8a8f98' : '#f5b700';
+
     const wrap = document.createElement('div');
     wrap.style.display = 'flex';
     wrap.style.flexDirection = 'column';
     wrap.style.alignItems = 'center';
     wrap.style.gap = '3px';
+    wrap.style.opacity = stale ? '0.65' : '1';
 
     const label = document.createElement('div');
-    label.textContent = name;
+    label.textContent = stale ? `${name} ${lastSeenLabel}` : name;
     label.style.background = '#1d2127';
-    label.style.color = '#f5b700';
+    label.style.color = accent;
     label.style.fontFamily = "'IBM Plex Mono', ui-monospace, monospace";
     label.style.fontSize = '11px';
     label.style.fontWeight = '600';
@@ -41,7 +46,7 @@ function createMarkerContent(name) {
     pin.style.width = '14px';
     pin.style.height = '14px';
     pin.style.borderRadius = '50%';
-    pin.style.background = '#f5b700';
+    pin.style.background = accent;
     pin.style.border = '2px solid #1d2127';
     pin.style.boxShadow = '0 1px 4px rgba(0,0,0,0.45)';
 
@@ -53,6 +58,7 @@ function createMarkerContent(name) {
 // Renders driver positions as markers on a live Google Map.
 // Falls back to a message if VITE_GOOGLE_MAPS_API_KEY isn't configured.
 export default function GoogleMapView({ positions }) {
+    const { t } = useLanguage();
     const mapDivRef = useRef(null);
     const mapRef = useRef(null);
     const apiRef = useRef(null);
@@ -84,23 +90,26 @@ export default function GoogleMapView({ positions }) {
         const api = apiRef.current;
         const bounds = new api.LatLngBounds();
         const seen = new Set();
+        const lastSeenLabel = t('mapView.lastSeen');
 
         for (const p of positions) {
             seen.add(p.driver_id);
             const position = { lat: Number(p.lat), lng: Number(p.lng) };
             bounds.extend(position);
 
+            const stale = isStale(p.recorded_at);
             let marker = markersRef.current.get(p.driver_id);
             if (!marker) {
                 marker = new api.AdvancedMarkerElement({
                     map: mapRef.current,
                     position,
                     title: p.driver_name,
-                    content: createMarkerContent(p.driver_name),
+                    content: createMarkerContent(p.driver_name, stale, lastSeenLabel),
                 });
                 markersRef.current.set(p.driver_id, marker);
             } else {
                 marker.position = position;
+                marker.content = createMarkerContent(p.driver_name, stale, lastSeenLabel);
             }
         }
 
@@ -112,13 +121,13 @@ export default function GoogleMapView({ positions }) {
         }
 
         mapRef.current.fitBounds(bounds, 80);
-    }, [positions]);
+    }, [positions, t]);
 
     if (!apiKey) {
         return (
             <div className="empty" style={{ height: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="empty__title">Map not configured</div>
-                <p>Set VITE_GOOGLE_MAPS_API_KEY in frontend/.env to enable the live map. Driver positions are still tracked and listed alongside.</p>
+                <div className="empty__title">{t('mapView.notConfigTitle')}</div>
+                <p>{t('mapView.notConfigBody')}</p>
             </div>
         );
     }
@@ -126,7 +135,7 @@ export default function GoogleMapView({ positions }) {
     if (error) {
         return (
             <div className="empty" style={{ height: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="empty__title" style={{ color: 'var(--danger)' }}>Map failed to load</div>
+                <div className="empty__title" style={{ color: 'var(--danger)' }}>{t('mapView.failedTitle')}</div>
                 <p>{error}</p>
             </div>
         );

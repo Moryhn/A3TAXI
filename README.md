@@ -12,6 +12,12 @@ Web app for managing a small taxi fleet (~15 vehicles/drivers) with two roles:
 - New home page with three clear entry points — book a ride, driver login, admin login — instead of dropping straight into the booking form.
 - Admin console is now usable on a phone: the sidebar collapses into a bottom tab bar and every page reflows to a single column below ~860px wide.
 - Scrollbars are styled to match the app instead of default OS gray.
+- **The entire app is now bilingual (English/French)** — an FR/EN toggle sits next to the theme toggle on every page (home, login, booking, admin, driver), one shared preference across the whole app. Dates/currency switch to French-Canadian formatting (`fr-CA`) when French is active.
+
+**Booking**
+- The public booking form now supports **round trips**, **passenger/luggage counts**, and two new non-ride **"other services"** — battery boost and lockout — which flow through the same driver-dispatch pipeline as a regular ride.
+- A live, non-binding **price estimate** now appears as you fill out a ride booking, computed server-side from Quebec's officially regulated taxi tariff (Commission des transports du Québec) — flag-drop + per-km rate, with the correct day/night rate applied automatically. Requires the **Routes API** enabled + billing on the Google Cloud project (separate key, server-side only — see `.env.example`); the estimate silently hides itself if that's not configured, rather than blocking booking.
+- A small route-preview map now shows on the booking form once pickup and dropoff are both set.
 
 **Admin console**
 - Every record type — trips, drivers, client accounts, reservations, dispatch jobs — can now be edited or deleted, each gated behind a confirm dialog.
@@ -90,6 +96,6 @@ All three modules have working backend APIs and frontend pages:
 - **Dispatching**: driver position tracking, live Google Maps view with driver markers, job assignment
 - **Reservations**: public booking form, SMS confirmation (stubs to console log if Twilio isn't configured), FullCalendar-based admin calendar
 
-Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, the edit/delete/trash/restore flows for every record type, and the Excel export (see "What's New" above). Places autocomplete is implemented and gracefully degrades to a plain text field, but hasn't been visually confirmed working yet — pending Places API (New) + billing being enabled on the Google Cloud project.
+Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, the edit/delete/trash/restore flows for every record type, and the Excel export (see "What's New" above). Places autocomplete is implemented and gracefully degrades to a plain text field, but hasn't been visually confirmed working yet — pending Places API (New) + billing being enabled on the Google Cloud project. The booking-form price estimate is implemented and degrades the same way (hides itself, doesn't block booking) — pending Routes API + billing being enabled on the same project.
 
 Not yet done: production deployment, and real device testing of driver GPS sharing.

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useLanguage } from '../../i18n/LanguageContext.jsx';
 
 export default function MyJobs() {
     const { auth } = useAuth();
+    const { t } = useLanguage();
     const [jobs, setJobs] = useState([]);
     const [sharing, setSharing] = useState(false);
     const [watchId, setWatchId] = useState(null);
@@ -44,8 +46,8 @@ export default function MyJobs() {
 
     return (
         <div>
-            <div className="eyebrow">On shift</div>
-            <h1 className="h1" style={{ fontSize: 26, marginBottom: 16 }}>My jobs</h1>
+            <div className="eyebrow">{t('driver.myJobs.eyebrow')}</div>
+            <h1 className="h1" style={{ fontSize: 26, marginBottom: 16 }}>{t('driver.myJobs.title')}</h1>
 
             <button
                 onClick={toggleSharing}
@@ -53,13 +55,13 @@ export default function MyJobs() {
                 style={{ width: '100%', padding: '13px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: sharing ? 'var(--amber-ink)' : 'var(--text-muted)', display: 'inline-block' }} />
-                {sharing ? 'Sharing location' : 'Start sharing location'}
+                {sharing ? t('driver.myJobs.sharingOn') : t('driver.myJobs.sharingOff')}
             </button>
 
             {jobs.length === 0 ? (
                 <div className="card empty">
-                    <div className="empty__title">No jobs yet</div>
-                    <p>Dispatched jobs will show up here.</p>
+                    <div className="empty__title">{t('driver.myJobs.emptyTitle')}</div>
+                    <p>{t('driver.myJobs.emptyBody')}</p>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -67,14 +69,17 @@ export default function MyJobs() {
                         <div key={j.id} className="card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                                 <div style={{ fontWeight: 600 }}>{j.address}</div>
-                                <span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{j.status}</span>
+                                <span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{t(`status.${j.status}`)}</span>
                             </div>
+                            {j.job_type && j.job_type !== 'ride' && (
+                                <div className="eyebrow" style={{ marginBottom: 6 }}>{t(`admin.dispatch.jobType.${j.job_type}`)}</div>
+                            )}
                             {j.notes && <p className="subtle" style={{ marginBottom: 10 }}>{j.notes}</p>}
                             {j.status === 'pending' && (
-                                <button onClick={() => updateStatus(j.id, 'accepted')} className="btn btn--primary" style={{ width: '100%' }}>Accept</button>
+                                <button onClick={() => updateStatus(j.id, 'accepted')} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.accept')}</button>
                             )}
                             {j.status === 'accepted' && (
-                                <button onClick={() => updateStatus(j.id, 'completed')} className="btn btn--primary" style={{ width: '100%' }}>Mark complete</button>
+                                <button onClick={() => updateStatus(j.id, 'completed')} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.markComplete')}</button>
                             )}
                         </div>
                     ))}

@@ -58,6 +58,7 @@ export const api = {
     deleteDispatchJob: (token, id) => request(`/dispatch/jobs/${id}`, { method: 'DELETE', token }),
 
     createReservation: (body) => request('/reservations', { method: 'POST', body }),
+    getQuote: (body) => request('/reservations/quote', { method: 'POST', body }),
     listReservations: (token, params = {}) => {
         const qs = new URLSearchParams(params).toString();
         return request(`/reservations${qs ? `?${qs}` : ''}`, { token });

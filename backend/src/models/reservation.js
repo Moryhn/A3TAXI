@@ -1,10 +1,22 @@
 import { query } from '../config/db.js';
 
-export async function createReservation({ clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime }) {
+export async function createReservation({
+    clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
+    serviceType = 'ride', passengerCount = 1, carryOnCount = 0, checkedLuggageCount = 0,
+    isRoundTrip = false, distanceKm = null, isNightRate = null, estimatedPrice = null,
+}) {
     const { rows } = await query(
-        `INSERT INTO reservations (client_name, client_phone, client_email, pickup_location, dropoff_location, requested_time)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime]
+        `INSERT INTO reservations (
+            client_name, client_phone, client_email, pickup_location, dropoff_location, requested_time,
+            service_type, passenger_count, carry_on_count, checked_luggage_count,
+            is_round_trip, distance_km, is_night_rate, estimated_price
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+        [
+            clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
+            serviceType, passengerCount, carryOnCount, checkedLuggageCount,
+            isRoundTrip, distanceKm, isNightRate, estimatedPrice,
+        ]
     );
     return rows[0];
 }
@@ -33,7 +45,11 @@ export async function listReservations({ dateFrom, dateTo } = {}) {
     return rows;
 }
 
-export async function updateReservation(id, { clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status }) {
+export async function updateReservation(id, {
+    clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
+    serviceType, passengerCount, carryOnCount, checkedLuggageCount,
+    isRoundTrip, distanceKm, isNightRate, estimatedPrice,
+}) {
     const { rows } = await query(
         `UPDATE reservations SET
             client_name = COALESCE($2, client_name),
@@ -42,9 +58,21 @@ export async function updateReservation(id, { clientName, clientPhone, clientEma
             pickup_location = COALESCE($5, pickup_location),
             dropoff_location = COALESCE($6, dropoff_location),
             requested_time = COALESCE($7, requested_time),
-            status = COALESCE($8, status)
+            status = COALESCE($8, status),
+            service_type = COALESCE($9, service_type),
+            passenger_count = COALESCE($10, passenger_count),
+            carry_on_count = COALESCE($11, carry_on_count),
+            checked_luggage_count = COALESCE($12, checked_luggage_count),
+            is_round_trip = COALESCE($13, is_round_trip),
+            distance_km = COALESCE($14, distance_km),
+            is_night_rate = COALESCE($15, is_night_rate),
+            estimated_price = COALESCE($16, estimated_price)
          WHERE id = $1 RETURNING *`,
-        [id, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status]
+        [
+            id, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
+            serviceType, passengerCount, carryOnCount, checkedLuggageCount,
+            isRoundTrip, distanceKm, isNightRate, estimatedPrice,
+        ]
     );
     return rows[0] || null;
 }

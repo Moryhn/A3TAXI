@@ -20,11 +20,11 @@ export async function latestPositions() {
     return rows;
 }
 
-export async function createDispatchJob({ driverId, address, notes, assignedBy }) {
+export async function createDispatchJob({ driverId, address, notes, assignedBy, jobType = 'ride' }) {
     const { rows } = await query(
-        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
-        [driverId, address, notes, assignedBy]
+        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [driverId, address, notes, assignedBy, jobType]
     );
     return rows[0];
 }
@@ -77,14 +77,15 @@ export async function listAllDispatchJobsForExport() {
     return rows;
 }
 
-export async function updateDispatchJob(jobId, { address, notes }) {
+export async function updateDispatchJob(jobId, { address, notes, jobType }) {
     const { rows } = await query(
         `UPDATE dispatch_jobs SET
             address = COALESCE($2, address),
             notes = COALESCE($3, notes),
+            job_type = COALESCE($4, job_type),
             updated_at = now()
          WHERE id = $1 RETURNING *`,
-        [jobId, address, notes]
+        [jobId, address, notes, jobType]
     );
     return rows[0] || null;
 }

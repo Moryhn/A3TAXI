@@ -3,6 +3,7 @@ node_modules/
 .env.local
 .env.*.local
 login.txt
+secret_twilio_info.txt
 dist/
 build/
 
