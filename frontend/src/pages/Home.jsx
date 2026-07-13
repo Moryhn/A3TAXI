@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ArrowRight, ShieldCheck, Globe2, MessageCircle } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme.js';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 
@@ -6,69 +7,45 @@ export default function Home() {
     const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
     const { t, lang, toggleLang } = useLanguage();
 
-    const options = [
-        {
-            to: '/book',
-            eyebrow: t('home.eyebrowCustomer'),
-            title: t('home.titleBook'),
-            description: t('home.descBook'),
-        },
-        {
-            to: '/login?mode=driver',
-            eyebrow: t('home.eyebrowDriver'),
-            title: t('home.titleDriverLogin'),
-            description: t('home.descDriverLogin'),
-        },
-        {
-            to: '/login?mode=admin',
-            eyebrow: t('home.eyebrowAdmin'),
-            title: t('home.titleAdminLogin'),
-            description: t('home.descAdminLogin'),
-        },
-    ];
-
     return (
-        <div className={`theme-${theme}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, position: 'relative' }}>
-            <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 8 }}>
-                <button
-                    onClick={toggleTheme}
-                    className="btn btn--ghost"
-                    style={{ padding: '8px 14px', fontSize: 12 }}
-                >
-                    {theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
-                </button>
-                <button
-                    onClick={toggleLang}
-                    className="btn btn--ghost"
-                    style={{ padding: '8px 14px', fontSize: 12 }}
-                >
-                    {lang === 'en' ? 'FR' : 'EN'}
-                </button>
+        <div className={`theme-${theme} storefront`}>
+            <div className="storefront__topbar">
+                <div className="storefront__brand">
+                    <div className="rail__mark">A3</div>
+                    <div className="eyebrow" style={{ margin: 0 }}>A3TAXI</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={toggleTheme} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                        {theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
+                    </button>
+                    <button onClick={toggleLang} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                        {lang === 'en' ? 'FR' : 'EN'}
+                    </button>
+                </div>
             </div>
-            <div style={{ width: '100%', maxWidth: 720 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36, justifyContent: 'center' }}>
-                    <div className="rail__mark" style={{ width: 44, height: 44, fontSize: 20 }}>A3</div>
-                    <div>
-                        <div className="h1" style={{ fontSize: 24 }}>A3TAXI</div>
-                        <div className="subtle" style={{ marginTop: -2 }}>{t('home.tagline')}</div>
+
+            <div className="storefront__main">
+                <div className="hero">
+                    <div className="eyebrow">{t('home.heroEyebrow')}</div>
+                    <h1 className="hero__title">
+                        {t('home.heroTitleStart')} <em>{t('home.heroTitleEmphasis')}</em>
+                    </h1>
+                    <p className="hero__subtitle">{t('home.heroSubtitle')}</p>
+                    <Link to="/book" className="btn btn--primary hero__cta">
+                        {t('home.titleBook')}
+                        <ArrowRight size={18} />
+                    </Link>
+
+                    <div className="trust-strip">
+                        <span className="trust-badge"><ShieldCheck size={15} /> {t('home.trustNoSurge')}</span>
+                        <span className="trust-badge"><Globe2 size={15} /> {t('home.trustArea')}</span>
+                        <span className="trust-badge"><MessageCircle size={15} /> {t('home.trustSms')}</span>
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                    {options.map((opt) => (
-                        <Link
-                            key={opt.to}
-                            to={opt.to}
-                            className="card"
-                            style={{ display: 'block', textDecoration: 'none', color: 'inherit', transition: 'transform 0.15s ease' }}
-                        >
-                            <div className="eyebrow">{opt.eyebrow}</div>
-                            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', margin: '6px 0 8px' }}>
-                                {opt.title}
-                            </div>
-                            <p className="subtle" style={{ margin: 0, lineHeight: 1.5 }}>{opt.description}</p>
-                        </Link>
-                    ))}
+                <div className="staff-links">
+                    <Link to="/login?mode=driver" className="staff-link">{t('home.titleDriverLogin')}</Link>
+                    <Link to="/login?mode=admin" className="staff-link">{t('home.titleAdminLogin')}</Link>
                 </div>
             </div>
         </div>
