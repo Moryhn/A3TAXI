@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
+import { useTheme } from '../../hooks/useTheme.js';
 
 export default function ReservationForm() {
+    const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
     const [form, setForm] = useState({
         clientName: '', clientPhone: '', clientEmail: '',
         pickupLocation: '', dropoffLocation: '', requestedTime: '',
@@ -22,7 +24,14 @@ export default function ReservationForm() {
     }
 
     return (
-        <div className="theme-light" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div className={`theme-${theme}`} style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, position: 'relative' }}>
+            <button
+                onClick={toggleTheme}
+                className="btn btn--ghost"
+                style={{ position: 'absolute', top: 20, right: 20, padding: '8px 14px', fontSize: 12 }}
+            >
+                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
             <div style={{ width: '100%', maxWidth: 440 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                     <div className="rail__mark" style={{ width: 40, height: 40, fontSize: 18 }}>A3</div>
@@ -34,15 +43,15 @@ export default function ReservationForm() {
                 <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div className="field">
                         <label htmlFor="clientName">Your name</label>
-                        <input id="clientName" className="input" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required />
+                        <input id="clientName" name="name" className="input" autoComplete="name" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required />
                     </div>
                     <div className="field">
                         <label htmlFor="clientPhone">Phone number</label>
-                        <input id="clientPhone" className="input" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} required />
+                        <input id="clientPhone" name="tel" className="input" type="tel" autoComplete="tel" value={form.clientPhone} onChange={(e) => setForm({ ...form, clientPhone: e.target.value })} required />
                     </div>
                     <div className="field">
                         <label htmlFor="clientEmail">Email (optional)</label>
-                        <input id="clientEmail" className="input" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} />
+                        <input id="clientEmail" name="email" className="input" type="email" autoComplete="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} />
                     </div>
                     <div className="field">
                         <label htmlFor="pickup">Pickup location</label>

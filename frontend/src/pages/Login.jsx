@@ -76,11 +76,11 @@ export default function Login() {
                             <>
                                 <div className="field">
                                     <label htmlFor="email">Email</label>
-                                    <input id="email" className="input" type="email" placeholder="you@a3taxi.local" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                                    <input id="email" name="email" className="input" type="email" autoComplete="username" placeholder="you@a3taxi.local" value={email} onChange={(e) => setEmail(e.target.value)} required />
                                 </div>
                                 <div className="field">
                                     <label htmlFor="password">Password</label>
-                                    <input id="password" className="input" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                                    <input id="password" name="password" className="input" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                                 </div>
                             </>
                         ) : (
