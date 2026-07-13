@@ -78,7 +78,7 @@ export default function ClientAccounts() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Code</th><th>Name</th><th>Status</th><th></th></tr></thead>
+                        <thead><tr><th>Code</th><th>Name</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             {accounts.map((a) => (
                                 <tr key={a.id}>
@@ -87,22 +87,26 @@ export default function ClientAccounts() {
                                         <>
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></td>
                                             <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
-                                            <td style={{ display: 'flex', gap: 8 }}>
-                                                <button onClick={() => saveEdit(a.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
-                                                <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => saveEdit(a.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                </div>
                                             </td>
                                         </>
                                     ) : (
                                         <>
                                             <td>{a.name}</td>
                                             <td><span className={`pill ${a.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{a.is_active ? 'Active' : 'Inactive'}</span></td>
-                                            <td style={{ display: 'flex', gap: 8 }}>
-                                                <button onClick={() => startEdit(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                {a.is_active ? (
-                                                    <button onClick={() => setPendingDelete(a)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
-                                                ) : (
-                                                    <button onClick={() => reactivate(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
-                                                )}
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => startEdit(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                    {a.is_active ? (
+                                                        <button onClick={() => setPendingDelete(a)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                    ) : (
+                                                        <button onClick={() => reactivate(a)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </>
                                     )}

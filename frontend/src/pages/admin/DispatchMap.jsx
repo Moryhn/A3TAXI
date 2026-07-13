@@ -132,7 +132,7 @@ export default function DispatchMap() {
                 ) : (
                     <div className="table-wrap" style={{ marginTop: 10 }}>
                         <table className="table">
-                            <thead><tr><th>Driver</th><th>Address</th><th>Notes</th><th>Status</th><th></th></tr></thead>
+                            <thead><tr><th>Driver</th><th>Address</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody>
                                 {jobs.map((j) => (
                                     <tr key={j.id}>
@@ -142,9 +142,11 @@ export default function DispatchMap() {
                                                 <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} /></td>
                                                 <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} /></td>
                                                 <td><span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{j.status}</span></td>
-                                                <td style={{ display: 'flex', gap: 8 }}>
-                                                    <button onClick={() => saveEdit(j.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
-                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                <td>
+                                                    <div style={{ display: 'flex', gap: 8 }}>
+                                                        <button onClick={() => saveEdit(j.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                        <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                    </div>
                                                 </td>
                                             </>
                                         ) : (
@@ -152,9 +154,11 @@ export default function DispatchMap() {
                                                 <td>{j.address}</td>
                                                 <td className="subtle">{j.notes || '—'}</td>
                                                 <td><span className={`pill pill--${j.status === 'pending' ? 'pending' : j.status === 'cancelled' ? 'cancelled' : 'confirmed'}`}>{j.status}</span></td>
-                                                <td style={{ display: 'flex', gap: 8 }}>
-                                                    <button onClick={() => startEdit(j)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                    <button onClick={() => setPendingDelete(j)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                <td>
+                                                    <div style={{ display: 'flex', gap: 8 }}>
+                                                        <button onClick={() => startEdit(j)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                        <button onClick={() => setPendingDelete(j)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                    </div>
                                                 </td>
                                             </>
                                         )}

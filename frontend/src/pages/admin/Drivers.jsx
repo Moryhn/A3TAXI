@@ -80,7 +80,7 @@ export default function Drivers() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th><th>Status</th><th></th></tr></thead>
+                        <thead><tr><th>Name</th><th>Phone</th><th>Access code</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             {drivers.map((d) => (
                                 <tr key={d.id}>
@@ -90,9 +90,11 @@ export default function Drivers() {
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></td>
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
                                             <td><span className={`pill ${d.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{d.is_active ? 'Active' : 'Inactive'}</span></td>
-                                            <td style={{ display: 'flex', gap: 8 }}>
-                                                <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
-                                                <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                </div>
                                             </td>
                                         </>
                                     ) : (
@@ -101,13 +103,15 @@ export default function Drivers() {
                                             <td className="subtle">{d.phone || '—'}</td>
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
                                             <td><span className={`pill ${d.is_active ? 'pill--confirmed' : 'pill--cancelled'}`}>{d.is_active ? 'Active' : 'Inactive'}</span></td>
-                                            <td style={{ display: 'flex', gap: 8 }}>
-                                                <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                {d.is_active ? (
-                                                    <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
-                                                ) : (
-                                                    <button onClick={() => reactivate(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
-                                                )}
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                    {d.is_active ? (
+                                                        <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                    ) : (
+                                                        <button onClick={() => reactivate(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Reactivate</button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </>
                                     )}

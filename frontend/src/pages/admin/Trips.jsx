@@ -85,7 +85,7 @@ export default function Trips() {
                 <div className="table-wrap">
                     <table className="table">
                         <thead>
-                            <tr><th>Date</th><th>Driver</th><th>Client</th><th>Route</th><th>Amount</th><th>Receipt</th><th></th></tr>
+                            <tr><th>Date</th><th>Driver</th><th>Client</th><th>Route</th><th>Amount</th><th>Receipt</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                             {trips.map((t) => (
@@ -95,15 +95,19 @@ export default function Trips() {
                                     <td>{t.client_name}</td>
                                     {editingId === t.id ? (
                                         <>
-                                            <td style={{ display: 'flex', gap: 6 }}>
-                                                <input className="input" style={{ padding: '6px 8px', width: 110 }} value={editForm.departureLocation} onChange={(e) => setEditForm({ ...editForm, departureLocation: e.target.value })} />
-                                                <input className="input" style={{ padding: '6px 8px', width: 110 }} value={editForm.arrivalLocation} onChange={(e) => setEditForm({ ...editForm, arrivalLocation: e.target.value })} />
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 6 }}>
+                                                    <input className="input" style={{ padding: '6px 8px', width: 110 }} value={editForm.departureLocation} onChange={(e) => setEditForm({ ...editForm, departureLocation: e.target.value })} />
+                                                    <input className="input" style={{ padding: '6px 8px', width: 110 }} value={editForm.arrivalLocation} onChange={(e) => setEditForm({ ...editForm, arrivalLocation: e.target.value })} />
+                                                </div>
                                             </td>
                                             <td><input className="input" type="number" step="0.01" style={{ padding: '6px 8px', width: 80 }} value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} /></td>
                                             <td>{t.receipt_photo_url ? <a href={`${API_ORIGIN}${t.receipt_photo_url}`} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>View</a> : <span className="subtle">—</span>}</td>
-                                            <td style={{ display: 'flex', gap: 8 }}>
-                                                <button onClick={() => saveEdit(t.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
-                                                <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    <button onClick={() => saveEdit(t.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>Save</button>
+                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Cancel</button>
+                                                </div>
                                             </td>
                                         </>
                                     ) : (
@@ -111,15 +115,17 @@ export default function Trips() {
                                             <td>{t.departure_location} → {t.arrival_location}</td>
                                             <td><span className="meter meter--sm">${Number(t.amount).toFixed(2)}</span></td>
                                             <td>{t.receipt_photo_url ? <a href={`${API_ORIGIN}${t.receipt_photo_url}`} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>View</a> : <span className="subtle">—</span>}</td>
-                                            <td style={{ display: 'flex', gap: 8 }}>
-                                                {t.invoice_id ? (
-                                                    <span className="subtle" title="Already invoiced">Invoiced</span>
-                                                ) : (
-                                                    <>
-                                                        <button onClick={() => startEdit(t)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
-                                                        <button onClick={() => setPendingDelete(t)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
-                                                    </>
-                                                )}
+                                            <td>
+                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                    {t.invoice_id ? (
+                                                        <span className="subtle" title="Already invoiced">Invoiced</span>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => startEdit(t)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>Edit</button>
+                                                            <button onClick={() => setPendingDelete(t)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>Delete</button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </>
                                     )}
