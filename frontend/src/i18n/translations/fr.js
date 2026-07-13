@@ -17,7 +17,7 @@ export default {
         titleAdminLogin: 'Connexion administrateur',
         heroEyebrow: 'A3TAXI · Montréal',
         heroTitleStart: 'Votre course, au prix',
-        heroTitleEmphasis: 'juste — jamais selon la demande.',
+        heroTitleEmphasis: 'juste — jamais selon le rush.',
         heroSubtitle: "Au tarif officiel du taximètre, ou demandez un prix fixe à l'avance. Confirmation par texto en quelques secondes — aucun algorithme ne vous fait payer plus cher parce qu'il pleut.",
         trustNoSurge: 'Aucune majoration',
         trustArea: 'Montréal + transfrontalier',

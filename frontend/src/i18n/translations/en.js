@@ -17,7 +17,7 @@ export default {
         titleAdminLogin: 'Admin login',
         heroEyebrow: 'A3TAXI · Montreal',
         heroTitleStart: 'Your ride, priced',
-        heroTitleEmphasis: 'honestly — never by demand.',
+        heroTitleEmphasis: 'honestly — never by rush.',
         heroSubtitle: 'Metered at Quebec\'s official taxi rate, or ask for a fixed price upfront. Confirmed by text in seconds — no algorithm charges you more because it\'s raining.',
         trustNoSurge: 'No surge pricing',
         trustArea: 'Montreal + cross-border',
