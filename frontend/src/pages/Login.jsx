@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
-    const [mode, setMode] = useState('admin');
+    const [searchParams] = useSearchParams();
+    const [mode, setMode] = useState(searchParams.get('mode') === 'driver' ? 'driver' : 'admin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [accessCode, setAccessCode] = useState('');
@@ -82,6 +83,9 @@ export default function Login() {
                         {error && <div className="pill pill--cancelled" style={{ color: 'var(--danger)', background: 'rgba(240,85,76,0.12)' }}>{error}</div>}
                         <button type="submit" className="btn btn--primary" style={{ marginTop: 6 }}>Log in</button>
                     </form>
+                </div>
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                    <Link to="/" className="subtle" style={{ textDecoration: 'none' }}>← Back to home</Link>
                 </div>
             </div>
         </div>

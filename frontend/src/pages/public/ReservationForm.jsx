@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
 
 export default function ReservationForm() {
@@ -74,6 +75,9 @@ export default function ReservationForm() {
                         </div>
                     )}
                 </form>
+                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                    <Link to="/" className="subtle" style={{ textDecoration: 'none' }}>← Back to home</Link>
+                </div>
             </div>
         </div>
     );

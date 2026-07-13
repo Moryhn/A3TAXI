@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
+import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
@@ -11,7 +12,7 @@ export default function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
-                    <Route path="/" element={<Navigate to="/book" replace />} />
+                    <Route path="/" element={<Home />} />
                     <Route path="/book" element={<ReservationForm />} />
                     <Route path="/login" element={<Login />} />
                     <Route
