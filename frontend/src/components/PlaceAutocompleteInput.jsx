@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { GOOGLE_MAPS_API_KEY, loadGoogleMapsLibrary } from '../lib/googleMaps.js';
 
+// A3TAXI operates in and around Montreal — bias suggestions there instead of
+// ranking by generic global relevance (which surfaced unrelated results in
+// other countries for short, common inputs).
+const SERVICE_AREA_CENTER = { lat: 45.5017, lng: -73.5673 };
+const SERVICE_AREA_RADIUS_METERS = 50000;
+
 // A plain text input with an address-suggestion dropdown, built on the
 // current (non-legacy) Places API. onChange always fires on every keystroke,
 // so the field stays fully usable even if the API key/library never loads.
@@ -49,6 +55,8 @@ export default function PlaceAutocompleteInput({ id, name, className, style, pla
                 const { suggestions: results } = await placesRef.current.AutocompleteSuggestion.fetchAutocompleteSuggestions({
                     input: text,
                     sessionToken: sessionTokenRef.current,
+                    locationBias: { center: SERVICE_AREA_CENTER, radius: SERVICE_AREA_RADIUS_METERS },
+                    includedRegionCodes: ['ca'],
                 });
                 setSuggestions(results || []);
                 setOpen((results || []).length > 0);
