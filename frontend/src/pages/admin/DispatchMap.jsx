@@ -9,6 +9,7 @@ export default function DispatchMap() {
     const [drivers, setDrivers] = useState([]);
     const [job, setJob] = useState({ driverId: '', address: '', notes: '' });
     const [sending, setSending] = useState(false);
+    const [status, setStatus] = useState(null);
 
     async function refresh() {
         setPositions(await api.getDriverPositions(auth.token));
@@ -24,9 +25,13 @@ export default function DispatchMap() {
     async function handleDispatch(e) {
         e.preventDefault();
         setSending(true);
+        setStatus(null);
         try {
             await api.createDispatchJob(auth.token, job);
             setJob({ driverId: '', address: '', notes: '' });
+            setStatus({ ok: true, message: 'Job sent.' });
+        } catch (err) {
+            setStatus({ ok: false, message: err.message });
         } finally {
             setSending(false);
         }
@@ -60,6 +65,19 @@ export default function DispatchMap() {
                             <input className="input" placeholder="Address" value={job.address} onChange={(e) => setJob({ ...job, address: e.target.value })} required />
                             <input className="input" placeholder="Notes (optional)" value={job.notes} onChange={(e) => setJob({ ...job, notes: e.target.value })} />
                             <button type="submit" className="btn btn--primary" disabled={sending}>{sending ? 'Sending…' : 'Send job'}</button>
+                            {status && (
+                                <div
+                                    className="pill"
+                                    style={{
+                                        justifyContent: 'center',
+                                        padding: '10px 14px',
+                                        color: status.ok ? '#0f8a5f' : 'var(--danger)',
+                                        background: status.ok ? 'rgba(52,211,153,0.15)' : 'rgba(240,85,76,0.12)',
+                                    }}
+                                >
+                                    {status.message}
+                                </div>
+                            )}
                         </form>
                     </div>
 

@@ -40,7 +40,7 @@ export default function InvoicePrint() {
                         </div>
                         <div>
                             <div className="eyebrow">Period</div>
-                            <div>{invoice.period_start} — {invoice.period_end}</div>
+                            <div>{new Date(invoice.period_start).toLocaleDateString()} — {new Date(invoice.period_end).toLocaleDateString()}</div>
                             <div className="subtle">Generated {new Date(invoice.generated_at).toLocaleDateString()}</div>
                         </div>
                     </div>

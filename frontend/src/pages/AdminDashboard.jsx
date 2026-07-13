@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes, Navigate } from 'react-router-dom';
+import { NavLink, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import ClientAccounts from './admin/ClientAccounts.jsx';
 import Drivers from './admin/Drivers.jsx';
@@ -19,6 +19,15 @@ const tabs = [
 
 export default function AdminDashboard() {
     const { auth, logout } = useAuth();
+    const location = useLocation();
+
+    if (location.pathname.endsWith('/print')) {
+        return (
+            <Routes>
+                <Route path="invoices/:id/print" element={<InvoicePrint />} />
+            </Routes>
+        );
+    }
 
     return (
         <div className="theme-dark app-shell">
