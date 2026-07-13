@@ -407,7 +407,13 @@ textarea {
         border-top: none;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 8px;
+    }
+
+    .rail__foot .pill {
+        width: auto !important;
+        order: 10;
     }
 
     .rail__foot .subtle {

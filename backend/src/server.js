@@ -11,6 +11,7 @@ import invoiceRoutes from './routes/invoices.js';
 import dispatchRoutes from './routes/dispatch.js';
 import reservationRoutes from './routes/reservations.js';
 import trashRoutes from './routes/trash.js';
+import exportRoutes from './routes/export.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/dispatch', dispatchRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/trash', trashRoutes);
+app.use('/api/export', exportRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err);

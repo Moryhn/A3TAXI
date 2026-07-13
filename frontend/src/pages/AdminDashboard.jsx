@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { NavLink, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../hooks/useTheme.js';
+import { api } from '../api/client.js';
 import ClientAccounts from './admin/ClientAccounts.jsx';
 import Drivers from './admin/Drivers.jsx';
 import Trips from './admin/Trips.jsx';
@@ -24,6 +26,20 @@ export default function AdminDashboard() {
     const { auth, logout } = useAuth();
     const location = useLocation();
     const [theme, toggleTheme] = useTheme('a3taxi-admin-theme', 'dark');
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState('');
+
+    async function handleExport() {
+        setExporting(true);
+        setExportError('');
+        try {
+            await api.exportExcel(auth.token);
+        } catch (err) {
+            setExportError(err.message);
+        } finally {
+            setExporting(false);
+        }
+    }
 
     if (location.pathname.endsWith('/print')) {
         return (
@@ -55,6 +71,14 @@ export default function AdminDashboard() {
 
                 <div className="rail__foot">
                     <div className="subtle" style={{ marginBottom: 10 }}>{auth.user.name}</div>
+                    <button onClick={handleExport} className="btn btn--ghost" style={{ width: '100%', marginBottom: 8 }} disabled={exporting}>
+                        {exporting ? 'Exporting…' : 'Export data'}
+                    </button>
+                    {exportError && (
+                        <div className="pill" style={{ marginBottom: 8, color: 'var(--danger)', background: 'rgba(240,85,76,0.12)', width: '100%' }}>
+                            {exportError}
+                        </div>
+                    )}
                     <button onClick={toggleTheme} className="btn btn--ghost" style={{ width: '100%', marginBottom: 8 }}>
                         {theme === 'dark' ? 'Light mode' : 'Dark mode'}
                     </button>

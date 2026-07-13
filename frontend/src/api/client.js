@@ -69,4 +69,27 @@ export const api = {
     listTrash: (token) => request('/trash', { token }),
     restoreTrashItem: (token, type, id) => request(`/trash/${type}/${id}/restore`, { method: 'POST', token }),
     permanentlyDeleteTrashItem: (token, type, id) => request(`/trash/${type}/${id}`, { method: 'DELETE', token }),
+
+    async exportExcel(token) {
+        const res = await fetch(`${API_URL}/export/excel`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => null);
+            throw new Error(data?.error || `Export failed with status ${res.status}`);
+        }
+        const blob = await res.blob();
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        const filename = match ? match[1] : 'a3taxi-export.xlsx';
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    },
 };

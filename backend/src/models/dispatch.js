@@ -65,6 +65,18 @@ export async function listAllDispatchJobs(limit = 50) {
     return rows;
 }
 
+// Unlimited version for full data export
+export async function listAllDispatchJobsForExport() {
+    const { rows } = await query(
+        `SELECT j.*, d.name AS driver_name
+         FROM dispatch_jobs j
+         JOIN drivers d ON d.id = j.driver_id
+         WHERE j.deleted_at IS NULL
+         ORDER BY j.created_at DESC`
+    );
+    return rows;
+}
+
 export async function updateDispatchJob(jobId, { address, notes }) {
     const { rows } = await query(
         `UPDATE dispatch_jobs SET
