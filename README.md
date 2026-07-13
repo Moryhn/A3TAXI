@@ -19,13 +19,16 @@ Web app for managing a small taxi fleet (~15 vehicles/drivers) with two roles:
 - Dispatch page now shows a "Recent jobs" list (previously a sent job was invisible to admin once dispatched), and live map markers are labeled with the driver's name instead of unlabeled pins.
 - Reservations calendar now fits the visible window without scrolling, including bookings at the very end of the day.
 
+**Data**
+- Google Places autocomplete on every address field (booking form pickup/dropoff, driver trip-entry departure/arrival, admin dispatch address) — suggestions dropdown styled to match the app rather than Google's default widget. Requires **Places API (New)** enabled with billing on the Google Cloud project (separate from the Maps JavaScript API already used for the live map).
+- "Export data" button (admin, always visible in the sidebar) downloads one Excel workbook with a sheet per data type — Trips, Invoices, Reservations, Dispatch Jobs, Drivers, Client Accounts — with proper column headers and currency/date formatting.
+
 **Fixes**
 - Invoice dates were rendering as raw timestamps instead of readable dates — fixed on both the invoice list and the printable invoice.
 - The printable invoice was rendering trapped inside the admin sidebar instead of as a clean full-page printout — fixed.
 - Unknown URLs rendered a blank page — now redirect to the home page.
 - Table action columns (Edit/Delete buttons) were misaligned on some rows — fixed.
-
-**Still planned**: Google Places autocomplete on address fields, and an Excel export of all data.
+- The confirm-delete dialog (used everywhere) had no keyboard/screen-reader support — now a proper modal with Escape-to-close and focus handling.
 
 ## Modules
 
@@ -87,6 +90,6 @@ All three modules have working backend APIs and frontend pages:
 - **Dispatching**: driver position tracking, live Google Maps view with driver markers, job assignment
 - **Reservations**: public booking form, SMS confirmation (stubs to console log if Twilio isn't configured), FullCalendar-based admin calendar
 
-Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, and the edit/delete/trash/restore flows for every record type (see "What's New" above).
+Verified end-to-end against a real local Postgres instance: both logins, trip entry with receipt upload/retrieval, invoice generation, dispatch positions/jobs, public reservations, the edit/delete/trash/restore flows for every record type, and the Excel export (see "What's New" above). Places autocomplete is implemented and gracefully degrades to a plain text field, but hasn't been visually confirmed working yet — pending Places API (New) + billing being enabled on the Google Cloud project.
 
-Not yet done: Google Places autocomplete on address fields, Excel data export, production deployment, and real device testing of driver GPS sharing.
+Not yet done: production deployment, and real device testing of driver GPS sharing.
