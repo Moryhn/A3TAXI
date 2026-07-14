@@ -33,7 +33,7 @@ jobs:
           # NOTE: this points at a Cloudflare Quick Tunnel, which is temporary and
           # changes whenever the tunnel restarts. Update this value and re-run this
           # workflow (or push) whenever the backend's tunnel URL changes.
-          VITE_API_URL: https://establishment-glad-triangle-crawford.trycloudflare.com/api
+          VITE_API_URL: https://bar-messages-violin-wave.trycloudflare.com/api
           VITE_GOOGLE_MAPS_API_KEY: AIzaSyBeBFAb5be28Am8o80SWwN5KZa9GlN0ATc
       - uses: actions/upload-pages-artifact@v3
         with:
