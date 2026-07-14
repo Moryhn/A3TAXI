@@ -10,7 +10,10 @@ export default function MyJobs() {
     const [jobs, setJobs] = useState([]);
     const [sharing, setSharing] = useState(false);
     const [watchId, setWatchId] = useState(null);
-    const [notifState, setNotifState] = useState('unsupported'); // unsupported | off | on | denied
+    // unsupported | off | on | denied — starts synchronously so the button shows right
+    // away instead of staying hidden while async feature checks (serviceWorker.ready,
+    // getSubscription) are still pending.
+    const [notifState, setNotifState] = useState(() => (isPushSupported() ? 'off' : 'unsupported'));
 
     async function refresh() {
         setJobs(await api.listMyJobs(auth.token));
@@ -28,7 +31,9 @@ export default function MyJobs() {
             setNotifState('denied');
             return;
         }
-        getExistingPushSubscription().then((sub) => setNotifState(sub ? 'on' : 'off'));
+        getExistingPushSubscription()
+            .then((sub) => setNotifState(sub ? 'on' : 'off'))
+            .catch(() => {});
     }, []);
 
     async function toggleNotifications() {
