@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
+import { isPushSupported, getExistingPushSubscription, enablePushNotifications, disablePushNotifications } from '../../push.js';
 
 export default function MyJobs() {
     const { auth } = useAuth();
@@ -9,6 +10,7 @@ export default function MyJobs() {
     const [jobs, setJobs] = useState([]);
     const [sharing, setSharing] = useState(false);
     const [watchId, setWatchId] = useState(null);
+    const [notifState, setNotifState] = useState('unsupported'); // unsupported | off | on | denied
 
     async function refresh() {
         setJobs(await api.listMyJobs(auth.token));
@@ -19,6 +21,29 @@ export default function MyJobs() {
         const interval = setInterval(refresh, 20000);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        if (!isPushSupported()) return;
+        if (Notification.permission === 'denied') {
+            setNotifState('denied');
+            return;
+        }
+        getExistingPushSubscription().then((sub) => setNotifState(sub ? 'on' : 'off'));
+    }, []);
+
+    async function toggleNotifications() {
+        try {
+            if (notifState === 'on') {
+                await disablePushNotifications(auth.token);
+                setNotifState('off');
+            } else {
+                await enablePushNotifications(auth.token);
+                setNotifState('on');
+            }
+        } catch (err) {
+            if (err.message === 'permission-denied') setNotifState('denied');
+        }
+    }
 
     function toggleSharing() {
         if (sharing) {
@@ -57,6 +82,22 @@ export default function MyJobs() {
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: sharing ? 'var(--amber-ink)' : 'var(--text-muted)', display: 'inline-block' }} />
                 {sharing ? t('driver.myJobs.sharingOn') : t('driver.myJobs.sharingOff')}
             </button>
+
+            {notifState !== 'unsupported' && (
+                <button
+                    onClick={notifState === 'denied' ? undefined : toggleNotifications}
+                    className={`btn ${notifState === 'on' ? 'btn--primary' : 'btn--ghost'}`}
+                    disabled={notifState === 'denied'}
+                    style={{ width: '100%', padding: '13px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: notifState === 'on' ? 'var(--amber-ink)' : 'var(--text-muted)', display: 'inline-block' }} />
+                    {notifState === 'denied'
+                        ? t('driver.myJobs.notifsDenied')
+                        : notifState === 'on'
+                        ? t('driver.myJobs.notifsOn')
+                        : t('driver.myJobs.notifsOff')}
+                </button>
+            )}
 
             {jobs.length === 0 ? (
                 <div className="card empty">

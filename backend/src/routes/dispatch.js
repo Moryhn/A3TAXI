@@ -10,6 +10,7 @@ import {
     updateDispatchJob,
     deleteDispatchJob,
 } from '../models/dispatch.js';
+import { sendJobNotification } from '../services/push.js';
 
 const router = Router();
 
@@ -41,6 +42,7 @@ router.post('/jobs', requireAuth('admin'), async (req, res) => {
         return res.status(400).json({ error: `jobType must be one of ${JOB_TYPES.join(', ')}` });
     }
     const job = await createDispatchJob({ driverId, address, notes, assignedBy: req.user.sub, jobType });
+    sendJobNotification(driverId, job).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.status(201).json(job);
 });
 

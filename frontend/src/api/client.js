@@ -57,6 +57,10 @@ export const api = {
     updateDispatchJob: (token, id, body) => request(`/dispatch/jobs/${id}`, { method: 'PATCH', body, token }),
     deleteDispatchJob: (token, id) => request(`/dispatch/jobs/${id}`, { method: 'DELETE', token }),
 
+    getVapidPublicKey: (token) => request('/push/vapid-public-key', { token }),
+    subscribePush: (token, subscription) => request('/push/subscribe', { method: 'POST', body: { subscription }, token }),
+    unsubscribePush: (token, endpoint) => request('/push/unsubscribe', { method: 'POST', body: { endpoint }, token }),
+
     createReservation: (body) => request('/reservations', { method: 'POST', body }),
     getQuote: (body) => request('/reservations/quote', { method: 'POST', body }),
     listReservations: (token, params = {}) => {

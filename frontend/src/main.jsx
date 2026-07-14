@@ -13,4 +13,9 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'notification-click' && event.data.url) {
+            window.location.hash = event.data.url.replace(/^\/#/, '');
+        }
+    });
 }
