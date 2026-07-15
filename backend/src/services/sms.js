@@ -17,8 +17,9 @@ function toE164(phone) {
     return `+${digits}`;
 }
 
-// Falls back to a console log when SMS Gate isn't configured (local dev)
-export async function sendReservationConfirmationSms(toPhone, message) {
+// Falls back to a console log when SMS Gate isn't configured (local dev).
+// Generic — used for both reservation confirmations and job-tracking links.
+export async function sendSms(toPhone, message) {
     if (!client) {
         console.log(`[sms:stub] to=${toPhone} message="${message}"`);
         return { stub: true };

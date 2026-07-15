@@ -88,6 +88,15 @@ export default {
         successMessage: 'Request received — dispatch is finding you a driver now.',
         connectedToDispatch: 'Goes straight to dispatch',
     },
+    track: {
+        title: 'Track your ride',
+        driverLabel: 'Driver',
+        notAssignedYet: 'Not assigned yet',
+        waitingTitle: 'Waiting for location',
+        waitingBody: 'Your driver hasn\'t started sharing their location yet — this updates automatically.',
+        notFoundTitle: 'Tracking link not found',
+        notFoundBody: 'This link may have expired or the ride was cancelled.',
+    },
     nav: {
         dispatch: 'Dispatch',
         trips: 'Trips',

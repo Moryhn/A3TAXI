@@ -7,7 +7,7 @@ import {
     updateReservation,
     deleteReservation,
 } from '../models/reservation.js';
-import { sendReservationConfirmationSms } from '../services/sms.js';
+import { sendSms } from '../services/sms.js';
 import { getRideEstimate } from '../services/quote.js';
 
 const router = Router();
@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
     });
 
     try {
-        await sendReservationConfirmationSms(
+        await sendSms(
             clientPhone,
             `Hi ${clientName}, your ride request for ${new Date(requestedTime).toLocaleString()} has been received. We'll confirm shortly.`
         );

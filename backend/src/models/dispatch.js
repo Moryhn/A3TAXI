@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { query } from '../config/db.js';
 
 export async function recordDriverPosition(driverId, lat, lng) {
@@ -24,12 +25,35 @@ export async function createDispatchJob({
     driverId = null, address, notes, assignedBy, jobType = 'ride',
     dropoffLocation = null, customerPhone = null, estimatedPrice = null,
 }) {
+    const trackingToken = crypto.randomBytes(24).toString('base64url');
     const { rows } = await query(
-        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type, dropoff_location, customer_phone, estimated_price)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [driverId, address, notes, assignedBy, jobType, dropoffLocation, customerPhone, estimatedPrice]
+        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type, dropoff_location, customer_phone, estimated_price, tracking_token)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [driverId, address, notes, assignedBy, jobType, dropoffLocation, customerPhone, estimatedPrice, trackingToken]
     );
     return rows[0];
+}
+
+// Public "track my ride" page looks the job up by its unguessable token,
+// never by sequential id.
+export async function findDispatchJobByTrackingToken(token) {
+    const { rows } = await query(
+        `SELECT j.*, d.name AS driver_name
+         FROM dispatch_jobs j
+         LEFT JOIN drivers d ON d.id = j.driver_id
+         WHERE j.tracking_token = $1`,
+        [token]
+    );
+    return rows[0] || null;
+}
+
+export async function latestPositionForDriver(driverId) {
+    const { rows } = await query(
+        `SELECT driver_id, lat, lng, recorded_at FROM driver_positions
+         WHERE driver_id = $1 ORDER BY recorded_at DESC LIMIT 1`,
+        [driverId]
+    );
+    return rows[0] || null;
 }
 
 // Admin picks a driver for a customer-submitted "book now" request (driver_id

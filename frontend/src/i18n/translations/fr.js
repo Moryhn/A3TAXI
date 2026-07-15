@@ -88,6 +88,15 @@ export default {
         successMessage: 'Demande reçue — le dispatch vous trouve un chauffeur.',
         connectedToDispatch: 'Envoyé directement au dispatch',
     },
+    track: {
+        title: 'Suivre votre course',
+        driverLabel: 'Chauffeur',
+        notAssignedYet: 'Pas encore assigné',
+        waitingTitle: 'En attente de la position',
+        waitingBody: "Votre chauffeur n'a pas encore commencé à partager sa position — ça se met à jour automatiquement.",
+        notFoundTitle: 'Lien de suivi introuvable',
+        notFoundBody: "Ce lien a peut-être expiré ou la course a été annulée.",
+    },
     nav: {
         dispatch: 'Répartition',
         trips: 'Courses',

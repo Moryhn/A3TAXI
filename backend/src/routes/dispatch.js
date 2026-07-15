@@ -10,9 +10,12 @@ import {
     updateDispatchJob,
     deleteDispatchJob,
     assignDriverToJob,
+    findDispatchJobByTrackingToken,
+    latestPositionForDriver,
 } from '../models/dispatch.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
+import { sendSms } from '../services/sms.js';
 
 const router = Router();
 
@@ -93,6 +96,11 @@ router.patch('/jobs/:id', requireAuth('admin', 'driver'), async (req, res) => {
         }
         const job = await updateDispatchJobStatus(req.params.id, status);
         if (!job) return res.status(404).json({ error: 'Job not found' });
+        if (status === 'accepted' && job.customer_phone && job.tracking_token) {
+            const trackingUrl = `${(process.env.FRONTEND_URL || '').replace(/\/$/, '')}/A3TAXI/#/track/${job.tracking_token}`;
+            sendSms(job.customer_phone, `Your A3TAXI driver is on the way! Track your ride live: ${trackingUrl}`)
+                .catch((err) => console.error('Tracking SMS failed:', err.message));
+        }
         return res.json(job);
     }
 
@@ -114,6 +122,21 @@ router.patch('/jobs/:id/assign', requireAuth('admin'), async (req, res) => {
     if (!job) return res.status(404).json({ error: 'Job not found' });
     sendJobNotification(driverId, job).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.json(job);
+});
+
+// Public "track my ride" page — looked up by unguessable token, never by id
+router.get('/track/:token', async (req, res) => {
+    const job = await findDispatchJobByTrackingToken(req.params.token);
+    if (!job) return res.status(404).json({ error: 'Tracking link not found' });
+
+    const position = job.driver_id ? await latestPositionForDriver(job.driver_id) : null;
+    res.json({
+        status: job.status,
+        driverName: job.driver_name,
+        pickupLocation: job.address,
+        dropoffLocation: job.dropoff_location,
+        position,
+    });
 });
 
 // Admin removes a dispatched job
