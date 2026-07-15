@@ -6,7 +6,14 @@ import GoogleMapView from '../../components/GoogleMapView.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 import MicButton from '../../components/MicButton.jsx';
-import { formatRelativeTime, isStale } from '../../lib/time.js';
+import { formatRelativeTime, isStale, localInputToUtcIso } from '../../lib/time.js';
+
+const RESERVATION_SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
+const DESTINATION_CATEGORIES = ['local', 'airport', 'montreal', 'longDistance'];
+const INITIAL_RESERVATION_FORM = {
+    clientName: '', clientPhone: '', pickupLocation: '', dropoffLocation: '',
+    requestedTime: '', serviceType: 'ride', destinationCategory: 'local',
+};
 
 export default function DispatchMap() {
     const { auth } = useAuth();
@@ -22,6 +29,10 @@ export default function DispatchMap() {
     const [editForm, setEditForm] = useState({ address: '', notes: '' });
     const [pendingDelete, setPendingDelete] = useState(null);
     const [assigning, setAssigning] = useState({});
+    const [showReservationForm, setShowReservationForm] = useState(false);
+    const [resForm, setResForm] = useState(INITIAL_RESERVATION_FORM);
+    const [resSubmitting, setResSubmitting] = useState(false);
+    const [resStatus, setResStatus] = useState(null);
 
     async function refresh() {
         setPositions(await api.getDriverPositions(auth.token));
@@ -76,6 +87,22 @@ export default function DispatchMap() {
         refresh();
     }
 
+    async function handleCreateReservation(e) {
+        e.preventDefault();
+        setResSubmitting(true);
+        setResStatus(null);
+        try {
+            await api.createReservation({ ...resForm, requestedTime: localInputToUtcIso(resForm.requestedTime) });
+            setResForm(INITIAL_RESERVATION_FORM);
+            setResStatus({ ok: true, message: t('admin.dispatch.reservationCreated') });
+        } catch (err) {
+            setResStatus({ ok: false, message: err.message });
+        } finally {
+            setResSubmitting(false);
+        }
+    }
+
+    const isResRide = resForm.serviceType === 'ride';
     const incomingRequests = jobs.filter((j) => !j.driver_id);
     const recentJobs = jobs.filter((j) => j.driver_id);
 
@@ -134,6 +161,86 @@ export default function DispatchMap() {
                                 </div>
                             )}
                         </form>
+                    </div>
+
+                    <div className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div className="eyebrow">{t('admin.dispatch.newReservationEyebrow')}</div>
+                            <button type="button" className="btn btn--ghost" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setShowReservationForm((v) => !v)}>
+                                {showReservationForm ? t('common.cancel') : t('admin.dispatch.newReservationToggle')}
+                            </button>
+                        </div>
+                        {showReservationForm && (
+                            <form onSubmit={handleCreateReservation} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
+                                <div className="tabbar" style={{ width: '100%' }}>
+                                    {RESERVATION_SERVICE_TYPES.map((s) => (
+                                        <button
+                                            key={s}
+                                            type="button"
+                                            className={`tabbar__btn ${resForm.serviceType === s ? 'tabbar__btn--active' : ''}`}
+                                            style={{ flex: 1, fontSize: 11 }}
+                                            onClick={() => setResForm({ ...resForm, serviceType: s })}
+                                        >
+                                            {t(`admin.dispatch.jobType.${s}`)}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    <input className="input" style={{ flex: 1 }} placeholder={t('admin.reservations.nameLabel')} value={resForm.clientName} onChange={(e) => setResForm({ ...resForm, clientName: e.target.value })} required />
+                                    <MicButton lang={micLang} title={t('admin.reservations.speakName')} onResult={(text) => setResForm({ ...resForm, clientName: text })} />
+                                </div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    <input className="input" style={{ flex: 1 }} type="tel" placeholder={t('booking.phoneLabel')} value={resForm.clientPhone} onChange={(e) => setResForm({ ...resForm, clientPhone: e.target.value })} required />
+                                    <MicButton lang={micLang} title={t('admin.reservations.speakPhone')} onResult={(text) => setResForm({ ...resForm, clientPhone: text })} />
+                                </div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <PlaceAutocompleteInput className="input" placeholder={t('booking.pickupLabel')} value={resForm.pickupLocation} onChange={(v) => setResForm({ ...resForm, pickupLocation: v })} required />
+                                    </div>
+                                    <MicButton lang={micLang} title={t('admin.reservations.speakPickup')} onResult={(text) => setResForm({ ...resForm, pickupLocation: text })} />
+                                </div>
+                                {isResRide && (
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <PlaceAutocompleteInput className="input" placeholder={t('booking.dropoffLabel')} value={resForm.dropoffLocation} onChange={(v) => setResForm({ ...resForm, dropoffLocation: v })} required />
+                                        </div>
+                                        <MicButton lang={micLang} title={t('admin.reservations.speakDropoff')} onResult={(text) => setResForm({ ...resForm, dropoffLocation: text })} />
+                                    </div>
+                                )}
+                                <input className="input" type="datetime-local" value={resForm.requestedTime} onChange={(e) => setResForm({ ...resForm, requestedTime: e.target.value })} required />
+                                {isResRide && (
+                                    <div className="tabbar" style={{ width: '100%' }}>
+                                        {DESTINATION_CATEGORIES.map((cat) => (
+                                            <button
+                                                key={cat}
+                                                type="button"
+                                                className={`tabbar__btn ${resForm.destinationCategory === cat ? 'tabbar__btn--active' : ''}`}
+                                                style={{ flex: 1, fontSize: 11 }}
+                                                onClick={() => setResForm({ ...resForm, destinationCategory: cat })}
+                                            >
+                                                {t(`booking.destinationCategory.${cat}`)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                <button type="submit" className="btn btn--primary" disabled={resSubmitting}>
+                                    {resSubmitting ? t('admin.dispatch.sending') : t('admin.dispatch.createReservation')}
+                                </button>
+                                {resStatus && (
+                                    <div
+                                        className="pill"
+                                        style={{
+                                            justifyContent: 'center',
+                                            padding: '10px 14px',
+                                            color: resStatus.ok ? '#0f8a5f' : 'var(--danger)',
+                                            background: resStatus.ok ? 'rgba(52,211,153,0.15)' : 'rgba(240,85,76,0.12)',
+                                        }}
+                                    >
+                                        {resStatus.message}
+                                    </div>
+                                )}
+                            </form>
+                        )}
                     </div>
 
                     <div className="card">
