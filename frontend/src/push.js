@@ -17,19 +17,50 @@ export async function getExistingPushSubscription() {
     return registration.pushManager.getSubscription();
 }
 
+// Each step is wrapped so a failure reports exactly where it broke (permission,
+// VAPID fetch, SW readiness, browser subscribe, or saving to our backend) instead
+// of a bare generic error — this stayed silent for too long across several devices
+// before error surfacing existed at all.
 export async function enablePushNotifications(token) {
-    const permission = await Notification.requestPermission();
+    let permission;
+    try {
+        permission = await Notification.requestPermission();
+    } catch (err) {
+        throw new Error(`[permission] ${err.message || err}`);
+    }
     if (permission !== 'granted') throw new Error('permission-denied');
 
-    const { publicKey } = await api.getVapidPublicKey(token);
-    if (!publicKey) throw new Error('push-not-configured');
+    let publicKey;
+    try {
+        ({ publicKey } = await api.getVapidPublicKey(token));
+    } catch (err) {
+        throw new Error(`[vapid-fetch] ${err.message || err}`);
+    }
+    if (!publicKey) throw new Error('[vapid-fetch] server returned no public key');
 
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
-    await api.subscribePush(token, subscription.toJSON());
+    let registration;
+    try {
+        registration = await navigator.serviceWorker.ready;
+    } catch (err) {
+        throw new Error(`[sw-ready] ${err.message || err}`);
+    }
+
+    let subscription;
+    try {
+        subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+        });
+    } catch (err) {
+        throw new Error(`[subscribe] ${err.name || ''} ${err.message || err}`.trim());
+    }
+
+    try {
+        await api.subscribePush(token, subscription.toJSON());
+    } catch (err) {
+        throw new Error(`[backend-save] ${err.message || err}`);
+    }
+
     return subscription;
 }
 
