@@ -29,15 +29,11 @@ services:
         sync: false
       - key: SMS_GATE_PASSWORD
         sync: false
-      - key: R2_ACCOUNT_ID
+      - key: CLOUDINARY_CLOUD_NAME
         sync: false
-      - key: R2_ACCESS_KEY_ID
+      - key: CLOUDINARY_API_KEY
         sync: false
-      - key: R2_SECRET_ACCESS_KEY
-        sync: false
-      - key: R2_BUCKET_NAME
-        sync: false
-      - key: R2_PUBLIC_URL
+      - key: CLOUDINARY_API_SECRET
         sync: false
       - key: FRONTEND_URL
         value: https://moryhn.github.io

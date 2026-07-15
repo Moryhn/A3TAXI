@@ -1,28 +1,20 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import crypto from 'crypto';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
 
-const r2 = new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    },
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Receipt photos are the only files this app stores — uploaded straight to R2 so
-// they survive backend redeploys (Render's free tier has no persistent disk).
-export async function uploadReceiptPhoto(file) {
-    const ext = path.extname(file.originalname);
-    const key = `receipts/${Date.now()}-${crypto.randomUUID()}${ext}`;
-
-    await r2.send(new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-    }));
-
-    return `${process.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${key}`;
+// Receipt photos are the only files this app stores — uploaded straight to
+// Cloudinary so they survive backend redeploys (Render's free tier has no
+// persistent disk).
+export function uploadReceiptPhoto(file) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: 'a3taxi-receipts', resource_type: 'image' },
+            (err, result) => (err ? reject(err) : resolve(result.secure_url))
+        );
+        stream.end(file.buffer);
+    });
 }

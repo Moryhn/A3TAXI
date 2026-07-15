@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 export const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
 
-// Receipt URLs are absolute (Cloudflare R2) for trips created after the storage
+// Receipt URLs are absolute (Cloudinary) for trips created after the storage
 // migration; older trips still have the legacy backend-relative /uploads/... path.
 export function receiptUrl(path) {
     return /^https?:\/\//.test(path) ? path : `${API_ORIGIN}${path}`;
