@@ -14,6 +14,7 @@ export default {
     home: {
         titleBookNow: 'Book now',
         titleBook: 'Reserve for later',
+        titleCallNow: 'Call now',
         titleDriverLogin: 'Driver login',
         titleAdminLogin: 'Admin login',
         heroEyebrow: 'A3TAXI · Montreal',

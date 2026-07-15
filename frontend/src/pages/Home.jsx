@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Globe2, MessageCircle } from 'lucide-react';
+import { ArrowRight, Phone, ShieldCheck, Globe2, MessageCircle } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme.js';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 
@@ -39,6 +39,10 @@ export default function Home() {
                         <Link to="/book" className="btn btn--ghost hero__cta">
                             {t('home.titleBook')}
                         </Link>
+                        <a href="tel:+14504442000" className="btn btn--ghost hero__cta">
+                            <Phone size={16} />
+                            {t('home.titleCallNow')}
+                        </a>
                     </div>
 
                     <div className="trust-strip">

@@ -14,6 +14,7 @@ export default {
     home: {
         titleBookNow: 'Commander maintenant',
         titleBook: 'Réserver à l\'avance',
+        titleCallNow: 'Appelez maintenant',
         titleDriverLogin: 'Connexion chauffeur',
         titleAdminLogin: 'Connexion administrateur',
         heroEyebrow: 'A3TAXI · Montréal',
