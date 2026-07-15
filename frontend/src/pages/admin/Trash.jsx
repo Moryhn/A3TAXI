@@ -14,6 +14,7 @@ export default function Trash() {
         job: t('admin.trash.types.job'),
         driver: t('admin.trash.types.driver'),
         client: t('admin.trash.types.client'),
+        invoice: t('admin.trash.types.invoice'),
     };
     const [items, setItems] = useState([]);
     const [error, setError] = useState('');

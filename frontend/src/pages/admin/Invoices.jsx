@@ -4,6 +4,7 @@ import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCurrency } from '../../lib/format.js';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 export default function Invoices() {
     const { auth } = useAuth();
@@ -12,6 +13,7 @@ export default function Invoices() {
     const [clients, setClients] = useState([]);
     const [form, setForm] = useState({ clientAccountId: '', periodStart: '', periodEnd: '' });
     const [error, setError] = useState('');
+    const [pendingDelete, setPendingDelete] = useState(null);
 
     async function refresh() {
         setInvoices(await api.listInvoices(auth.token));
@@ -29,6 +31,12 @@ export default function Invoices() {
         } catch (err) {
             setError(err.message);
         }
+    }
+
+    async function confirmDelete() {
+        await api.deleteInvoice(auth.token, pendingDelete.id);
+        setPendingDelete(null);
+        refresh();
     }
 
     return (
@@ -71,7 +79,7 @@ export default function Invoices() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>{t('admin.invoices.colClient')}</th><th>{t('admin.invoices.colPeriod')}</th><th>{t('admin.invoices.colTotal')}</th><th>{t('admin.invoices.colGenerated')}</th><th></th></tr></thead>
+                        <thead><tr><th>{t('admin.invoices.colClient')}</th><th>{t('admin.invoices.colPeriod')}</th><th>{t('admin.invoices.colTotal')}</th><th>{t('admin.invoices.colGenerated')}</th><th></th><th></th></tr></thead>
                         <tbody>
                             {invoices.map((inv) => (
                                 <tr key={inv.id}>
@@ -80,6 +88,7 @@ export default function Invoices() {
                                     <td><span className="meter meter--sm">{formatCurrency(inv.total_amount, lang)}</span></td>
                                     <td className="subtle">{formatDate(inv.generated_at, lang)}</td>
                                     <td><Link to={`${inv.id}/print`} style={{ color: 'var(--amber)' }}>{t('admin.invoices.viewPrint')}</Link></td>
+                                    <td><button onClick={() => setPendingDelete(inv)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.invoices.delete')}</button></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -87,6 +96,14 @@ export default function Invoices() {
                 </div>
             )}
             <p className="subtle" style={{ marginTop: 12 }}>{t('admin.invoices.receiptDisclaimer')}</p>
+
+            <ConfirmDialog
+                open={!!pendingDelete}
+                title={t('admin.invoices.confirmDeleteTitle')}
+                message={pendingDelete ? t('admin.invoices.confirmDeleteMessage', { client: pendingDelete.client_name, total: formatCurrency(pendingDelete.total_amount, lang) }) : ''}
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDelete(null)}
+            />
         </div>
     );
 }

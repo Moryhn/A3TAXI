@@ -3,7 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { searchTrips, markTripsInvoiced } from '../models/trip.js';
 import {
     createInvoice, listInvoices, findInvoiceById, invoiceTrips,
-    findInvoiceByClientAndPeriod, addAmountToInvoice,
+    findInvoiceByClientAndPeriod, addAmountToInvoice, deleteInvoice,
 } from '../models/invoice.js';
 
 const router = Router();
@@ -59,6 +59,15 @@ router.get('/:id', requireAuth('admin'), async (req, res) => {
 
     const trips = await invoiceTrips(req.params.id);
     res.json({ ...invoice, trips });
+});
+
+// Moves the invoice to Trash and frees its trips to be invoiced again
+router.delete('/:id', requireAuth('admin'), async (req, res) => {
+    const invoice = await findInvoiceById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+
+    await deleteInvoice(req.params.id);
+    res.status(204).end();
 });
 
 export default router;

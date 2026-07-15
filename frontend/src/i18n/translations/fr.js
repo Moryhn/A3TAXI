@@ -206,6 +206,9 @@ export default {
             colGenerated: 'Générée',
             viewPrint: 'Voir / Imprimer',
             receiptDisclaimer: "Les photos de reçus ne sont jamais incluses sur la facture imprimée — elles restent dans le système à des fins de vérification interne uniquement.",
+            delete: 'Supprimer',
+            confirmDeleteTitle: 'Supprimer cette facture ?',
+            confirmDeleteMessage: "{{client}} — {{total}}. Elle sera déplacée vers la corbeille, et ses courses redeviendront disponibles pour une future facturation. Vous pourrez la restaurer plus tard.",
         },
         invoicePrint: {
             loading: 'Chargement…',
@@ -277,6 +280,7 @@ export default {
                 job: 'Course assignée',
                 driver: 'Chauffeur',
                 client: 'Compte client',
+                invoice: 'Facture',
             },
         },
         trips: {

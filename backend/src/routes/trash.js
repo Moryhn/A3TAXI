@@ -5,6 +5,7 @@ import { listDeletedReservations, restoreReservation, permanentlyDeleteReservati
 import { listDeletedDispatchJobs, restoreDispatchJob, permanentlyDeleteDispatchJob } from '../models/dispatch.js';
 import { listDeletedDrivers, restoreDriver, permanentlyDeleteDriver } from '../models/driver.js';
 import { listDeletedClientAccounts, restoreClientAccount, permanentlyDeleteClientAccount } from '../models/clientAccount.js';
+import { listDeletedInvoices, restoreInvoice, permanentlyDeleteInvoice } from '../models/invoice.js';
 
 const router = Router();
 
@@ -14,6 +15,7 @@ const restoreByType = {
     job: restoreDispatchJob,
     driver: restoreDriver,
     client: restoreClientAccount,
+    invoice: restoreInvoice,
 };
 
 const permanentDeleteByType = {
@@ -22,16 +24,18 @@ const permanentDeleteByType = {
     job: permanentlyDeleteDispatchJob,
     driver: permanentlyDeleteDriver,
     client: permanentlyDeleteClientAccount,
+    invoice: permanentlyDeleteInvoice,
 };
 
 // Everything currently in the trash, across all record types
 router.get('/', requireAuth('admin'), async (req, res) => {
-    const [trips, reservations, jobs, drivers, clients] = await Promise.all([
+    const [trips, reservations, jobs, drivers, clients, invoices] = await Promise.all([
         listDeletedTrips(),
         listDeletedReservations(),
         listDeletedDispatchJobs(),
         listDeletedDrivers(),
         listDeletedClientAccounts(),
+        listDeletedInvoices(),
     ]);
 
     const items = [
@@ -69,6 +73,13 @@ router.get('/', requireAuth('admin'), async (req, res) => {
             label: c.name,
             sublabel: c.code,
             deletedAt: c.deleted_at,
+        })),
+        ...invoices.map((i) => ({
+            type: 'invoice',
+            id: i.id,
+            label: i.client_name,
+            sublabel: `${new Date(i.period_start).toISOString().slice(0, 10)} → ${new Date(i.period_end).toISOString().slice(0, 10)} · $${Number(i.total_amount).toFixed(2)}`,
+            deletedAt: i.deleted_at,
         })),
     ].sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
 

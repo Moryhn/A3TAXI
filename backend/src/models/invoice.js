@@ -14,7 +14,7 @@ export async function createInvoice({ clientAccountId, periodStart, periodEnd, t
 // the same client+period top up this invoice instead of creating a duplicate.
 export async function findInvoiceByClientAndPeriod(clientAccountId, periodStart, periodEnd) {
     const { rows } = await query(
-        `SELECT * FROM invoices WHERE client_account_id = $1 AND period_start = $2 AND period_end = $3`,
+        `SELECT * FROM invoices WHERE client_account_id = $1 AND period_start = $2 AND period_end = $3 AND deleted_at IS NULL`,
         [clientAccountId, periodStart, periodEnd]
     );
     return rows[0] || null;
@@ -39,19 +39,48 @@ export async function findInvoiceById(id) {
 }
 
 export async function listInvoices({ clientAccountId } = {}) {
-    const conditions = [];
+    const conditions = ['i.deleted_at IS NULL'];
     const params = [];
     if (clientAccountId) {
-        conditions.push('i.client_account_id = $1');
+        conditions.push(`i.client_account_id = $${params.length + 1}`);
         params.push(clientAccountId);
     }
-    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const where = `WHERE ${conditions.join(' AND ')}`;
     const { rows } = await query(
         `SELECT i.*, c.name AS client_name, c.code AS client_code
          FROM invoices i JOIN client_accounts c ON c.id = i.client_account_id
          ${where}
          ORDER BY i.generated_at DESC`,
         params
+    );
+    return rows;
+}
+
+// Deleting an invoice releases its trips back to the un-invoiced pool (rather
+// than leaving them permanently stuck pointing at a trashed invoice), so a
+// wrongly-generated invoice can be deleted and its trips picked up again by
+// the next "Generate" for that client.
+export async function deleteInvoice(id) {
+    await query('UPDATE trips SET invoice_id = NULL WHERE invoice_id = $1', [id]);
+    await query('UPDATE invoices SET deleted_at = now() WHERE id = $1', [id]);
+}
+
+export async function restoreInvoice(id) {
+    const { rows } = await query('UPDATE invoices SET deleted_at = NULL WHERE id = $1 RETURNING *', [id]);
+    return rows[0] || null;
+}
+
+export async function permanentlyDeleteInvoice(id) {
+    await query('UPDATE trips SET invoice_id = NULL WHERE invoice_id = $1', [id]);
+    await query('DELETE FROM invoices WHERE id = $1', [id]);
+}
+
+export async function listDeletedInvoices() {
+    const { rows } = await query(
+        `SELECT i.*, c.name AS client_name, c.code AS client_code
+         FROM invoices i JOIN client_accounts c ON c.id = i.client_account_id
+         WHERE i.deleted_at IS NOT NULL
+         ORDER BY i.deleted_at DESC`
     );
     return rows;
 }

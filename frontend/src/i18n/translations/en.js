@@ -206,6 +206,9 @@ export default {
             colGenerated: 'Generated',
             viewPrint: 'View / Print',
             receiptDisclaimer: 'Receipt photos are never included on the printed invoice — they remain in the system for internal verification only.',
+            delete: 'Delete',
+            confirmDeleteTitle: 'Delete this invoice?',
+            confirmDeleteMessage: '{{client}} — {{total}}. It\'ll move to Trash, and its trips become available to invoice again. You can restore it later.',
         },
         invoicePrint: {
             loading: 'Loading…',
@@ -277,6 +280,7 @@ export default {
                 job: 'Dispatch job',
                 driver: 'Driver',
                 client: 'Client account',
+                invoice: 'Invoice',
             },
         },
         trips: {
