@@ -59,6 +59,7 @@ export default function Reservations() {
                 customerPhone: selected.client_phone,
                 estimatedPrice: selected.estimated_price,
                 jobType: selected.service_type,
+                scheduledTime: selected.requested_time,
             });
             setSendStatus({ ok: true, message: t('admin.reservations.sentToDriver') });
             setSendDriverId('');

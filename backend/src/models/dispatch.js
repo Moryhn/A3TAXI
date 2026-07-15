@@ -23,15 +23,35 @@ export async function latestPositions() {
 
 export async function createDispatchJob({
     driverId = null, address, notes, assignedBy, jobType = 'ride',
-    dropoffLocation = null, customerPhone = null, estimatedPrice = null,
+    dropoffLocation = null, customerPhone = null, estimatedPrice = null, scheduledTime = null,
 }) {
     const trackingToken = crypto.randomBytes(24).toString('base64url');
     const { rows } = await query(
-        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type, dropoff_location, customer_phone, estimated_price, tracking_token)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [driverId, address, notes, assignedBy, jobType, dropoffLocation, customerPhone, estimatedPrice, trackingToken]
+        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type, dropoff_location, customer_phone, estimated_price, tracking_token, scheduled_time)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        [driverId, address, notes, assignedBy, jobType, dropoffLocation, customerPhone, estimatedPrice, trackingToken, scheduledTime]
     );
     return rows[0];
+}
+
+// Accepted jobs scheduled for the near future whose customer hasn't gotten
+// the "your driver is on the way" text yet — checked by a periodic sweep
+// rather than sent immediately on accept, since the driver may accept hours
+// or days before a scheduled pickup.
+export async function findJobsDueForTrackingSms() {
+    const { rows } = await query(
+        `SELECT * FROM dispatch_jobs
+         WHERE status = 'accepted'
+           AND customer_phone IS NOT NULL
+           AND tracking_sms_sent = false
+           AND scheduled_time IS NOT NULL
+           AND scheduled_time <= now() + interval '10 minutes'`
+    );
+    return rows;
+}
+
+export async function markTrackingSmsSent(jobId) {
+    await query('UPDATE dispatch_jobs SET tracking_sms_sent = true WHERE id = $1', [jobId]);
 }
 
 // Public "track my ride" page looks the job up by its unguessable token,

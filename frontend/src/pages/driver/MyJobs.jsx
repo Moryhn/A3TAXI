@@ -3,10 +3,11 @@ import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { isPushSupported, getExistingPushSubscription, enablePushNotifications, disablePushNotifications } from '../../push.js';
+import { formatDateTime } from '../../lib/format.js';
 
 export default function MyJobs() {
     const { auth } = useAuth();
-    const { t } = useLanguage();
+    const { t, lang } = useLanguage();
     const [jobs, setJobs] = useState([]);
     const [sharing, setSharing] = useState(false);
     const [watchId, setWatchId] = useState(null);
@@ -141,6 +142,12 @@ export default function MyJobs() {
                             </div>
                             {j.job_type && j.job_type !== 'ride' && (
                                 <div className="eyebrow" style={{ marginBottom: 6 }}>{t(`admin.dispatch.jobType.${j.job_type}`)}</div>
+                            )}
+                            {j.scheduled_time && (
+                                <p className="subtle" style={{ marginBottom: 6, fontWeight: 600 }}>{formatDateTime(j.scheduled_time, lang)}</p>
+                            )}
+                            {j.dropoff_location && (
+                                <p className="subtle" style={{ marginBottom: 6 }}>→ {j.dropoff_location}</p>
                             )}
                             {j.notes && <p className="subtle" style={{ marginBottom: 10 }}>{j.notes}</p>}
                             {j.status === 'pending' && (

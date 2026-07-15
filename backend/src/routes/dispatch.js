@@ -12,12 +12,20 @@ import {
     assignDriverToJob,
     findDispatchJobByTrackingToken,
     latestPositionForDriver,
+    findJobsDueForTrackingSms,
+    markTrackingSmsSent,
 } from '../models/dispatch.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
 import { sendSms } from '../services/sms.js';
 
 const router = Router();
+
+async function sendTrackingSms(job) {
+    const trackingUrl = `${(process.env.FRONTEND_URL || '').replace(/\/$/, '')}/A3TAXI/#/track/${job.tracking_token}`;
+    await sendSms(job.customer_phone, `Your A3TAXI driver is on the way! Track your ride live: ${trackingUrl}`);
+    await markTrackingSmsSent(job.id);
+}
 
 // Driver app posts periodic GPS updates
 router.post('/positions', requireAuth('driver'), async (req, res) => {
@@ -66,7 +74,7 @@ router.post('/requests', async (req, res) => {
 // estimatedPrice are accepted here too (so the customer gets the same
 // tracking SMS as a "book now" request once the driver accepts).
 router.post('/jobs', requireAuth('admin'), async (req, res) => {
-    const { driverId, address, notes, jobType, dropoffLocation, customerPhone, estimatedPrice } = req.body;
+    const { driverId, address, notes, jobType, dropoffLocation, customerPhone, estimatedPrice, scheduledTime } = req.body;
     if (!driverId || !address) {
         return res.status(400).json({ error: 'driverId and address are required' });
     }
@@ -74,7 +82,7 @@ router.post('/jobs', requireAuth('admin'), async (req, res) => {
         return res.status(400).json({ error: `jobType must be one of ${JOB_TYPES.join(', ')}` });
     }
     const job = await createDispatchJob({
-        driverId, address, notes, assignedBy: req.user.sub, jobType, dropoffLocation, customerPhone, estimatedPrice,
+        driverId, address, notes, assignedBy: req.user.sub, jobType, dropoffLocation, customerPhone, estimatedPrice, scheduledTime,
     });
     sendJobNotification(driverId, job).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.status(201).json(job);
@@ -101,10 +109,13 @@ router.patch('/jobs/:id', requireAuth('admin', 'driver'), async (req, res) => {
         }
         const job = await updateDispatchJobStatus(req.params.id, status);
         if (!job) return res.status(404).json({ error: 'Job not found' });
-        if (status === 'accepted' && job.customer_phone && job.tracking_token) {
-            const trackingUrl = `${(process.env.FRONTEND_URL || '').replace(/\/$/, '')}/A3TAXI/#/track/${job.tracking_token}`;
-            sendSms(job.customer_phone, `Your A3TAXI driver is on the way! Track your ride live: ${trackingUrl}`)
-                .catch((err) => console.error('Tracking SMS failed:', err.message));
+        // Jobs with no scheduled_time are "now" (book-now requests, ad-hoc
+        // admin dispatches) — text immediately. Jobs scheduled ahead of time
+        // (a reservation sent to a driver hours early) wait for the periodic
+        // sweep below instead, so the customer isn't told "on the way" the
+        // moment a driver accepts a job for tomorrow.
+        if (status === 'accepted' && job.customer_phone && job.tracking_token && !job.scheduled_time) {
+            sendTrackingSms(job).catch((err) => console.error('Tracking SMS failed:', err.message));
         }
         return res.json(job);
     }
@@ -142,6 +153,22 @@ router.get('/track/:token', async (req, res) => {
         dropoffLocation: job.dropoff_location,
         position,
     });
+});
+
+// Pinged every few minutes by a GitHub Actions schedule (see
+// .github/workflows/tracking-sms-cron.yml) — sends the "on the way" text for
+// any accepted, scheduled job now within 10 minutes of pickup. Protected by
+// a shared secret rather than admin auth since it's an unattended machine
+// caller, not a logged-in admin.
+router.post('/send-scheduled-tracking-sms', async (req, res) => {
+    if (!process.env.CRON_SECRET || req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const jobs = await findJobsDueForTrackingSms();
+    const results = await Promise.allSettled(jobs.map(sendTrackingSms));
+    const sent = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.length - sent;
+    res.json({ checked: jobs.length, sent, failed });
 });
 
 // Admin removes a dispatched job

@@ -1,0 +1,18 @@
+name: Send scheduled tracking SMS
+
+on:
+  schedule:
+    # Every 5 minutes — GitHub Actions' minimum schedule granularity. The
+    # backend treats a job as "due" up to 10 minutes ahead of pickup so this
+    # interval can never skip one between runs.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger scheduled tracking SMS sweep
+        run: |
+          curl -sf -X POST "https://a3taxi.onrender.com/api/dispatch/send-scheduled-tracking-sms" \
+            -H "X-Cron-Secret: ${{ secrets.CRON_SECRET }}"
