@@ -9,6 +9,25 @@ export async function createInvoice({ clientAccountId, periodStart, periodEnd, t
     return rows[0];
 }
 
+// One invoice per client per period, no matter how many drivers' trips feed
+// into it or how many times admin re-runs "Generate" — later generations for
+// the same client+period top up this invoice instead of creating a duplicate.
+export async function findInvoiceByClientAndPeriod(clientAccountId, periodStart, periodEnd) {
+    const { rows } = await query(
+        `SELECT * FROM invoices WHERE client_account_id = $1 AND period_start = $2 AND period_end = $3`,
+        [clientAccountId, periodStart, periodEnd]
+    );
+    return rows[0] || null;
+}
+
+export async function addAmountToInvoice(invoiceId, additionalAmount) {
+    const { rows } = await query(
+        `UPDATE invoices SET total_amount = total_amount + $2 WHERE id = $1 RETURNING *`,
+        [invoiceId, additionalAmount]
+    );
+    return rows[0];
+}
+
 export async function findInvoiceById(id) {
     const { rows } = await query(
         `SELECT i.*, c.name AS client_name, c.code AS client_code
