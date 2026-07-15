@@ -97,7 +97,19 @@ export default function Login() {
                         ) : (
                             <div className="field">
                                 <label htmlFor="accessCode">{t('login.accessCodeLabel')}</label>
-                                <input id="accessCode" className="input" style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }} placeholder="DRV-1001" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} required />
+                                <input
+                                    id="accessCode"
+                                    className="input"
+                                    style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
+                                    placeholder="DRV-1001"
+                                    value={accessCode}
+                                    onChange={(e) => setAccessCode(e.target.value)}
+                                    autoCapitalize="characters"
+                                    autoCorrect="off"
+                                    autoComplete="off"
+                                    spellCheck="false"
+                                    required
+                                />
                             </div>
                         )}
                         {error && <div className="pill pill--cancelled" style={{ color: 'var(--danger)', background: 'rgba(240,85,76,0.12)' }}>{error}</div>}

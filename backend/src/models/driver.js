@@ -2,8 +2,8 @@ import { query } from '../config/db.js';
 
 export async function findDriverByAccessCode(accessCode) {
     const { rows } = await query(
-        'SELECT * FROM drivers WHERE access_code = $1 AND is_active = true',
-        [accessCode]
+        'SELECT * FROM drivers WHERE UPPER(access_code) = UPPER($1) AND is_active = true',
+        [accessCode.trim()]
     );
     return rows[0] || null;
 }
