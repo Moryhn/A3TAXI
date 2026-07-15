@@ -22,12 +22,37 @@ export async function findInvoiceByClientAndPeriod(clientAccountId, periodStart,
     return rows[0] || null;
 }
 
+export async function updateInvoice(id, { invoiceNumber, invoiceDate }) {
+    const { rows } = await query(
+        `UPDATE invoices SET
+            invoice_number = COALESCE($2, invoice_number),
+            invoice_date = COALESCE($3, invoice_date)
+         WHERE id = $1 RETURNING *`,
+        [id, invoiceNumber, invoiceDate]
+    );
+    return rows[0] || null;
+}
+
 export async function addAmountToInvoice(invoiceId, additionalAmount) {
     const { rows } = await query(
         `UPDATE invoices SET total_amount = total_amount + $2 WHERE id = $1 RETURNING *`,
         [invoiceId, additionalAmount]
     );
     return rows[0];
+}
+
+// Keeps total_amount truthful to its line items whenever a trip on an
+// already-invoiced invoice is edited or removed (admin can now correct a
+// wrong amount/route/date after generation instead of the invoice being
+// permanently locked).
+export async function recalculateInvoiceTotal(invoiceId) {
+    const { rows } = await query(
+        `UPDATE invoices SET total_amount = (
+            SELECT COALESCE(SUM(amount), 0) FROM trips WHERE invoice_id = $1 AND deleted_at IS NULL
+         ) WHERE id = $1 RETURNING *`,
+        [invoiceId]
+    );
+    return rows[0] || null;
 }
 
 export async function findInvoiceById(id) {
@@ -93,7 +118,7 @@ export async function invoiceTrips(invoiceId) {
     const { rows } = await query(
         `SELECT t.id, t.trip_date, t.departure_location, t.arrival_location, t.amount, d.name AS driver_name
          FROM trips t JOIN drivers d ON d.id = t.driver_id
-         WHERE t.invoice_id = $1
+         WHERE t.invoice_id = $1 AND t.deleted_at IS NULL
          ORDER BY t.trip_date`,
         [invoiceId]
     );

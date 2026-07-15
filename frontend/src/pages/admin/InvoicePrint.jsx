@@ -25,10 +25,60 @@ export default function InvoicePrint() {
     const { id } = useParams();
     const { t, lang } = useLanguage();
     const [invoice, setInvoice] = useState(null);
+    const [editing, setEditing] = useState(false);
+    const [editHeader, setEditHeader] = useState({ invoiceNumber: '', invoiceDate: '' });
+    const [editTrips, setEditTrips] = useState([]);
+    const [removedTripIds, setRemovedTripIds] = useState([]);
+    const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        api.getInvoice(auth.token, id).then(setInvoice);
-    }, [id]);
+    function refresh() {
+        return api.getInvoice(auth.token, id).then(setInvoice);
+    }
+
+    useEffect(() => { refresh(); }, [id]);
+
+    function startEdit() {
+        setEditHeader({
+            invoiceNumber: invoice.invoice_number || '',
+            invoiceDate: (invoice.invoice_date || invoice.generated_at).slice(0, 10),
+        });
+        setEditTrips(invoice.trips.map((trip) => ({
+            id: trip.id,
+            trip_date: trip.trip_date.slice(0, 10),
+            departure_location: trip.departure_location,
+            arrival_location: trip.arrival_location,
+            amount: trip.amount,
+        })));
+        setRemovedTripIds([]);
+        setEditing(true);
+    }
+
+    function updateTripField(tripId, field, value) {
+        setEditTrips((rows) => rows.map((r) => (r.id === tripId ? { ...r, [field]: value } : r)));
+    }
+
+    function removeTripLine(tripId) {
+        setEditTrips((rows) => rows.filter((r) => r.id !== tripId));
+        setRemovedTripIds((ids) => [...ids, tripId]);
+    }
+
+    async function saveEdit() {
+        setSaving(true);
+        try {
+            await api.updateInvoice(auth.token, id, editHeader);
+            await Promise.all(editTrips.map((r) => api.updateTrip(auth.token, r.id, {
+                departureLocation: r.departure_location,
+                arrivalLocation: r.arrival_location,
+                amount: r.amount,
+                tripDate: r.trip_date,
+            })));
+            await Promise.all(removedTripIds.map((tripId) => api.deleteTrip(auth.token, tripId)));
+            await refresh();
+            setEditing(false);
+        } finally {
+            setSaving(false);
+        }
+    }
 
     if (!invoice) return <div className="theme-light" style={{ minHeight: '100vh', padding: 40 }}>{t('admin.invoicePrint.loading')}</div>;
 
@@ -39,8 +89,20 @@ export default function InvoicePrint() {
     return (
         <div className="theme-light invoice-print" style={{ minHeight: '100vh', padding: '40px 20px' }}>
             <div style={{ maxWidth: 720, margin: '0 auto' }}>
-                <div className="no-print" style={{ marginBottom: 24 }}>
-                    <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoicePrint.printButton')}</button>
+                <div className="no-print" style={{ marginBottom: 24, display: 'flex', gap: 10 }}>
+                    {editing ? (
+                        <>
+                            <button onClick={saveEdit} className="btn btn--primary" disabled={saving}>
+                                {saving ? t('common.save') + '…' : t('admin.invoicePrint.saveChanges')}
+                            </button>
+                            <button onClick={() => setEditing(false)} className="btn btn--ghost" disabled={saving}>{t('common.cancel')}</button>
+                        </>
+                    ) : (
+                        <>
+                            <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoicePrint.printButton')}</button>
+                            <button onClick={startEdit} className="btn btn--ghost">{t('admin.invoicePrint.editButton')}</button>
+                        </>
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -53,8 +115,23 @@ export default function InvoicePrint() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                         <h1 className="h1" style={{ fontSize: 28, marginBottom: 8 }}>{t('admin.invoicePrint.title')}</h1>
-                        <div className="subtle">{t('admin.invoicePrint.dateLabel')}: {formatDate(invoiceDate, lang)}</div>
-                        <div className="subtle">{t('admin.invoicePrint.numberLabel')}: {invoiceNumber}</div>
+                        {editing ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <span className="subtle">{t('admin.invoicePrint.dateLabel')}:</span>
+                                    <input className="input no-print" type="date" style={{ padding: '4px 8px', width: 150 }} value={editHeader.invoiceDate} onChange={(e) => setEditHeader({ ...editHeader, invoiceDate: e.target.value })} />
+                                </div>
+                                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <span className="subtle">{t('admin.invoicePrint.numberLabel')}:</span>
+                                    <input className="input no-print" style={{ padding: '4px 8px', width: 150, fontFamily: 'var(--font-mono)' }} value={editHeader.invoiceNumber} onChange={(e) => setEditHeader({ ...editHeader, invoiceNumber: e.target.value })} />
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="subtle">{t('admin.invoicePrint.dateLabel')}: {formatDate(invoiceDate, lang)}</div>
+                                <div className="subtle">{t('admin.invoicePrint.numberLabel')}: {invoiceNumber}</div>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -69,6 +146,7 @@ export default function InvoicePrint() {
                     <div className="subtle" style={{ marginTop: 8 }}>
                         {t('admin.invoicePrint.period')}: {formatDate(invoice.period_start, lang)} — {formatDate(invoice.period_end, lang)}
                     </div>
+                    {editing && <p className="subtle" style={{ marginTop: 8, fontSize: 12 }}>{t('admin.invoicePrint.editClientHint')}</p>}
                 </div>
 
                 <div className="table-wrap">
@@ -80,10 +158,20 @@ export default function InvoicePrint() {
                                 <th>{t('admin.invoicePrint.colDeparture')}</th>
                                 <th>{t('admin.invoicePrint.colArrival')}</th>
                                 <th style={{ textAlign: 'right' }}>{t('admin.invoicePrint.colAmount')}</th>
+                                {editing && <th className="no-print"></th>}
                             </tr>
                         </thead>
                         <tbody>
-                            {invoice.trips.map((trip) => (
+                            {editing ? editTrips.map((trip) => (
+                                <tr key={trip.id}>
+                                    <td><input className="input" type="date" style={{ padding: '6px 8px' }} value={trip.trip_date} onChange={(e) => updateTripField(trip.id, 'trip_date', e.target.value)} /></td>
+                                    <td className="subtle">{invoice.client_invoice_description || '—'}</td>
+                                    <td><input className="input" style={{ padding: '6px 8px' }} value={trip.departure_location} onChange={(e) => updateTripField(trip.id, 'departure_location', e.target.value)} /></td>
+                                    <td><input className="input" style={{ padding: '6px 8px' }} value={trip.arrival_location} onChange={(e) => updateTripField(trip.id, 'arrival_location', e.target.value)} /></td>
+                                    <td><input className="input" type="number" step="0.01" style={{ padding: '6px 8px', textAlign: 'right', fontFamily: 'var(--font-mono)' }} value={trip.amount} onChange={(e) => updateTripField(trip.id, 'amount', e.target.value)} /></td>
+                                    <td className="no-print"><button onClick={() => removeTripLine(trip.id)} className="btn btn--danger" style={{ padding: '6px 10px', fontSize: 12 }}>{t('common.delete')}</button></td>
+                                </tr>
+                            )) : invoice.trips.map((trip) => (
                                 <tr key={trip.id}>
                                     <td className="subtle">{formatDate(trip.trip_date, lang)}</td>
                                     <td>{invoice.client_invoice_description || trip.driver_name}</td>
@@ -118,6 +206,7 @@ export default function InvoicePrint() {
                             <span>{t('admin.invoicePrint.total')}</span>
                             <span style={{ fontFamily: 'var(--font-mono)' }}>{formatCurrency(tax.total, lang)}</span>
                         </div>
+                        {editing && <p className="subtle" style={{ fontSize: 11, marginTop: 6 }}>{t('admin.invoicePrint.totalRecalcHint')}</p>}
                     </div>
                 </div>
 

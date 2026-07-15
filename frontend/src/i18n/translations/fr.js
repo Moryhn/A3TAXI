@@ -240,6 +240,10 @@ export default {
             thankYou: "Merci d'encourager l'industrie locale.",
             footerContact: 'Pour toute question, contactez-nous au {{phone}} ou {{email}}.',
             disclaimer: "Les photos de reçus sont conservées à l'interne et ne sont pas incluses dans cette facture.",
+            editButton: 'Modifier',
+            saveChanges: 'Enregistrer les modifications',
+            editClientHint: "Le nom/l'adresse de facturation viennent du compte client — modifiez-les depuis la page Clients pour mettre à jour toutes les prochaines factures.",
+            totalRecalcHint: 'Le total se recalcule automatiquement à partir des lignes ci-dessus une fois enregistré.',
         },
         reservations: {
             eyebrow: 'Réservations',

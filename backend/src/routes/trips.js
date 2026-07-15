@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { uploadReceipt } from '../middleware/upload.js';
 import { uploadReceiptPhoto } from '../services/storage.js';
 import { createTrip, searchTrips, findTripById, updateTrip, deleteTrip } from '../models/trip.js';
+import { recalculateInvoiceTotal } from '../models/invoice.js';
 
 const router = Router();
 
@@ -48,24 +49,28 @@ router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
     res.json(trips);
 });
 
-// Admin edits a trip (blocked once it's been invoiced, to protect billing history)
+// Admin edits a trip. Editing one that's already on an invoice is allowed —
+// the invoice's total is recalculated from its line items right after, so it
+// never goes stale relative to what it actually lists.
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
-    if (trip.invoice_id) return res.status(409).json({ error: 'This trip has already been invoiced and can no longer be edited' });
 
-    const { departureLocation, arrivalLocation, amount } = req.body;
-    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount });
+    const { departureLocation, arrivalLocation, amount, tripDate } = req.body;
+    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount, tripDate });
+    if (trip.invoice_id) await recalculateInvoiceTotal(trip.invoice_id);
     res.json(updated);
 });
 
-// Admin deletes a trip (blocked once it's been invoiced)
+// Admin deletes a trip. If it was on an invoice, that invoice's total is
+// recalculated (and, if it was the last line, the invoice is left at $0
+// rather than deleted outright — admin can delete the invoice separately).
 router.delete('/:id', requireAuth('admin'), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
-    if (trip.invoice_id) return res.status(409).json({ error: 'This trip has already been invoiced and can no longer be deleted' });
 
     await deleteTrip(req.params.id);
+    if (trip.invoice_id) await recalculateInvoiceTotal(trip.invoice_id);
     res.status(204).end();
 });
 

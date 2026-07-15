@@ -240,6 +240,10 @@ export default {
             thankYou: 'Thank you for supporting local business.',
             footerContact: 'Questions? Reach us at {{phone}} or {{email}}.',
             disclaimer: 'Receipt photos are retained internally and are not included on this invoice.',
+            editButton: 'Edit',
+            saveChanges: 'Save changes',
+            editClientHint: 'Billing name/address come from the client account — edit them on the Clients page to update every future invoice.',
+            totalRecalcHint: 'Total recalculates automatically from the line items above once saved.',
         },
         reservations: {
             eyebrow: 'Reservations',
