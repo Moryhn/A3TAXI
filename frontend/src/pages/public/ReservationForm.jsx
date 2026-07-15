@@ -18,6 +18,7 @@ const INITIAL_FORM = {
     clientName: '', clientPhone: '', clientEmail: '',
     pickupLocation: '', dropoffLocation: '', requestedTime: '',
     isRoundTrip: false, passengerCount: 1, carryOnCount: 0, checkedLuggageCount: 0,
+    destinationCategory: 'local',
 };
 
 export default function ReservationForm() {

@@ -31,10 +31,15 @@ export default function Home() {
                         {t('home.heroTitleStart')} <em>{t('home.heroTitleEmphasis')}</em>
                     </h1>
                     <p className="hero__subtitle">{t('home.heroSubtitle')}</p>
-                    <Link to="/book" className="btn btn--primary hero__cta">
-                        {t('home.titleBook')}
-                        <ArrowRight size={18} />
-                    </Link>
+                    <div className="hero__cta-row">
+                        <Link to="/book-now" className="btn btn--primary hero__cta">
+                            {t('home.titleBookNow')}
+                            <ArrowRight size={18} />
+                        </Link>
+                        <Link to="/book" className="btn btn--ghost hero__cta">
+                            {t('home.titleBook')}
+                        </Link>
+                    </div>
 
                     <div className="trust-strip">
                         <span className="trust-badge"><ShieldCheck size={15} /> {t('home.trustNoSurge')}</span>

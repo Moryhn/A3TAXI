@@ -21,6 +21,7 @@ export default function DispatchMap() {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({ address: '', notes: '' });
     const [pendingDelete, setPendingDelete] = useState(null);
+    const [assigning, setAssigning] = useState({});
 
     async function refresh() {
         setPositions(await api.getDriverPositions(auth.token));
@@ -66,6 +67,17 @@ export default function DispatchMap() {
         setPendingDelete(null);
         refresh();
     }
+
+    async function assignDriver(jobId) {
+        const driverId = assigning[jobId];
+        if (!driverId) return;
+        await api.assignDispatchJob(auth.token, jobId, driverId);
+        setAssigning((a) => ({ ...a, [jobId]: '' }));
+        refresh();
+    }
+
+    const incomingRequests = jobs.filter((j) => !j.driver_id);
+    const recentJobs = jobs.filter((j) => j.driver_id);
 
     return (
         <div>
@@ -153,15 +165,54 @@ export default function DispatchMap() {
             </div>
 
             <div className="card" style={{ marginTop: 20 }}>
+                <div className="eyebrow">{t('admin.dispatch.incomingRequestsEyebrow')}</div>
+                {incomingRequests.length === 0 ? (
+                    <p className="subtle" style={{ marginTop: 10 }}>{t('admin.dispatch.noIncomingRequests')}</p>
+                ) : (
+                    <div className="table-wrap" style={{ marginTop: 10 }}>
+                        <table className="table">
+                            <thead><tr><th>{t('admin.dispatch.colPickup')}</th><th>{t('admin.dispatch.colDropoff')}</th><th>{t('admin.dispatch.colPhone')}</th><th>{t('admin.dispatch.colEstimatedPrice')}</th><th>{t('admin.dispatch.colActions')}</th></tr></thead>
+                            <tbody>
+                                {incomingRequests.map((j) => (
+                                    <tr key={j.id}>
+                                        <td>{j.address}</td>
+                                        <td>{j.dropoff_location || '—'}</td>
+                                        <td>{j.customer_phone ? <a href={`tel:${j.customer_phone}`} style={{ color: 'var(--amber)' }}>{j.customer_phone}</a> : '—'}</td>
+                                        <td className="subtle">{j.estimated_price != null ? `$${Number(j.estimated_price).toFixed(2)}` : '—'}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                <select
+                                                    className="select"
+                                                    style={{ padding: '6px 10px', fontSize: 12 }}
+                                                    value={assigning[j.id] || ''}
+                                                    onChange={(e) => setAssigning((a) => ({ ...a, [j.id]: e.target.value }))}
+                                                >
+                                                    <option value="">{t('admin.dispatch.selectDriver')}</option>
+                                                    {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                                </select>
+                                                <button onClick={() => assignDriver(j.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }} disabled={!assigning[j.id]}>
+                                                    {t('admin.dispatch.assign')}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            <div className="card" style={{ marginTop: 20 }}>
                 <div className="eyebrow">{t('admin.dispatch.recentJobsEyebrow')}</div>
-                {jobs.length === 0 ? (
+                {recentJobs.length === 0 ? (
                     <p className="subtle" style={{ marginTop: 10 }}>{t('admin.dispatch.noJobsYet')}</p>
                 ) : (
                     <div className="table-wrap" style={{ marginTop: 10 }}>
                         <table className="table">
                             <thead><tr><th>{t('admin.dispatch.colDriver')}</th><th>{t('admin.dispatch.colType')}</th><th>{t('admin.dispatch.colAddress')}</th><th>{t('admin.dispatch.colNotes')}</th><th>{t('admin.dispatch.colStatus')}</th><th>{t('admin.dispatch.colActions')}</th></tr></thead>
                             <tbody>
-                                {jobs.map((j) => (
+                                {recentJobs.map((j) => (
                                     <tr key={j.id}>
                                         <td>{j.driver_name}</td>
                                         <td className="subtle">{t(`admin.dispatch.jobType.${j.job_type}`)}</td>

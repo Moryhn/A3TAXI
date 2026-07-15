@@ -62,6 +62,8 @@ export const api = {
     listAllDispatchJobs: (token) => request('/dispatch/jobs/all', { token }),
     updateDispatchJob: (token, id, body) => request(`/dispatch/jobs/${id}`, { method: 'PATCH', body, token }),
     deleteDispatchJob: (token, id) => request(`/dispatch/jobs/${id}`, { method: 'DELETE', token }),
+    assignDispatchJob: (token, id, driverId) => request(`/dispatch/jobs/${id}/assign`, { method: 'PATCH', body: { driverId }, token }),
+    createRideRequest: (body) => request('/dispatch/requests', { method: 'POST', body }),
 
     getVapidPublicKey: (token) => request('/push/vapid-public-key', { token }),
     subscribePush: (token, subscription) => request('/push/subscribe', { method: 'POST', body: { subscription }, token }),

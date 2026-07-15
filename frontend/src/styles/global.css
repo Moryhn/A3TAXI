@@ -876,12 +876,22 @@ textarea {
     line-height: 1.5;
 }
 
+.hero__cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
 .hero__cta {
     padding: 16px 32px;
     font-size: 16px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
+}
+
+.hero__cta.btn--primary {
     box-shadow: 0 8px 24px rgba(245, 183, 0, 0.25);
 }
 

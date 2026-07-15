@@ -9,8 +9,10 @@ import {
     listAllDispatchJobs,
     updateDispatchJob,
     deleteDispatchJob,
+    assignDriverToJob,
 } from '../models/dispatch.js';
 import { sendJobNotification } from '../services/push.js';
+import { getRideEstimate } from '../services/quote.js';
 
 const router = Router();
 
@@ -31,6 +33,30 @@ router.get('/positions', requireAuth('admin'), async (req, res) => {
 });
 
 const JOB_TYPES = ['ride', 'battery_boost', 'lockout'];
+
+// Public "book now" request — customer submits pickup/dropoff/phone, no driver
+// assigned yet. Shows up in the admin dispatch queue as unassigned until an
+// admin picks a driver via PATCH /jobs/:id/assign.
+router.post('/requests', async (req, res) => {
+    const { pickupLocation, dropoffLocation, customerPhone } = req.body;
+    if (!pickupLocation || !dropoffLocation || !customerPhone) {
+        return res.status(400).json({ error: 'pickupLocation, dropoffLocation and customerPhone are required' });
+    }
+
+    // Recomputed server-side — never trust a client-supplied price.
+    const quote = await getRideEstimate({
+        pickupLocation, dropoffLocation, requestedTime: new Date().toISOString(), isRoundTrip: false, serviceType: 'ride',
+    });
+
+    const job = await createDispatchJob({
+        address: pickupLocation,
+        dropoffLocation,
+        customerPhone,
+        estimatedPrice: quote.estimatedPrice,
+        jobType: 'ride',
+    });
+    res.status(201).json(job);
+});
 
 // Admin sends a job/address to a specific driver
 router.post('/jobs', requireAuth('admin'), async (req, res) => {
@@ -76,6 +102,17 @@ router.patch('/jobs/:id', requireAuth('admin', 'driver'), async (req, res) => {
     }
     const job = await updateDispatchJob(req.params.id, { address, notes, jobType });
     if (!job) return res.status(404).json({ error: 'Job not found' });
+    res.json(job);
+});
+
+// Admin assigns a driver to an unassigned "book now" request
+router.patch('/jobs/:id/assign', requireAuth('admin'), async (req, res) => {
+    const { driverId } = req.body;
+    if (!driverId) return res.status(400).json({ error: 'driverId is required' });
+
+    const job = await assignDriverToJob(req.params.id, driverId, req.user.sub);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    sendJobNotification(driverId, job).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.json(job);
 });
 

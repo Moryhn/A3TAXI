@@ -7,6 +7,7 @@ import Login from './pages/Login.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import ReservationForm from './pages/public/ReservationForm.jsx';
+import BookNow from './pages/public/BookNow.jsx';
 
 export default function App() {
     return (
@@ -16,6 +17,7 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/book" element={<ReservationForm />} />
+                        <Route path="/book-now" element={<BookNow />} />
                         <Route path="/login" element={<Login />} />
                         <Route
                             path="/admin/*"

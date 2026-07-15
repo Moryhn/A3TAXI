@@ -20,13 +20,26 @@ export async function latestPositions() {
     return rows;
 }
 
-export async function createDispatchJob({ driverId, address, notes, assignedBy, jobType = 'ride' }) {
+export async function createDispatchJob({
+    driverId = null, address, notes, assignedBy, jobType = 'ride',
+    dropoffLocation = null, customerPhone = null, estimatedPrice = null,
+}) {
     const { rows } = await query(
-        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [driverId, address, notes, assignedBy, jobType]
+        `INSERT INTO dispatch_jobs (driver_id, address, notes, assigned_by, job_type, dropoff_location, customer_phone, estimated_price)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [driverId, address, notes, assignedBy, jobType, dropoffLocation, customerPhone, estimatedPrice]
     );
     return rows[0];
+}
+
+// Admin picks a driver for a customer-submitted "book now" request (driver_id
+// was NULL until this point) — also used if we ever let admin reassign a job.
+export async function assignDriverToJob(jobId, driverId, adminId) {
+    const { rows } = await query(
+        `UPDATE dispatch_jobs SET driver_id = $2, assigned_by = $3, updated_at = now() WHERE id = $1 RETURNING *`,
+        [jobId, driverId, adminId]
+    );
+    return rows[0] || null;
 }
 
 export async function listDispatchJobsForDriver(driverId, status) {
@@ -56,7 +69,7 @@ export async function listAllDispatchJobs(limit = 50) {
     const { rows } = await query(
         `SELECT j.*, d.name AS driver_name
          FROM dispatch_jobs j
-         JOIN drivers d ON d.id = j.driver_id
+         LEFT JOIN drivers d ON d.id = j.driver_id
          WHERE j.deleted_at IS NULL
          ORDER BY j.created_at DESC
          LIMIT $1`,
@@ -70,7 +83,7 @@ export async function listAllDispatchJobsForExport() {
     const { rows } = await query(
         `SELECT j.*, d.name AS driver_name
          FROM dispatch_jobs j
-         JOIN drivers d ON d.id = j.driver_id
+         LEFT JOIN drivers d ON d.id = j.driver_id
          WHERE j.deleted_at IS NULL
          ORDER BY j.created_at DESC`
     );
@@ -107,7 +120,7 @@ export async function listDeletedDispatchJobs() {
     const { rows } = await query(
         `SELECT j.*, d.name AS driver_name
          FROM dispatch_jobs j
-         JOIN drivers d ON d.id = j.driver_id
+         LEFT JOIN drivers d ON d.id = j.driver_id
          WHERE j.deleted_at IS NOT NULL
          ORDER BY j.deleted_at DESC`
     );

@@ -8,29 +8,16 @@ import {
     deleteReservation,
 } from '../models/reservation.js';
 import { sendReservationConfirmationSms } from '../services/sms.js';
-import { getDrivingDistance } from '../services/distance.js';
-import { calculateFare } from '../services/pricing.js';
+import { getRideEstimate } from '../services/quote.js';
 
 const router = Router();
 
 const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
 
-async function buildQuote({ pickupLocation, dropoffLocation, requestedTime, isRoundTrip, serviceType }) {
-    if (serviceType !== 'ride' || !pickupLocation || !dropoffLocation) {
-        return { distanceKm: null, durationMin: null, isNightRate: null, estimatedPrice: null };
-    }
-    const distance = await getDrivingDistance(pickupLocation, dropoffLocation);
-    if (!distance) {
-        return { distanceKm: null, durationMin: null, isNightRate: null, estimatedPrice: null };
-    }
-    const fare = calculateFare({ distanceKm: distance.distanceKm, requestedTime, isRoundTrip });
-    return { ...distance, ...fare };
-}
-
 // Live price-estimate preview while the customer is filling out the booking form
 router.post('/quote', async (req, res) => {
     const { pickupLocation, dropoffLocation, requestedTime, isRoundTrip, serviceType } = req.body;
-    const quote = await buildQuote({
+    const quote = await getRideEstimate({
         pickupLocation, dropoffLocation, requestedTime, isRoundTrip: !!isRoundTrip, serviceType: serviceType || 'ride',
     });
     res.json(quote);
@@ -41,6 +28,7 @@ router.post('/', async (req, res) => {
     const {
         clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType = 'ride', passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip,
+        destinationCategory,
     } = req.body;
 
     if (!SERVICE_TYPES.includes(serviceType)) {
@@ -55,7 +43,7 @@ router.post('/', async (req, res) => {
 
     // Recomputed server-side regardless of anything the client may have sent for price —
     // never trust a client-supplied fare.
-    const quote = await buildQuote({ pickupLocation, dropoffLocation, requestedTime, isRoundTrip: !!isRoundTrip, serviceType });
+    const quote = await getRideEstimate({ pickupLocation, dropoffLocation, requestedTime, isRoundTrip: !!isRoundTrip, serviceType });
 
     const reservation = await createReservation({
         clientName,
@@ -72,6 +60,7 @@ router.post('/', async (req, res) => {
         distanceKm: quote.distanceKm,
         isNightRate: quote.isNightRate,
         estimatedPrice: quote.estimatedPrice,
+        destinationCategory: destinationCategory || 'local',
     });
 
     try {
@@ -97,7 +86,7 @@ router.get('/', requireAuth('admin'), async (req, res) => {
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const {
         status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
-        serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip,
+        serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip, destinationCategory,
     } = req.body;
     if (status && !['pending', 'confirmed', 'cancelled'].includes(status)) {
         return res.status(400).json({ error: 'status must be pending, confirmed, or cancelled' });
@@ -107,7 +96,7 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     }
     const reservation = await updateReservation(req.params.id, {
         status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
-        serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip,
+        serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip, destinationCategory,
     });
     if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
     res.json(reservation);

@@ -6,6 +6,7 @@ import { loadGoogleMapsLibrary } from '../../lib/googleMaps.js';
 
 const SERVICE_ICONS = { ride: Car, battery_boost: BatteryCharging, lockout: KeyRound };
 const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
+const DESTINATION_CATEGORIES = ['local', 'airport', 'montreal', 'longDistance'];
 
 export default function TripStep({ form, setForm, isRide, t }) {
     const [locating, setLocating] = useState(false);
@@ -66,6 +67,25 @@ export default function TripStep({ form, setForm, isRide, t }) {
                     );
                 })}
             </div>
+
+            {isRide && (
+                <div className="field">
+                    <label>{t('booking.destinationCategoryLabel')}</label>
+                    <div className="tabbar" style={{ width: '100%' }}>
+                        {DESTINATION_CATEGORIES.map((cat) => (
+                            <button
+                                key={cat}
+                                type="button"
+                                className={`tabbar__btn ${form.destinationCategory === cat ? 'tabbar__btn--active' : ''}`}
+                                style={{ flex: 1, fontSize: 12 }}
+                                onClick={() => setForm({ ...form, destinationCategory: cat })}
+                            >
+                                {t(`booking.destinationCategory.${cat}`)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="field">
                 <label htmlFor="pickup"><MapPin size={12} style={{ verticalAlign: -2, marginRight: 4 }} />{isRide ? t('booking.pickupLabel') : t('booking.serviceLocationLabel')}</label>

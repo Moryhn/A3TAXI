@@ -4,18 +4,19 @@ export async function createReservation({
     clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
     serviceType = 'ride', passengerCount = 1, carryOnCount = 0, checkedLuggageCount = 0,
     isRoundTrip = false, distanceKm = null, isNightRate = null, estimatedPrice = null,
+    destinationCategory = 'local',
 }) {
     const { rows } = await query(
         `INSERT INTO reservations (
             client_name, client_phone, client_email, pickup_location, dropoff_location, requested_time,
             service_type, passenger_count, carry_on_count, checked_luggage_count,
-            is_round_trip, distance_km, is_night_rate, estimated_price
+            is_round_trip, distance_km, is_night_rate, estimated_price, destination_category
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
         [
             clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
-            isRoundTrip, distanceKm, isNightRate, estimatedPrice,
+            isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
         ]
     );
     return rows[0];
@@ -48,7 +49,7 @@ export async function listReservations({ dateFrom, dateTo } = {}) {
 export async function updateReservation(id, {
     clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
     serviceType, passengerCount, carryOnCount, checkedLuggageCount,
-    isRoundTrip, distanceKm, isNightRate, estimatedPrice,
+    isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
 }) {
     const { rows } = await query(
         `UPDATE reservations SET
@@ -66,12 +67,13 @@ export async function updateReservation(id, {
             is_round_trip = COALESCE($13, is_round_trip),
             distance_km = COALESCE($14, distance_km),
             is_night_rate = COALESCE($15, is_night_rate),
-            estimated_price = COALESCE($16, estimated_price)
+            estimated_price = COALESCE($16, estimated_price),
+            destination_category = COALESCE($17, destination_category)
          WHERE id = $1 RETURNING *`,
         [
             id, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
-            isRoundTrip, distanceKm, isNightRate, estimatedPrice,
+            isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
         ]
     );
     return rows[0] || null;

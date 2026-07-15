@@ -164,6 +164,9 @@ export default function Reservations() {
                                 <div style={{ margin: '10px 0', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                                     <span className={`pill pill--${selected.status}`}>{t(`status.${selected.status}`)}</span>
                                     <span className="pill">{t(`admin.reservations.serviceType.${selected.service_type}`)}</span>
+                                    {selected.destination_category && selected.destination_category !== 'local' && (
+                                        <span className="pill">{t(`booking.destinationCategory.${selected.destination_category}`)}</span>
+                                    )}
                                     {selected.is_round_trip && <span className="pill">{t('booking.roundTripLabel')}</span>}
                                     {selected.sms_sent && <span className="subtle" style={{ marginLeft: 8, alignSelf: 'center' }}>{t('admin.reservations.smsSent')}</span>}
                                 </div>
