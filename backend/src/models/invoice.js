@@ -1,10 +1,12 @@
 import { query } from '../config/db.js';
 
-export async function createInvoice({ clientAccountId, periodStart, periodEnd, totalAmount }) {
+export async function createInvoice({
+    clientAccountId, periodStart, periodEnd, totalAmount, invoiceNumber = null, invoiceDate = null,
+}) {
     const { rows } = await query(
-        `INSERT INTO invoices (client_account_id, period_start, period_end, total_amount)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
-        [clientAccountId, periodStart, periodEnd, totalAmount]
+        `INSERT INTO invoices (client_account_id, period_start, period_end, total_amount, invoice_number, invoice_date)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [clientAccountId, periodStart, periodEnd, totalAmount, invoiceNumber, invoiceDate]
     );
     return rows[0];
 }
@@ -30,7 +32,9 @@ export async function addAmountToInvoice(invoiceId, additionalAmount) {
 
 export async function findInvoiceById(id) {
     const { rows } = await query(
-        `SELECT i.*, c.name AS client_name, c.code AS client_code
+        `SELECT i.*, c.name AS client_name, c.code AS client_code, c.address AS client_address,
+                c.city AS client_city, c.postal_code AS client_postal_code,
+                c.contact_phone AS client_phone, c.invoice_description AS client_invoice_description
          FROM invoices i JOIN client_accounts c ON c.id = i.client_account_id
          WHERE i.id = $1`,
         [id]

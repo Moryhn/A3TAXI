@@ -11,7 +11,7 @@ export default function Invoices() {
     const { t, lang } = useLanguage();
     const [invoices, setInvoices] = useState([]);
     const [clients, setClients] = useState([]);
-    const [form, setForm] = useState({ clientAccountId: '', periodStart: '', periodEnd: '' });
+    const [form, setForm] = useState({ clientAccountId: '', periodStart: '', periodEnd: '', invoiceNumber: '', invoiceDate: '' });
     const [error, setError] = useState('');
     const [pendingDelete, setPendingDelete] = useState(null);
 
@@ -66,6 +66,14 @@ export default function Invoices() {
                         <label>{t('admin.invoices.periodEndLabel')}</label>
                         <input className="input" type="date" value={form.periodEnd} onChange={(e) => setForm({ ...form, periodEnd: e.target.value })} required />
                     </div>
+                    <div className="field">
+                        <label>{t('admin.invoices.invoiceNumberLabel')}</label>
+                        <input className="input" style={{ fontFamily: 'var(--font-mono)' }} value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} />
+                    </div>
+                    <div className="field">
+                        <label>{t('admin.invoices.invoiceDateLabel')}</label>
+                        <input className="input" type="date" value={form.invoiceDate} onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })} />
+                    </div>
                     <button type="submit" className="btn btn--primary">{t('admin.invoices.generate')}</button>
                 </form>
                 {error && <div className="pill" style={{ marginTop: 12, color: 'var(--danger)', background: 'rgba(240,85,76,0.12)' }}>{error}</div>}
@@ -79,10 +87,11 @@ export default function Invoices() {
             ) : (
                 <div className="table-wrap">
                     <table className="table">
-                        <thead><tr><th>{t('admin.invoices.colClient')}</th><th>{t('admin.invoices.colPeriod')}</th><th>{t('admin.invoices.colTotal')}</th><th>{t('admin.invoices.colGenerated')}</th><th></th><th></th></tr></thead>
+                        <thead><tr><th>{t('admin.invoices.colNumber')}</th><th>{t('admin.invoices.colClient')}</th><th>{t('admin.invoices.colPeriod')}</th><th>{t('admin.invoices.colTotal')}</th><th>{t('admin.invoices.colGenerated')}</th><th></th><th></th></tr></thead>
                         <tbody>
                             {invoices.map((inv) => (
                                 <tr key={inv.id}>
+                                    <td className="subtle" style={{ fontFamily: 'var(--font-mono)' }}>{inv.invoice_number || '—'}</td>
                                     <td>{inv.client_name}</td>
                                     <td className="subtle">{formatDate(inv.period_start, lang)} → {formatDate(inv.period_end, lang)}</td>
                                     <td><span className="meter meter--sm">{formatCurrency(inv.total_amount, lang)}</span></td>

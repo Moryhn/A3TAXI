@@ -11,25 +11,35 @@ export async function findClientAccountById(id) {
     return rows[0] || null;
 }
 
-export async function createClientAccount({ name, code, contactName, contactEmail, contactPhone }) {
+export async function createClientAccount({
+    name, code, contactName, contactEmail, contactPhone,
+    address, city, postalCode, invoiceDescription,
+}) {
     const { rows } = await query(
-        `INSERT INTO client_accounts (name, code, contact_name, contact_email, contact_phone)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [name, code, contactName, contactEmail, contactPhone]
+        `INSERT INTO client_accounts (name, code, contact_name, contact_email, contact_phone, address, city, postal_code, invoice_description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [name, code, contactName, contactEmail, contactPhone, address, city, postalCode, invoiceDescription]
     );
     return rows[0];
 }
 
-export async function updateClientAccount(id, { name, contactName, contactEmail, contactPhone, isActive }) {
+export async function updateClientAccount(id, {
+    name, contactName, contactEmail, contactPhone, isActive,
+    address, city, postalCode, invoiceDescription,
+}) {
     const { rows } = await query(
         `UPDATE client_accounts
          SET name = COALESCE($2, name),
              contact_name = COALESCE($3, contact_name),
              contact_email = COALESCE($4, contact_email),
              contact_phone = COALESCE($5, contact_phone),
-             is_active = COALESCE($6, is_active)
+             is_active = COALESCE($6, is_active),
+             address = COALESCE($7, address),
+             city = COALESCE($8, city),
+             postal_code = COALESCE($9, postal_code),
+             invoice_description = COALESCE($10, invoice_description)
          WHERE id = $1 RETURNING *`,
-        [id, name, contactName, contactEmail, contactPhone, isActive]
+        [id, name, contactName, contactEmail, contactPhone, isActive, address, city, postalCode, invoiceDescription]
     );
     return rows[0] || null;
 }

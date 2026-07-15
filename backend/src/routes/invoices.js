@@ -14,7 +14,7 @@ const router = Router();
 // trips yet — newly-qualifying trips are added to it instead of starting a
 // second, duplicate invoice for the same client and period.
 router.post('/generate', requireAuth('admin'), async (req, res) => {
-    const { clientAccountId, periodStart, periodEnd } = req.body;
+    const { clientAccountId, periodStart, periodEnd, invoiceNumber, invoiceDate } = req.body;
     if (!clientAccountId || !periodStart || !periodEnd) {
         return res.status(400).json({ error: 'clientAccountId, periodStart and periodEnd are required' });
     }
@@ -37,7 +37,9 @@ router.post('/generate', requireAuth('admin'), async (req, res) => {
         if (invoice) {
             invoice = await addAmountToInvoice(invoice.id, additionalAmount);
         } else {
-            invoice = await createInvoice({ clientAccountId, periodStart, periodEnd, totalAmount: additionalAmount });
+            invoice = await createInvoice({
+                clientAccountId, periodStart, periodEnd, totalAmount: additionalAmount, invoiceNumber, invoiceDate,
+            });
         }
         await markTripsInvoiced(newTrips.map((t) => t.id), invoice.id);
     }
