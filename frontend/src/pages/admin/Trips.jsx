@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, API_ORIGIN } from '../../api/client.js';
+import { api, receiptUrl } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCurrency } from '../../lib/format.js';
@@ -105,7 +105,7 @@ export default function Trips() {
                                                 </div>
                                             </td>
                                             <td><input className="input" type="number" step="0.01" style={{ padding: '6px 8px', width: 80 }} value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} /></td>
-                                            <td>{trip.receipt_photo_url ? <a href={`${API_ORIGIN}${trip.receipt_photo_url}`} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
+                                            <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     <button onClick={() => saveEdit(trip.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.trips.save')}</button>
@@ -117,7 +117,7 @@ export default function Trips() {
                                         <>
                                             <td>{trip.departure_location} → {trip.arrival_location}</td>
                                             <td><span className="meter meter--sm">{formatCurrency(trip.amount, lang)}</span></td>
-                                            <td>{trip.receipt_photo_url ? <a href={`${API_ORIGIN}${trip.receipt_photo_url}`} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
+                                            <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     {trip.invoice_id ? (

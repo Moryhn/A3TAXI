@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { uploadReceipt } from '../middleware/upload.js';
+import { uploadReceiptPhoto } from '../services/storage.js';
 import { createTrip, searchTrips, findTripById, updateTrip, deleteTrip } from '../models/trip.js';
 
 const router = Router();
@@ -12,7 +13,7 @@ router.post('/', requireAuth('driver'), uploadReceipt.single('receipt'), async (
         return res.status(400).json({ error: 'clientAccountId, departureLocation, arrivalLocation and amount are required' });
     }
 
-    const receiptPhotoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const receiptPhotoUrl = req.file ? await uploadReceiptPhoto(req.file) : null;
 
     const trip = await createTrip({
         driverId: req.user.sub,
