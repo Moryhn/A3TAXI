@@ -80,6 +80,19 @@ export default function MyJobs() {
         refresh();
     }
 
+    // window.open must run synchronously inside the click handler (before any
+    // await) or mobile browsers treat it as an unrequested popup and block it.
+    // Navigates to the client's location (job.address) — where the driver needs
+    // to go to pick them up, not the drop-off.
+    function acceptJob(job) {
+        window.open(
+            `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}&travelmode=driving`,
+            '_blank',
+            'noopener,noreferrer'
+        );
+        updateStatus(job.id, 'accepted');
+    }
+
     return (
         <div>
             <div className="eyebrow">{t('driver.myJobs.eyebrow')}</div>
@@ -131,7 +144,7 @@ export default function MyJobs() {
                             )}
                             {j.notes && <p className="subtle" style={{ marginBottom: 10 }}>{j.notes}</p>}
                             {j.status === 'pending' && (
-                                <button onClick={() => updateStatus(j.id, 'accepted')} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.accept')}</button>
+                                <button onClick={() => acceptJob(j)} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.accept')}</button>
                             )}
                             {j.status === 'accepted' && (
                                 <button onClick={() => updateStatus(j.id, 'completed')} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.markComplete')}</button>
