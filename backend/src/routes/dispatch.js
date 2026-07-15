@@ -61,16 +61,21 @@ router.post('/requests', async (req, res) => {
     res.status(201).json(job);
 });
 
-// Admin sends a job/address to a specific driver
+// Admin sends a job/address to a specific driver — also used to dispatch an
+// already-confirmed reservation, which is why dropoffLocation/customerPhone/
+// estimatedPrice are accepted here too (so the customer gets the same
+// tracking SMS as a "book now" request once the driver accepts).
 router.post('/jobs', requireAuth('admin'), async (req, res) => {
-    const { driverId, address, notes, jobType } = req.body;
+    const { driverId, address, notes, jobType, dropoffLocation, customerPhone, estimatedPrice } = req.body;
     if (!driverId || !address) {
         return res.status(400).json({ error: 'driverId and address are required' });
     }
     if (jobType && !JOB_TYPES.includes(jobType)) {
         return res.status(400).json({ error: `jobType must be one of ${JOB_TYPES.join(', ')}` });
     }
-    const job = await createDispatchJob({ driverId, address, notes, assignedBy: req.user.sub, jobType });
+    const job = await createDispatchJob({
+        driverId, address, notes, assignedBy: req.user.sub, jobType, dropoffLocation, customerPhone, estimatedPrice,
+    });
     sendJobNotification(driverId, job).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.status(201).json(job);
 });

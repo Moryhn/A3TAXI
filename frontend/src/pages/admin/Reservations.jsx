@@ -29,16 +29,45 @@ export default function Reservations() {
     const { t, lang } = useLanguage();
     const micLang = lang === 'fr' ? 'fr-CA' : 'en-US';
     const [reservations, setReservations] = useState([]);
+    const [drivers, setDrivers] = useState([]);
     const [selected, setSelected] = useState(null);
     const [editing, setEditing] = useState(false);
     const [editForm, setEditForm] = useState(null);
     const [pendingDelete, setPendingDelete] = useState(null);
+    const [sendDriverId, setSendDriverId] = useState('');
+    const [sending, setSending] = useState(false);
+    const [sendStatus, setSendStatus] = useState(null);
 
     async function refresh() {
         setReservations(await api.listReservations(auth.token));
     }
 
-    useEffect(() => { refresh(); }, []);
+    useEffect(() => {
+        refresh();
+        api.listDrivers(auth.token).then(setDrivers);
+    }, []);
+
+    async function sendToDriver() {
+        if (!sendDriverId) return;
+        setSending(true);
+        setSendStatus(null);
+        try {
+            await api.createDispatchJob(auth.token, {
+                driverId: sendDriverId,
+                address: selected.pickup_location,
+                dropoffLocation: selected.dropoff_location,
+                customerPhone: selected.client_phone,
+                estimatedPrice: selected.estimated_price,
+                jobType: selected.service_type,
+            });
+            setSendStatus({ ok: true, message: t('admin.reservations.sentToDriver') });
+            setSendDriverId('');
+        } catch (err) {
+            setSendStatus({ ok: false, message: err.message });
+        } finally {
+            setSending(false);
+        }
+    }
 
     async function setStatus(id, status) {
         await api.updateReservationStatus(auth.token, id, status);
@@ -110,7 +139,7 @@ export default function Reservations() {
                         expandRows
                         slotDuration="02:00:00"
                         slotMaxTime="24:30:00"
-                        eventClick={(info) => { setSelected(info.event.extendedProps); setEditing(false); }}
+                        eventClick={(info) => { setSelected(info.event.extendedProps); setEditing(false); setSendDriverId(''); setSendStatus(null); }}
                     />
                 </div>
 
@@ -183,6 +212,23 @@ export default function Reservations() {
                                 )}
                                 {selected.estimated_price != null && (
                                     <div className="meter meter--sm" style={{ marginBottom: 8 }}>{formatCurrency(selected.estimated_price, lang)}</div>
+                                )}
+                                {selected.status !== 'cancelled' && (
+                                    <div className="field" style={{ marginBottom: 8 }}>
+                                        <label>{t('admin.reservations.sendToDriverLabel')}</label>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <select className="select" style={{ flex: 1 }} value={sendDriverId} onChange={(e) => setSendDriverId(e.target.value)}>
+                                                <option value="">{t('admin.dispatch.selectDriver')}</option>
+                                                {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                            </select>
+                                            <button onClick={sendToDriver} className="btn btn--primary" disabled={!sendDriverId || sending}>
+                                                {sending ? t('admin.dispatch.sending') : t('admin.reservations.sendBtn')}
+                                            </button>
+                                        </div>
+                                        {sendStatus && (
+                                            <p className="subtle" style={{ marginTop: 6, color: sendStatus.ok ? undefined : 'var(--danger)' }}>{sendStatus.message}</p>
+                                        )}
+                                    </div>
                                 )}
                                 {selected.status === 'pending' && (
                                     <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
