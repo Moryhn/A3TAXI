@@ -14,6 +14,7 @@ export default function MyJobs() {
     // away instead of staying hidden while async feature checks (serviceWorker.ready,
     // getSubscription) are still pending.
     const [notifState, setNotifState] = useState(() => (isPushSupported() ? 'off' : 'unsupported'));
+    const [notifError, setNotifError] = useState('');
 
     async function refresh() {
         setJobs(await api.listMyJobs(auth.token));
@@ -37,6 +38,7 @@ export default function MyJobs() {
     }, []);
 
     async function toggleNotifications() {
+        setNotifError('');
         try {
             if (notifState === 'on') {
                 await disablePushNotifications(auth.token);
@@ -46,7 +48,11 @@ export default function MyJobs() {
                 setNotifState('on');
             }
         } catch (err) {
-            if (err.message === 'permission-denied') setNotifState('denied');
+            if (err.message === 'permission-denied') {
+                setNotifState('denied');
+            } else {
+                setNotifError(err.message || String(err));
+            }
         }
     }
 
@@ -102,6 +108,9 @@ export default function MyJobs() {
                         ? t('driver.myJobs.notifsOn')
                         : t('driver.myJobs.notifsOff')}
                 </button>
+            )}
+            {notifError && (
+                <p className="subtle" style={{ marginTop: -12, marginBottom: 20, color: 'var(--danger)' }}>{notifError}</p>
             )}
 
             {jobs.length === 0 ? (
