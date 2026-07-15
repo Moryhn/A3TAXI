@@ -8,6 +8,7 @@ import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDateTime, formatCurrency } from '../../lib/format.js';
+import { localInputToUtcIso } from '../../lib/time.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import MicButton from '../../components/MicButton.jsx';
 
@@ -57,7 +58,10 @@ export default function Reservations() {
     }
 
     async function saveEdit() {
-        const updated = await api.updateReservation(auth.token, selected.id, editForm);
+        const updated = await api.updateReservation(auth.token, selected.id, {
+            ...editForm,
+            requestedTime: localInputToUtcIso(editForm.requestedTime),
+        });
         setSelected(updated);
         setEditing(false);
         refresh();

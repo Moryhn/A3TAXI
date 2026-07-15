@@ -64,9 +64,17 @@ router.post('/', async (req, res) => {
     });
 
     try {
+        // Explicit timeZone — the server (Render) runs in UTC, so a plain
+        // toLocaleString() would show the customer a time that doesn't match
+        // what they picked or what the admin calendar displays.
+        const formattedTime = new Date(requestedTime).toLocaleString('en-US', {
+            timeZone: 'America/Toronto',
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        });
         await sendSms(
             clientPhone,
-            `Hi ${clientName}, your ride request for ${new Date(requestedTime).toLocaleString()} has been received. We'll confirm shortly.`
+            `Hi ${clientName}, your ride request for ${formattedTime} has been received. We'll confirm shortly.`
         );
         await markReservationSmsSent(reservation.id);
     } catch (err) {

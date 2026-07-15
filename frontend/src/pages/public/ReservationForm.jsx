@@ -6,6 +6,7 @@ import { GOOGLE_MAPS_API_KEY } from '../../lib/googleMaps.js';
 import { useTheme } from '../../hooks/useTheme.js';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { addRecentAddress } from '../../lib/recentAddresses.js';
+import { localInputToUtcIso } from '../../lib/time.js';
 import RoutePreviewMap from '../../components/RoutePreviewMap.jsx';
 import ProgressTrail from '../../components/booking/ProgressTrail.jsx';
 import MeterPanel from '../../components/booking/MeterPanel.jsx';
@@ -55,7 +56,7 @@ export default function ReservationForm() {
             api.getQuote({
                 pickupLocation: form.pickupLocation,
                 dropoffLocation: form.dropoffLocation,
-                requestedTime: form.requestedTime,
+                requestedTime: localInputToUtcIso(form.requestedTime),
                 isRoundTrip: form.isRoundTrip,
                 serviceType: form.serviceType,
             })
@@ -92,7 +93,7 @@ export default function ReservationForm() {
         e.preventDefault();
         setStatus(null);
         try {
-            await api.createReservation(form);
+            await api.createReservation({ ...form, requestedTime: localInputToUtcIso(form.requestedTime) });
             addRecentAddress(form.pickupLocation);
             addRecentAddress(form.dropoffLocation);
             setStatus({ ok: true, message: t('booking.successMessage') });
