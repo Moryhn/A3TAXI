@@ -162,6 +162,8 @@ export default {
             reservationCreated: 'Reservation created.',
             selectDriver: 'Select driver',
             addressPlaceholder: 'Address',
+            dropoffPlaceholder: 'Destination (optional)',
+            phonePlaceholder: 'Customer phone (optional)',
             notesPlaceholder: 'Notes (optional)',
             sendJob: 'Send job',
             sending: 'Sending…',

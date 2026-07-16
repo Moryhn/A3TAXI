@@ -22,7 +22,7 @@ export default function DispatchMap() {
     const [positions, setPositions] = useState([]);
     const [drivers, setDrivers] = useState([]);
     const [jobs, setJobs] = useState([]);
-    const [job, setJob] = useState({ driverId: '', address: '', notes: '', jobType: 'ride' });
+    const [job, setJob] = useState({ driverId: '', address: '', dropoffLocation: '', customerPhone: '', notes: '', jobType: 'ride' });
     const [sending, setSending] = useState(false);
     const [status, setStatus] = useState(null);
     const [editingId, setEditingId] = useState(null);
@@ -52,7 +52,7 @@ export default function DispatchMap() {
         setStatus(null);
         try {
             await api.createDispatchJob(auth.token, job);
-            setJob({ driverId: '', address: '', notes: '', jobType: 'ride' });
+            setJob({ driverId: '', address: '', dropoffLocation: '', customerPhone: '', notes: '', jobType: 'ride' });
             setStatus({ ok: true, message: t('admin.dispatch.jobSent') });
             refresh();
         } catch (err) {
@@ -142,6 +142,12 @@ export default function DispatchMap() {
                                 </div>
                                 <MicButton lang={micLang} title={t('admin.dispatch.speakAddress')} onResult={(text) => setJob({ ...job, address: text })} />
                             </div>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <div style={{ flex: 1 }}>
+                                    <PlaceAutocompleteInput className="input" placeholder={t('admin.dispatch.dropoffPlaceholder')} value={job.dropoffLocation} onChange={(v) => setJob({ ...job, dropoffLocation: v })} />
+                                </div>
+                            </div>
+                            <input className="input" type="tel" placeholder={t('admin.dispatch.phonePlaceholder')} value={job.customerPhone} onChange={(e) => setJob({ ...job, customerPhone: e.target.value })} />
                             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                 <input className="input" style={{ flex: 1 }} placeholder={t('admin.dispatch.notesPlaceholder')} value={job.notes} onChange={(e) => setJob({ ...job, notes: e.target.value })} />
                                 <MicButton lang={micLang} title={t('admin.dispatch.speakNotes')} onResult={(text) => setJob({ ...job, notes: job.notes ? `${job.notes} ${text}` : text })} />

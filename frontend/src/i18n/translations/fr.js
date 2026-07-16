@@ -162,6 +162,8 @@ export default {
             reservationCreated: 'Réservation créée.',
             selectDriver: 'Choisir un chauffeur',
             addressPlaceholder: 'Adresse',
+            dropoffPlaceholder: 'Destination (facultatif)',
+            phonePlaceholder: 'Téléphone du client (facultatif)',
             notesPlaceholder: 'Notes (facultatif)',
             sendJob: 'Envoyer',
             sending: 'Envoi…',
