@@ -146,8 +146,12 @@ export default function DispatchMap() {
                                 <div style={{ flex: 1 }}>
                                     <PlaceAutocompleteInput className="input" placeholder={t('admin.dispatch.dropoffPlaceholder')} value={job.dropoffLocation} onChange={(v) => setJob({ ...job, dropoffLocation: v })} />
                                 </div>
+                                <MicButton lang={micLang} title={t('admin.dispatch.speakDropoff')} onResult={(text) => setJob({ ...job, dropoffLocation: text })} />
                             </div>
-                            <input className="input" type="tel" placeholder={t('admin.dispatch.phonePlaceholder')} value={job.customerPhone} onChange={(e) => setJob({ ...job, customerPhone: e.target.value })} />
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                <input className="input" style={{ flex: 1 }} type="tel" placeholder={t('admin.dispatch.phonePlaceholder')} value={job.customerPhone} onChange={(e) => setJob({ ...job, customerPhone: e.target.value })} />
+                                <MicButton lang={micLang} title={t('admin.dispatch.speakPhone')} onResult={(text) => setJob({ ...job, customerPhone: text })} />
+                            </div>
                             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                 <input className="input" style={{ flex: 1 }} placeholder={t('admin.dispatch.notesPlaceholder')} value={job.notes} onChange={(e) => setJob({ ...job, notes: e.target.value })} />
                                 <MicButton lang={micLang} title={t('admin.dispatch.speakNotes')} onResult={(text) => setJob({ ...job, notes: job.notes ? `${job.notes} ${text}` : text })} />

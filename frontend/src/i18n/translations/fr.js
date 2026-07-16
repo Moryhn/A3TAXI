@@ -187,6 +187,8 @@ export default {
             colPhone: 'Téléphone',
             colEstimatedPrice: 'Prix est.',
             speakAddress: "Dicter l'adresse",
+            speakDropoff: 'Dicter la destination',
+            speakPhone: 'Dicter le téléphone',
             speakNotes: 'Dicter les notes',
             confirmDeleteTitle: 'Supprimer cette course ?',
             confirmDeleteMessage: "{{address}} — assignée à {{driver}}. Elle sera déplacée vers la corbeille, où vous pourrez la restaurer plus tard.",

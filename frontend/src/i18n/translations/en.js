@@ -187,6 +187,8 @@ export default {
             colPhone: 'Phone',
             colEstimatedPrice: 'Est. price',
             speakAddress: 'Speak address',
+            speakDropoff: 'Speak destination',
+            speakPhone: 'Speak phone',
             speakNotes: 'Speak notes',
             confirmDeleteTitle: 'Delete this job?',
             confirmDeleteMessage: '{{address}} — assigned to {{driver}}. It\'ll move to Trash, where you can restore it later.',
