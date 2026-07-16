@@ -78,6 +78,8 @@ export const api = {
         const qs = new URLSearchParams(params).toString();
         return request(`/reservations${qs ? `?${qs}` : ''}`, { token });
     },
+    getCalendarFeed: (token) => request('/reservations/calendar-feed', { token }),
+    regenerateCalendarFeed: (token) => request('/reservations/calendar-feed/regenerate', { method: 'POST', token }),
     updateReservationStatus: (token, id, status) => request(`/reservations/${id}`, { method: 'PATCH', body: { status }, token }),
     updateReservation: (token, id, body) => request(`/reservations/${id}`, { method: 'PATCH', body, token }),
     deleteReservation: (token, id) => request(`/reservations/${id}`, { method: 'DELETE', token }),

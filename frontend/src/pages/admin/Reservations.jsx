@@ -37,6 +37,9 @@ export default function Reservations() {
     const [sendDriverId, setSendDriverId] = useState('');
     const [sending, setSending] = useState(false);
     const [sendStatus, setSendStatus] = useState(null);
+    const [showCalendarSync, setShowCalendarSync] = useState(false);
+    const [feedUrl, setFeedUrl] = useState('');
+    const [copyStatus, setCopyStatus] = useState('');
 
     async function refresh() {
         setReservations(await api.listReservations(auth.token));
@@ -46,6 +49,25 @@ export default function Reservations() {
         refresh();
         api.listDrivers(auth.token).then(setDrivers);
     }, []);
+
+    async function toggleCalendarSync() {
+        if (!showCalendarSync && !feedUrl) {
+            const { feedUrl: url } = await api.getCalendarFeed(auth.token);
+            setFeedUrl(url);
+        }
+        setShowCalendarSync((v) => !v);
+    }
+
+    async function copyFeedUrl() {
+        await navigator.clipboard.writeText(feedUrl);
+        setCopyStatus(t('admin.reservations.copied'));
+        setTimeout(() => setCopyStatus(''), 2000);
+    }
+
+    async function regenerateFeedUrl() {
+        const { feedUrl: url } = await api.regenerateCalendarFeed(auth.token);
+        setFeedUrl(url);
+    }
 
     async function sendToDriver() {
         if (!sendDriverId) return;
@@ -125,8 +147,26 @@ export default function Reservations() {
                     <div className="eyebrow">{t('admin.reservations.eyebrow')}</div>
                     <h1 className="h1">{t('admin.reservations.title')}</h1>
                 </div>
-                <div className="meter meter--sm">{pendingCount}<span className="meter__unit">{t('admin.reservations.pending')}</span></div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <button onClick={toggleCalendarSync} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                        {t('admin.reservations.calendarSyncToggle')}
+                    </button>
+                    <div className="meter meter--sm">{pendingCount}<span className="meter__unit">{t('admin.reservations.pending')}</span></div>
+                </div>
             </div>
+
+            {showCalendarSync && (
+                <div className="card" style={{ flexShrink: 0, marginBottom: 10 }}>
+                    <div className="eyebrow">{t('admin.reservations.calendarSyncEyebrow')}</div>
+                    <p className="subtle" style={{ marginTop: 6 }}>{t('admin.reservations.calendarSyncInstructions')}</p>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                        <input className="input" style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: 12 }} readOnly value={feedUrl} onFocus={(e) => e.target.select()} />
+                        <button onClick={copyFeedUrl} className="btn btn--primary" style={{ padding: '8px 14px', fontSize: 12 }}>{t('admin.reservations.copyLink')}</button>
+                        <button onClick={regenerateFeedUrl} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>{t('admin.reservations.regenerateLink')}</button>
+                    </div>
+                    {copyStatus && <p className="subtle" style={{ marginTop: 6, fontSize: 12 }}>{copyStatus}</p>}
+                </div>
+            )}
 
             <div className="reservations-row">
                 <div className="card" style={{ flex: 1, padding: 10, minHeight: 0 }}>
