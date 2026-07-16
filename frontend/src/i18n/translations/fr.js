@@ -366,6 +366,7 @@ export default {
             arrivalLabel: 'Arrivée',
             arrivalPlaceholder: "Lieu d'arrivée de la course",
             receiptLabel: 'Photo du reçu',
+            processingPhoto: 'Traitement de la photo…',
             saveTrip: 'Enregistrer la course',
             saving: 'Enregistrement…',
             tripSaved: 'Course enregistrée.',

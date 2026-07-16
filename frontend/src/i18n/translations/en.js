@@ -366,6 +366,7 @@ export default {
             arrivalLabel: 'Arrival',
             arrivalPlaceholder: 'Where the trip ended',
             receiptLabel: 'Receipt photo',
+            processingPhoto: 'Processing photo…',
             saveTrip: 'Save trip',
             saving: 'Saving…',
             tripSaved: 'Trip saved.',
