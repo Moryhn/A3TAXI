@@ -2,6 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+// Express 4 doesn't forward a rejected promise from an async route handler to
+// the error middleware below — it becomes an unhandled rejection that crashes
+// the whole process (Node 15+ default), taking down every other request until
+// Render restarts the service. This patches route/router handlers so async
+// errors reach app.use(err, ...) like a synchronous throw would.
+import 'express-async-errors';
 
 import authRoutes from './routes/auth.js';
 import driverRoutes from './routes/drivers.js';

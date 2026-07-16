@@ -14,7 +14,9 @@ const router = Router();
 // trips yet — newly-qualifying trips are added to it instead of starting a
 // second, duplicate invoice for the same client and period.
 router.post('/generate', requireAuth('admin'), async (req, res) => {
-    const { clientAccountId, periodStart, periodEnd, invoiceNumber, invoiceDate } = req.body;
+    const { clientAccountId, periodStart, periodEnd } = req.body;
+    const invoiceNumber = req.body.invoiceNumber || null;
+    const invoiceDate = req.body.invoiceDate || null;
     if (!clientAccountId || !periodStart || !periodEnd) {
         return res.status(400).json({ error: 'clientAccountId, periodStart and periodEnd are required' });
     }
@@ -66,7 +68,8 @@ router.get('/:id', requireAuth('admin'), async (req, res) => {
 // Admin corrects the invoice number/date after the fact (e.g. to match an
 // existing paper numbering scheme) — total/trips/period stay generation-only.
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
-    const { invoiceNumber, invoiceDate } = req.body;
+    const invoiceNumber = req.body.invoiceNumber || null;
+    const invoiceDate = req.body.invoiceDate || null;
     const invoice = await updateInvoice(req.params.id, { invoiceNumber, invoiceDate });
     if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
     res.json(invoice);
