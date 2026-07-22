@@ -6,6 +6,7 @@ import { useLanguage } from '../i18n/LanguageContext.jsx';
 import { api } from '../api/client.js';
 import ClientAccounts from './admin/ClientAccounts.jsx';
 import Drivers from './admin/Drivers.jsx';
+import DriverDetail from './admin/DriverDetail.jsx';
 import Trips from './admin/Trips.jsx';
 import Invoices from './admin/Invoices.jsx';
 import InvoicePrint from './admin/InvoicePrint.jsx';
@@ -111,6 +112,7 @@ export default function AdminDashboard() {
                     <Route key={tab.path} path={tab.path} element={<div className="page">{tab.element}</div>} />
                 ))}
                 <Route path="invoices/:id/print" element={<InvoicePrint />} />
+                <Route path="drivers/:id" element={<div className="page"><DriverDetail /></div>} />
             </Routes>
         </div>
     );

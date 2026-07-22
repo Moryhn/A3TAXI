@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
@@ -100,6 +101,7 @@ export default function Drivers() {
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
+                                                    <Link to={`${d.id}`} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.drivers.viewFile')}</Link>
                                                     <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.edit')}</button>
                                                     <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.delete')}</button>
                                                 </div>

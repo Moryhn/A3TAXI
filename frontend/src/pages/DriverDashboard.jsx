@@ -4,6 +4,7 @@ import { useTheme } from '../hooks/useTheme.js';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import TripEntry from './driver/TripEntry.jsx';
 import MyJobs from './driver/MyJobs.jsx';
+import MyAccount from './driver/MyAccount.jsx';
 
 export default function DriverDashboard() {
     const { auth, logout } = useAuth();
@@ -37,12 +38,14 @@ export default function DriverDashboard() {
                         <Route index element={<Navigate to="trip-entry" replace />} />
                         <Route path="trip-entry" element={<TripEntry />} />
                         <Route path="jobs" element={<MyJobs />} />
+                        <Route path="account" element={<MyAccount />} />
                     </Routes>
                 </div>
 
                 <nav className="bottom-nav">
                     <NavLink to="trip-entry" className={({ isActive }) => `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`}>{t('nav.newTrip')}</NavLink>
                     <NavLink to="jobs" className={({ isActive }) => `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`}>{t('nav.myJobs')}</NavLink>
+                    <NavLink to="account" className={({ isActive }) => `bottom-nav__link ${isActive ? 'bottom-nav__link--active' : ''}`}>{t('nav.myAccount')}</NavLink>
                 </nav>
             </div>
         </div>

@@ -14,7 +14,7 @@ export async function findDriverById(id) {
 }
 
 export async function listDrivers() {
-    const { rows } = await query('SELECT id, name, phone, access_code, is_active, created_at FROM drivers WHERE deleted_at IS NULL ORDER BY name');
+    const { rows } = await query('SELECT id, name, phone, access_code, is_active, monthly_dues, created_at FROM drivers WHERE deleted_at IS NULL ORDER BY name');
     return rows;
 }
 
@@ -26,14 +26,15 @@ export async function createDriver({ name, phone, accessCode }) {
     return rows[0];
 }
 
-export async function updateDriver(id, { name, phone, isActive }) {
+export async function updateDriver(id, { name, phone, isActive, monthlyDues }) {
     const { rows } = await query(
         `UPDATE drivers SET
             name = COALESCE($2, name),
             phone = COALESCE($3, phone),
-            is_active = COALESCE($4, is_active)
+            is_active = COALESCE($4, is_active),
+            monthly_dues = COALESCE($5, monthly_dues)
          WHERE id = $1 RETURNING *`,
-        [id, name, phone, isActive]
+        [id, name, phone, isActive, monthlyDues]
     );
     return rows[0] || null;
 }
