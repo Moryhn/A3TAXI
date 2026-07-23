@@ -23,18 +23,17 @@ export async function listLedgerEntries(driverId, { dateFrom, dateTo } = {}) {
     return rows;
 }
 
-// Dues owed minus payments received minus the value of trips the driver has
-// already completed but that haven't been invoiced to the client yet — those
-// trips are credited against dues automatically. Once a trip gets invoiced,
-// its credit is expected to be locked in as a manual ledger payment entry,
-// at which point it drops out of this live subtraction.
+// Dues owed minus payments received minus the value of every trip the driver
+// has completed — trip revenue always credits against dues, whether or not
+// that trip has since been invoiced to the client (invoicing is a separate,
+// company-level event and doesn't change what the driver has already earned
+// toward their own dues).
 //
 // asOfDate makes this a historical snapshot instead of the live balance: a
-// trip only counts as still-pending "as of" that date if it hadn't been
-// invoiced yet by then (invoice.generated_at is after asOfDate), and a
-// client only counts as still active "as of" that date if it wasn't
-// archived yet by then (deleted_at is after asOfDate) — both compared using
-// the state each row actually had at that point in time, not today's state.
+// trip only counts if it happened by that date, and a client only counts as
+// still active "as of" that date if it wasn't archived yet by then
+// (deleted_at is after asOfDate) — compared using the state each row
+// actually had at that point in time, not today's state.
 export async function getDriverBalance(driverId, asOfDate = new Date()) {
     const { rows } = await query(
         `SELECT
@@ -44,10 +43,8 @@ export async function getDriverBalance(driverId, asOfDate = new Date()) {
             - COALESCE((SELECT SUM(t.amount)
                         FROM trips t
                         JOIN client_accounts c ON c.id = t.client_account_id
-                        LEFT JOIN invoices inv ON inv.id = t.invoice_id
                         WHERE t.driver_id = $1 AND t.deleted_at IS NULL
                           AND t.trip_date <= $2::date
-                          AND (t.invoice_id IS NULL OR inv.generated_at::date > $2::date)
                           AND (c.deleted_at IS NULL OR c.deleted_at::date > $2::date)), 0)
             AS balance`,
         [driverId, asOfDate]
