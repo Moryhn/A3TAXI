@@ -23,7 +23,7 @@ export default function DriverDetail() {
     async function refresh() {
         const [d, t, l] = await Promise.all([
             api.getDriver(auth.token, id),
-            api.listTrips(auth.token, { driverId: id }),
+            api.listTrips(auth.token, { driverId: id, invoiced: false }),
             api.getDriverLedger(auth.token, id),
         ]);
         setDriver(d);

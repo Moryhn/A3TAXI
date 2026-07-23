@@ -11,7 +11,7 @@ export default function MyAccount() {
     const [ledger, setLedger] = useState({ entries: [], balance: 0 });
 
     useEffect(() => {
-        api.listTrips(auth.token).then(setTrips);
+        api.listTrips(auth.token, { invoiced: false }).then(setTrips);
         api.getMyLedger(auth.token).then(setLedger);
     }, []);
 

@@ -10,11 +10,21 @@ export async function listLedgerEntries(driverId) {
     return rows;
 }
 
+// Dues owed minus payments received minus the value of trips the driver has
+// already completed but that haven't been invoiced to the client yet — those
+// trips are credited against dues automatically. Once a trip gets invoiced,
+// its credit is expected to be locked in as a manual ledger payment entry,
+// at which point it drops out of this live subtraction.
 export async function getDriverBalance(driverId) {
     const { rows } = await query(
-        `SELECT COALESCE(SUM(CASE WHEN type = 'charge' THEN amount ELSE -amount END), 0) AS balance
-         FROM driver_ledger_entries
-         WHERE driver_id = $1 AND deleted_at IS NULL`,
+        `SELECT
+            COALESCE((SELECT SUM(CASE WHEN type = 'charge' THEN amount ELSE -amount END)
+                      FROM driver_ledger_entries
+                      WHERE driver_id = $1 AND deleted_at IS NULL), 0)
+            - COALESCE((SELECT SUM(amount)
+                        FROM trips
+                        WHERE driver_id = $1 AND deleted_at IS NULL AND invoice_id IS NULL), 0)
+            AS balance`,
         [driverId]
     );
     return Number(rows[0].balance);
