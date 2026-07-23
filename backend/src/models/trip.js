@@ -9,7 +9,7 @@ export async function createTrip({ driverId, clientAccountId, departureLocation,
     return rows[0];
 }
 
-export async function searchTrips({ driverId, clientAccountId, dateFrom, dateTo, invoiced }) {
+export async function searchTrips({ driverId, clientAccountId, dateFrom, dateTo, invoiced, excludeDeletedClient }) {
     const conditions = ['t.deleted_at IS NULL'];
     const params = [];
     let i = 1;
@@ -34,6 +34,13 @@ export async function searchTrips({ driverId, clientAccountId, dateFrom, dateTo,
         conditions.push(`t.invoice_id IS NULL`);
     } else if (invoiced === true) {
         conditions.push(`t.invoice_id IS NOT NULL`);
+    }
+    // Trips of an archived client don't belong in a driver's live pending
+    // total/balance — the client relationship is over, nothing left to
+    // invoice them for. Invoice generation deliberately does NOT set this,
+    // since a final invoice can still be raised for a just-archived client.
+    if (excludeDeletedClient) {
+        conditions.push(`c.deleted_at IS NULL`);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';

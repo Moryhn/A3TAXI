@@ -21,9 +21,11 @@ export async function getDriverBalance(driverId) {
             COALESCE((SELECT SUM(CASE WHEN type = 'charge' THEN amount ELSE -amount END)
                       FROM driver_ledger_entries
                       WHERE driver_id = $1 AND deleted_at IS NULL), 0)
-            - COALESCE((SELECT SUM(amount)
-                        FROM trips
-                        WHERE driver_id = $1 AND deleted_at IS NULL AND invoice_id IS NULL), 0)
+            - COALESCE((SELECT SUM(t.amount)
+                        FROM trips t
+                        JOIN client_accounts c ON c.id = t.client_account_id
+                        WHERE t.driver_id = $1 AND t.deleted_at IS NULL AND t.invoice_id IS NULL
+                          AND c.deleted_at IS NULL), 0)
             AS balance`,
         [driverId]
     );
