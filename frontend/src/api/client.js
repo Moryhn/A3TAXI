@@ -34,6 +34,7 @@ export const api = {
     createDriver: (token, driver) => request('/drivers', { method: 'POST', body: driver, token }),
     updateDriver: (token, id, body) => request(`/drivers/${id}`, { method: 'PATCH', body, token }),
     deleteDriver: (token, id) => request(`/drivers/${id}`, { method: 'DELETE', token }),
+    resetDriverAccessCode: (token, id) => request(`/drivers/${id}/reset-access-code`, { method: 'POST', token }),
 
     getDriverLedger: (token, driverId) => request(`/drivers/${driverId}/ledger`, { token }),
     addDriverLedgerEntry: (token, driverId, body) => request(`/drivers/${driverId}/ledger`, { method: 'POST', body, token }),

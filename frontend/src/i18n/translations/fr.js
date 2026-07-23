@@ -150,8 +150,11 @@ export default {
             colAccessCode: "Code d'accès",
             colActions: 'Actions',
             viewFile: 'Voir le dossier',
+            resetCodeBtn: 'Régénérer le code',
             confirmDeleteTitle: 'Supprimer {{name}}?',
             confirmDeleteMessage: "Ceci déplace le chauffeur vers la corbeille et révoque son code d'accès. Son historique de courses est conservé, et vous pouvez le restaurer depuis la corbeille plus tard.",
+            confirmResetTitle: "Régénérer le code d'accès de {{name}}?",
+            confirmResetMessage: "Un nouveau code sera généré et l'ancien cessera de fonctionner immédiatement. Le chauffeur devra utiliser le nouveau code pour se connecter.",
         },
         driverDetail: {
             back: '← Retour aux chauffeurs',

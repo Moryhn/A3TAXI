@@ -11,36 +11,60 @@ export default function Drivers() {
     const [drivers, setDrivers] = useState([]);
     const [form, setForm] = useState({ name: '', phone: '' });
     const [editingId, setEditingId] = useState(null);
-    const [editForm, setEditForm] = useState({ name: '', phone: '' });
+    const [editForm, setEditForm] = useState({ name: '', phone: '', accessCode: '' });
     const [pendingDelete, setPendingDelete] = useState(null);
+    const [pendingReset, setPendingReset] = useState(null);
+    const [error, setError] = useState('');
 
     async function refresh() {
-        setDrivers(await api.listDrivers(auth.token));
+        try {
+            setDrivers(await api.listDrivers(auth.token));
+            setError('');
+        } catch (err) {
+            setError(err.message);
+        }
     }
 
     useEffect(() => { refresh(); }, []);
 
     async function handleCreate(e) {
         e.preventDefault();
-        await api.createDriver(auth.token, form);
-        setForm({ name: '', phone: '' });
-        refresh();
+        try {
+            await api.createDriver(auth.token, form);
+            setForm({ name: '', phone: '' });
+            setError('');
+            refresh();
+        } catch (err) {
+            setError(err.message);
+        }
     }
 
     function startEdit(d) {
         setEditingId(d.id);
-        setEditForm({ name: d.name, phone: d.phone || '' });
+        setEditForm({ name: d.name, phone: d.phone || '', accessCode: d.access_code });
+        setError('');
     }
 
     async function saveEdit(id) {
-        await api.updateDriver(auth.token, id, editForm);
-        setEditingId(null);
-        refresh();
+        try {
+            await api.updateDriver(auth.token, id, editForm);
+            setEditingId(null);
+            setError('');
+            refresh();
+        } catch (err) {
+            setError(err.message);
+        }
     }
 
     async function confirmDelete() {
         await api.deleteDriver(auth.token, pendingDelete.id);
         setPendingDelete(null);
+        refresh();
+    }
+
+    async function confirmReset() {
+        await api.resetDriverAccessCode(auth.token, pendingReset.id);
+        setPendingReset(null);
         refresh();
     }
 
@@ -70,6 +94,8 @@ export default function Drivers() {
                 <p className="subtle" style={{ marginTop: 10 }}>{t('admin.drivers.helperText')}</p>
             </div>
 
+            {error && <div className="pill pill--cancelled" style={{ color: 'var(--danger)', background: 'rgba(240,85,76,0.12)', marginBottom: 16 }}>{error}</div>}
+
             {drivers.length === 0 ? (
                 <div className="card empty">
                     <div className="empty__title">{t('admin.drivers.emptyTitle')}</div>
@@ -86,7 +112,17 @@ export default function Drivers() {
                                         <>
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></td>
                                             <td><input className="input" style={{ padding: '6px 10px' }} value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></td>
-                                            <td><span className="meter meter--sm">{d.access_code}</span></td>
+                                            <td>
+                                                <input
+                                                    className="input"
+                                                    style={{ padding: '6px 10px', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}
+                                                    value={editForm.accessCode}
+                                                    onChange={(e) => setEditForm({ ...editForm, accessCode: e.target.value })}
+                                                    autoCapitalize="characters"
+                                                    autoCorrect="off"
+                                                    spellCheck="false"
+                                                />
+                                            </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: 8 }}>
                                                     <button onClick={() => saveEdit(d.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.save')}</button>
@@ -100,9 +136,10 @@ export default function Drivers() {
                                             <td className="subtle">{d.phone || '—'}</td>
                                             <td><span className="meter meter--sm">{d.access_code}</span></td>
                                             <td>
-                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                                     <Link to={`${d.id}`} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.drivers.viewFile')}</Link>
                                                     <button onClick={() => startEdit(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.edit')}</button>
+                                                    <button onClick={() => setPendingReset(d)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.drivers.resetCodeBtn')}</button>
                                                     <button onClick={() => setPendingDelete(d)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.delete')}</button>
                                                 </div>
                                             </td>
@@ -121,6 +158,14 @@ export default function Drivers() {
                 message={t('admin.drivers.confirmDeleteMessage')}
                 onConfirm={confirmDelete}
                 onCancel={() => setPendingDelete(null)}
+            />
+
+            <ConfirmDialog
+                open={!!pendingReset}
+                title={t('admin.drivers.confirmResetTitle', { name: pendingReset?.name })}
+                message={t('admin.drivers.confirmResetMessage')}
+                onConfirm={confirmReset}
+                onCancel={() => setPendingReset(null)}
             />
         </div>
     );

@@ -6,6 +6,10 @@ import { listLedgerEntries, getDriverBalance, addLedgerEntry, findLedgerEntryByI
 
 const router = Router();
 
+function generateAccessCode() {
+    return `DRV-${crypto.randomInt(1000, 9999)}`;
+}
+
 router.get('/', requireAuth('admin'), async (req, res) => {
     const drivers = await listDrivers();
     res.json(drivers);
@@ -51,14 +55,34 @@ router.post('/', requireAuth('admin'), async (req, res) => {
     const { name, phone } = req.body;
     if (!name) return res.status(400).json({ error: 'name is required' });
 
-    const accessCode = `DRV-${crypto.randomInt(1000, 9999)}`;
+    const accessCode = generateAccessCode();
     const driver = await createDriver({ name, phone, accessCode });
     res.status(201).json(driver);
 });
 
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const { name, phone, isActive, monthlyDues } = req.body;
-    const driver = await updateDriver(req.params.id, { name, phone, isActive, monthlyDues });
+    let { accessCode } = req.body;
+    if (accessCode !== undefined) {
+        accessCode = accessCode.trim().toUpperCase();
+        if (!accessCode) return res.status(400).json({ error: 'Access code cannot be empty' });
+    }
+
+    let driver;
+    try {
+        driver = await updateDriver(req.params.id, { name, phone, isActive, monthlyDues, accessCode });
+    } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ error: 'This access code is already in use by another driver' });
+        throw err;
+    }
+    if (!driver) return res.status(404).json({ error: 'Driver not found' });
+    res.json(driver);
+});
+
+// Generates a fresh random access code for the driver, e.g. after they suspect
+// it leaked — same format as at creation time.
+router.post('/:id/reset-access-code', requireAuth('admin'), async (req, res) => {
+    const driver = await updateDriver(req.params.id, { accessCode: generateAccessCode() });
     if (!driver) return res.status(404).json({ error: 'Driver not found' });
     res.json(driver);
 });

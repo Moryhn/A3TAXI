@@ -26,15 +26,16 @@ export async function createDriver({ name, phone, accessCode }) {
     return rows[0];
 }
 
-export async function updateDriver(id, { name, phone, isActive, monthlyDues }) {
+export async function updateDriver(id, { name, phone, isActive, monthlyDues, accessCode }) {
     const { rows } = await query(
         `UPDATE drivers SET
             name = COALESCE($2, name),
             phone = COALESCE($3, phone),
             is_active = COALESCE($4, is_active),
-            monthly_dues = COALESCE($5, monthly_dues)
+            monthly_dues = COALESCE($5, monthly_dues),
+            access_code = COALESCE($6, access_code)
          WHERE id = $1 RETURNING *`,
-        [id, name, phone, isActive, monthlyDues]
+        [id, name, phone, isActive, monthlyDues, accessCode]
     );
     return rows[0] || null;
 }

@@ -150,8 +150,11 @@ export default {
             colAccessCode: 'Access code',
             colActions: 'Actions',
             viewFile: 'View file',
+            resetCodeBtn: 'Regenerate code',
             confirmDeleteTitle: 'Delete {{name}}?',
             confirmDeleteMessage: 'This moves the driver to the trash and revokes their access code. Their trip history is kept, and you can restore them from Trash later.',
+            confirmResetTitle: "Regenerate {{name}}'s access code?",
+            confirmResetMessage: "A new code will be generated and the old one will stop working immediately. The driver will need the new code to log in.",
         },
         driverDetail: {
             back: '← Back to drivers',
