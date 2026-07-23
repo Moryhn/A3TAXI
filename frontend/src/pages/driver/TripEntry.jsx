@@ -11,7 +11,7 @@ export default function TripEntry() {
     const { t, lang } = useLanguage();
     const micLang = lang === 'fr' ? 'fr-CA' : 'en-US';
     const [clients, setClients] = useState([]);
-    const [form, setForm] = useState({ clientAccountId: '', departureLocation: '', arrivalLocation: '', amount: '' });
+    const [form, setForm] = useState({ clientAccountId: '', departureLocation: '', arrivalLocation: '', amount: '', direction: 'aller' });
     const [receipt, setReceipt] = useState(null);
     const [compressing, setCompressing] = useState(false);
     const [status, setStatus] = useState(null);
@@ -39,7 +39,7 @@ export default function TripEntry() {
 
         try {
             await api.createTrip(auth.token, data);
-            setForm({ clientAccountId: '', departureLocation: '', arrivalLocation: '', amount: '' });
+            setForm({ clientAccountId: '', departureLocation: '', arrivalLocation: '', amount: '', direction: 'aller' });
             setReceipt(null);
             setStatus({ ok: true, message: t('driver.tripEntry.tripSaved') });
         } catch (err) {
@@ -99,6 +99,15 @@ export default function TripEntry() {
                         </div>
                         <MicButton lang={micLang} title={t('driver.tripEntry.speakArrival')} onResult={(text) => setForm({ ...form, arrivalLocation: text })} />
                     </div>
+                </div>
+
+                <div className="field">
+                    <label>{t('driver.tripEntry.directionLabel')}</label>
+                    <select className="select" value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
+                        <option value="aller">{t('driver.tripEntry.directionAller')}</option>
+                        <option value="retour">{t('driver.tripEntry.directionRetour')}</option>
+                        <option value="aller_retour">{t('driver.tripEntry.directionAllerRetour')}</option>
+                    </select>
                 </div>
 
                 <div className="field">

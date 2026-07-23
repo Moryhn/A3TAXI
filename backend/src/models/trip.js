@@ -1,10 +1,10 @@
 import { query } from '../config/db.js';
 
-export async function createTrip({ driverId, clientAccountId, departureLocation, arrivalLocation, amount, receiptPhotoUrl }) {
+export async function createTrip({ driverId, clientAccountId, departureLocation, arrivalLocation, amount, receiptPhotoUrl, direction = 'aller' }) {
     const { rows } = await query(
-        `INSERT INTO trips (driver_id, client_account_id, departure_location, arrival_location, amount, receipt_photo_url)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [driverId, clientAccountId, departureLocation, arrivalLocation, amount, receiptPhotoUrl]
+        `INSERT INTO trips (driver_id, client_account_id, departure_location, arrival_location, amount, receipt_photo_url, direction)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [driverId, clientAccountId, departureLocation, arrivalLocation, amount, receiptPhotoUrl, direction]
     );
     return rows[0];
 }
@@ -58,15 +58,16 @@ export async function findTripById(id) {
     return rows[0] || null;
 }
 
-export async function updateTrip(id, { departureLocation, arrivalLocation, amount, tripDate }) {
+export async function updateTrip(id, { departureLocation, arrivalLocation, amount, tripDate, direction }) {
     const { rows } = await query(
         `UPDATE trips SET
             departure_location = COALESCE($2, departure_location),
             arrival_location = COALESCE($3, arrival_location),
             amount = COALESCE($4, amount),
-            trip_date = COALESCE($5, trip_date)
+            trip_date = COALESCE($5, trip_date),
+            direction = COALESCE($6, direction)
          WHERE id = $1 RETURNING *`,
-        [id, departureLocation, arrivalLocation, amount, tripDate]
+        [id, departureLocation, arrivalLocation, amount, tripDate, direction]
     );
     return rows[0] || null;
 }

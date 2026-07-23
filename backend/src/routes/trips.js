@@ -9,9 +9,12 @@ const router = Router();
 
 // Driver submits a trip with a receipt photo
 router.post('/', requireAuth('driver'), uploadReceipt.single('receipt'), async (req, res) => {
-    const { clientAccountId, departureLocation, arrivalLocation, amount } = req.body;
+    const { clientAccountId, departureLocation, arrivalLocation, amount, direction } = req.body;
     if (!clientAccountId || !departureLocation || !arrivalLocation || !amount) {
         return res.status(400).json({ error: 'clientAccountId, departureLocation, arrivalLocation and amount are required' });
+    }
+    if (direction && !['aller', 'retour', 'aller_retour'].includes(direction)) {
+        return res.status(400).json({ error: 'direction must be aller, retour, or aller_retour' });
     }
 
     const receiptPhotoUrl = req.file ? await uploadReceiptPhoto(req.file) : null;
@@ -23,6 +26,7 @@ router.post('/', requireAuth('driver'), uploadReceipt.single('receipt'), async (
         arrivalLocation,
         amount,
         receiptPhotoUrl,
+        direction,
     });
 
     res.status(201).json(trip);
@@ -56,8 +60,8 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
 
-    const { departureLocation, arrivalLocation, amount, tripDate } = req.body;
-    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount, tripDate });
+    const { departureLocation, arrivalLocation, amount, tripDate, direction } = req.body;
+    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount, tripDate, direction });
     if (trip.invoice_id) await recalculateInvoiceTotal(trip.invoice_id);
     res.json(updated);
 });

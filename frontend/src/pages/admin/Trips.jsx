@@ -11,7 +11,7 @@ export default function Trips() {
     const [trips, setTrips] = useState([]);
     const [filters, setFilters] = useState({ clientAccountId: '', dateFrom: '', dateTo: '' });
     const [editingId, setEditingId] = useState(null);
-    const [editForm, setEditForm] = useState({ departureLocation: '', arrivalLocation: '', amount: '' });
+    const [editForm, setEditForm] = useState({ departureLocation: '', arrivalLocation: '', amount: '', direction: 'aller' });
     const [pendingDelete, setPendingDelete] = useState(null);
     const [error, setError] = useState('');
 
@@ -29,7 +29,7 @@ export default function Trips() {
     function startEdit(trip) {
         setError('');
         setEditingId(trip.id);
-        setEditForm({ departureLocation: trip.departure_location, arrivalLocation: trip.arrival_location, amount: trip.amount });
+        setEditForm({ departureLocation: trip.departure_location, arrivalLocation: trip.arrival_location, amount: trip.amount, direction: trip.direction });
     }
 
     async function saveEdit(id) {
@@ -88,7 +88,7 @@ export default function Trips() {
                 <div className="table-wrap">
                     <table className="table">
                         <thead>
-                            <tr><th>{t('admin.trips.colDate')}</th><th>{t('admin.trips.colDriver')}</th><th>{t('admin.trips.colClient')}</th><th>{t('admin.trips.colRoute')}</th><th>{t('admin.trips.colAmount')}</th><th>{t('admin.trips.colReceipt')}</th><th>{t('admin.trips.colActions')}</th></tr>
+                            <tr><th>{t('admin.trips.colDate')}</th><th>{t('admin.trips.colDriver')}</th><th>{t('admin.trips.colClient')}</th><th>{t('admin.trips.colRoute')}</th><th>{t('admin.trips.colDirection')}</th><th>{t('admin.trips.colAmount')}</th><th>{t('admin.trips.colReceipt')}</th><th>{t('admin.trips.colActions')}</th></tr>
                         </thead>
                         <tbody>
                             {trips.map((trip) => (
@@ -104,6 +104,13 @@ export default function Trips() {
                                                     <input className="input" style={{ padding: '6px 8px', width: 110 }} value={editForm.arrivalLocation} onChange={(e) => setEditForm({ ...editForm, arrivalLocation: e.target.value })} />
                                                 </div>
                                             </td>
+                                            <td>
+                                                <select className="select" style={{ padding: '6px 8px' }} value={editForm.direction} onChange={(e) => setEditForm({ ...editForm, direction: e.target.value })}>
+                                                    <option value="aller">{t('admin.trips.directionAller')}</option>
+                                                    <option value="retour">{t('admin.trips.directionRetour')}</option>
+                                                    <option value="aller_retour">{t('admin.trips.directionAllerRetour')}</option>
+                                                </select>
+                                            </td>
                                             <td><input className="input" type="number" step="0.01" style={{ padding: '6px 8px', width: 80 }} value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} /></td>
                                             <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
                                             <td>
@@ -116,6 +123,7 @@ export default function Trips() {
                                     ) : (
                                         <>
                                             <td>{trip.departure_location} → {trip.arrival_location}</td>
+                                            <td className="subtle">{t(`admin.trips.direction${trip.direction === 'aller_retour' ? 'AllerRetour' : trip.direction === 'retour' ? 'Retour' : 'Aller'}`)}</td>
                                             <td><span className="meter meter--sm">{formatCurrency(trip.amount, lang)}</span></td>
                                             <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
                                             <td>
