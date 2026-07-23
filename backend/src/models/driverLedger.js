@@ -44,7 +44,7 @@ export async function getDriverBalance(driverId, asOfDate = new Date()) {
                         FROM trips t
                         JOIN client_accounts c ON c.id = t.client_account_id
                         WHERE t.driver_id = $1 AND t.deleted_at IS NULL
-                          AND t.trip_date <= $2::date
+                          AND t.trip_date::date <= $2::date
                           AND (c.deleted_at IS NULL OR c.deleted_at::date > $2::date)), 0)
             AS balance`,
         [driverId, asOfDate]
