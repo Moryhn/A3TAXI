@@ -3,17 +3,20 @@ import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCurrency } from '../../lib/format.js';
+import MonthNav, { currentMonthValue, monthParam, monthDateRange } from '../../components/MonthNav.jsx';
 
 export default function MyAccount() {
     const { auth } = useAuth();
     const { t, lang } = useLanguage();
+    const [month, setMonth] = useState(currentMonthValue);
     const [trips, setTrips] = useState([]);
     const [ledger, setLedger] = useState({ entries: [], balance: 0 });
 
     useEffect(() => {
-        api.listTrips(auth.token, { invoiced: false, excludeDeletedClient: true }).then(setTrips);
-        api.getMyLedger(auth.token).then(setLedger);
-    }, []);
+        const { dateFrom, dateTo } = monthDateRange(month);
+        api.listTrips(auth.token, { dateFrom, dateTo }).then(setTrips);
+        api.getMyLedger(auth.token, monthParam(month)).then(setLedger);
+    }, [month]);
 
     const tripsTotal = trips.reduce((sum, trip) => sum + Number(trip.amount), 0);
 
@@ -21,6 +24,8 @@ export default function MyAccount() {
         <div>
             <div className="eyebrow">{t('driver.account.eyebrow')}</div>
             <h1 className="h1" style={{ fontSize: 26, marginBottom: 20 }}>{t('driver.account.title')}</h1>
+
+            <MonthNav value={month} onChange={setMonth} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div className="card">

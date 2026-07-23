@@ -10,6 +10,28 @@ function generateAccessCode() {
     return `DRV-${crypto.randomInt(1000, 9999)}`;
 }
 
+// Resolves a "YYYY-MM" query param (defaulting to the current month) into the
+// date range to list entries within, and the point in time the balance
+// should be computed as of — end of that month, except for the current
+// month, where it's today (so the current month always shows the live
+// running balance, not a preview of what it'll be once the month ends).
+function resolveMonthRange(monthParam) {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth() + 1;
+
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+        [year, month] = monthParam.split('-').map(Number);
+    }
+
+    const dateFrom = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endOfMonth = new Date(year, month, 0).toISOString().slice(0, 10);
+    const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
+    const asOf = isCurrentMonth ? now.toISOString().slice(0, 10) : endOfMonth;
+
+    return { dateFrom, dateTo: endOfMonth, asOf };
+}
+
 router.get('/', requireAuth('admin'), async (req, res) => {
     const drivers = await listDrivers();
     res.json(drivers);
@@ -18,8 +40,9 @@ router.get('/', requireAuth('admin'), async (req, res) => {
 // Driver views their own dues ledger (registered before /:id so 'me' isn't
 // swallowed as a driver id).
 router.get('/me/ledger', requireAuth('driver'), async (req, res) => {
-    const entries = await listLedgerEntries(req.user.sub);
-    const balance = await getDriverBalance(req.user.sub);
+    const { dateFrom, dateTo, asOf } = resolveMonthRange(req.query.month);
+    const entries = await listLedgerEntries(req.user.sub, { dateFrom, dateTo });
+    const balance = await getDriverBalance(req.user.sub, asOf);
     res.json({ entries, balance });
 });
 
@@ -30,8 +53,9 @@ router.get('/:id', requireAuth('admin'), async (req, res) => {
 });
 
 router.get('/:id/ledger', requireAuth('admin'), async (req, res) => {
-    const entries = await listLedgerEntries(req.params.id);
-    const balance = await getDriverBalance(req.params.id);
+    const { dateFrom, dateTo, asOf } = resolveMonthRange(req.query.month);
+    const entries = await listLedgerEntries(req.params.id, { dateFrom, dateTo });
+    const balance = await getDriverBalance(req.params.id, asOf);
     res.json({ entries, balance });
 });
 

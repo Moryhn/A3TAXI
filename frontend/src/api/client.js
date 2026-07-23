@@ -36,10 +36,10 @@ export const api = {
     deleteDriver: (token, id) => request(`/drivers/${id}`, { method: 'DELETE', token }),
     resetDriverAccessCode: (token, id) => request(`/drivers/${id}/reset-access-code`, { method: 'POST', token }),
 
-    getDriverLedger: (token, driverId) => request(`/drivers/${driverId}/ledger`, { token }),
+    getDriverLedger: (token, driverId, month) => request(`/drivers/${driverId}/ledger${month ? `?month=${month}` : ''}`, { token }),
     addDriverLedgerEntry: (token, driverId, body) => request(`/drivers/${driverId}/ledger`, { method: 'POST', body, token }),
     deleteDriverLedgerEntry: (token, driverId, entryId) => request(`/drivers/${driverId}/ledger/${entryId}`, { method: 'DELETE', token }),
-    getMyLedger: (token) => request('/drivers/me/ledger', { token }),
+    getMyLedger: (token, month) => request(`/drivers/me/ledger${month ? `?month=${month}` : ''}`, { token }),
 
     listClientAccounts: (token) => request('/client-accounts', { token }),
     createClientAccount: (token, account) => request('/client-accounts', { method: 'POST', body: account, token }),

@@ -5,11 +5,13 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCurrency } from '../../lib/format.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import MonthNav, { currentMonthValue, monthParam, monthDateRange } from '../../components/MonthNav.jsx';
 
 export default function DriverDetail() {
     const { id } = useParams();
     const { auth } = useAuth();
     const { t, lang } = useLanguage();
+    const [month, setMonth] = useState(currentMonthValue);
     const [driver, setDriver] = useState(null);
     const [trips, setTrips] = useState([]);
     const [ledger, setLedger] = useState({ entries: [], balance: 0 });
@@ -21,10 +23,11 @@ export default function DriverDetail() {
     const [error, setError] = useState('');
 
     async function refresh() {
+        const { dateFrom, dateTo } = monthDateRange(month);
         const [d, t, l] = await Promise.all([
             api.getDriver(auth.token, id),
-            api.listTrips(auth.token, { driverId: id, invoiced: false, excludeDeletedClient: true }),
-            api.getDriverLedger(auth.token, id),
+            api.listTrips(auth.token, { driverId: id, dateFrom, dateTo }),
+            api.getDriverLedger(auth.token, id, monthParam(month)),
         ]);
         setDriver(d);
         setDues(d.monthly_dues);
@@ -32,7 +35,7 @@ export default function DriverDetail() {
         setLedger(l);
     }
 
-    useEffect(() => { refresh(); }, [id]);
+    useEffect(() => { refresh(); }, [id, month]);
 
     const tripsTotal = trips.reduce((sum, trip) => sum + Number(trip.amount), 0);
 
@@ -86,6 +89,8 @@ export default function DriverDetail() {
             </div>
 
             {error && <div className="pill" style={{ marginBottom: 16, color: 'var(--danger)', background: 'rgba(240,85,76,0.12)' }}>{error}</div>}
+
+            <MonthNav value={month} onChange={setMonth} />
 
             <div className="form-row" style={{ marginBottom: 16 }}>
                 <div className="card" style={{ flex: 1 }}>

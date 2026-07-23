@@ -160,7 +160,7 @@ export default {
             back: '← Back to drivers',
             eyebrow: 'Driver file',
             balanceOwed: 'owed to the company',
-            tripsTotalEyebrow: 'Trips not yet invoiced',
+            tripsTotalEyebrow: 'Trips this month',
             tripsCount: '{{count}} trip(s)',
             monthlyDuesEyebrow: 'Monthly dues',
             addEntryEyebrow: 'Add entry',
@@ -405,7 +405,7 @@ export default {
         account: {
             eyebrow: 'My account',
             title: 'My account',
-            tripsTotalEyebrow: 'My trips not yet invoiced',
+            tripsTotalEyebrow: "My trips this month",
             tripsCount: '{{count}} trip(s)',
             balanceEyebrow: 'Balance owed to the company',
             balanceHint: 'Monthly dues minus payments and trips not yet invoiced.',

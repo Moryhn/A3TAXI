@@ -31,7 +31,7 @@ router.post('/', requireAuth('driver'), uploadReceipt.single('receipt'), async (
 // Admin searches/filters trips by date, driver, or client account.
 // Drivers can list their own trips (driverId forced to self).
 router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
-    const { clientAccountId, dateFrom, dateTo, invoiced, excludeDeletedClient } = req.query;
+    const { clientAccountId, dateFrom, dateTo, invoiced } = req.query;
     let { driverId } = req.query;
 
     if (req.user.role === 'driver') {
@@ -44,7 +44,6 @@ router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
         dateFrom,
         dateTo,
         invoiced: invoiced === undefined ? undefined : invoiced === 'true',
-        excludeDeletedClient: excludeDeletedClient === 'true',
     });
 
     res.json(trips);

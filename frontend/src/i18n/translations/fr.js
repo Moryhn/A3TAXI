@@ -160,7 +160,7 @@ export default {
             back: '← Retour aux chauffeurs',
             eyebrow: 'Dossier chauffeur',
             balanceOwed: 'dû à la compagnie',
-            tripsTotalEyebrow: 'Courses pas encore facturées',
+            tripsTotalEyebrow: 'Courses du mois',
             tripsCount: '{{count}} course(s)',
             monthlyDuesEyebrow: 'Cotisation mensuelle',
             addEntryEyebrow: 'Ajouter une entrée',
@@ -405,7 +405,7 @@ export default {
         account: {
             eyebrow: 'Mon compte',
             title: 'Mon compte',
-            tripsTotalEyebrow: 'Mes courses pas encore facturées',
+            tripsTotalEyebrow: 'Mes courses du mois',
             tripsCount: '{{count}} course(s)',
             balanceEyebrow: 'Solde dû à la compagnie',
             balanceHint: 'Cotisation mensuelle moins les paiements et les courses pas encore facturées.',
