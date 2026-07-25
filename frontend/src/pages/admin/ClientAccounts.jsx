@@ -4,6 +4,11 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
+const EMPTY_TEMPLATE_FORM = {
+    name: '', clientNameCell: '', periodCell: '', tripRowStart: '',
+    dateCol: '', descriptionCol: '', departureCol: '', arrivalCol: '', amountCol: '',
+};
+
 export default function ClientAccounts() {
     const { auth } = useAuth();
     const { t } = useLanguage();
@@ -16,6 +21,12 @@ export default function ClientAccounts() {
         name: '', contactPhone: '', address: '', city: '', postalCode: '', invoiceDescription: '',
     });
     const [pendingDelete, setPendingDelete] = useState(null);
+
+    const [activeTemplate, setActiveTemplate] = useState(null);
+    const [templateForm, setTemplateForm] = useState(EMPTY_TEMPLATE_FORM);
+    const [templateFile, setTemplateFile] = useState(null);
+    const [uploadingTemplate, setUploadingTemplate] = useState(false);
+    const [templateError, setTemplateError] = useState('');
 
     async function refresh() {
         setAccounts(await api.listClientAccounts(auth.token));
@@ -40,6 +51,47 @@ export default function ClientAccounts() {
             postalCode: a.postal_code || '',
             invoiceDescription: a.invoice_description || '',
         });
+        setTemplateForm(EMPTY_TEMPLATE_FORM);
+        setTemplateFile(null);
+        setTemplateError('');
+        setActiveTemplate(null);
+        api.getClientTemplate(auth.token, a.id).then((res) => setActiveTemplate(res.active));
+    }
+
+    async function uploadTemplate(clientAccountId) {
+        setTemplateError('');
+        if (!templateFile) {
+            setTemplateError(t('admin.clients.template.fileRequired'));
+            return;
+        }
+        const fieldMapping = {
+            client_name: templateForm.clientNameCell || undefined,
+            period: templateForm.periodCell || undefined,
+            trip_row_start: Number(templateForm.tripRowStart),
+            trip_columns: {
+                date: templateForm.dateCol,
+                description: templateForm.descriptionCol,
+                departure: templateForm.departureCol,
+                arrival: templateForm.arrivalCol,
+                amount: templateForm.amountCol,
+            },
+        };
+        const body = new FormData();
+        body.append('file', templateFile);
+        body.append('name', templateForm.name || templateFile.name);
+        body.append('fieldMapping', JSON.stringify(fieldMapping));
+
+        setUploadingTemplate(true);
+        try {
+            const created = await api.uploadClientTemplate(auth.token, clientAccountId, body);
+            setActiveTemplate(created);
+            setTemplateForm(EMPTY_TEMPLATE_FORM);
+            setTemplateFile(null);
+        } catch (err) {
+            setTemplateError(err.message);
+        } finally {
+            setUploadingTemplate(false);
+        }
     }
 
     async function saveEdit(id) {
@@ -158,6 +210,65 @@ export default function ClientAccounts() {
                                                         <label>{t('admin.clients.invoiceDescriptionLabel')}</label>
                                                         <input className="input" placeholder="Livraison" value={editForm.invoiceDescription} onChange={(e) => setEditForm({ ...editForm, invoiceDescription: e.target.value })} />
                                                     </div>
+                                                </div>
+
+                                                <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                                                    <div className="eyebrow">{t('admin.clients.template.eyebrow')}</div>
+                                                    {activeTemplate && (
+                                                        <p className="subtle" style={{ marginTop: 6 }}>
+                                                            {t('admin.clients.template.current', { name: activeTemplate.name })}
+                                                        </p>
+                                                    )}
+                                                    <p className="subtle" style={{ marginTop: activeTemplate ? 2 : 6, fontSize: 12 }}>
+                                                        {t('admin.clients.template.hint')}
+                                                    </p>
+
+                                                    <div className="form-row" style={{ marginTop: 12 }}>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.fileLabel')}</label>
+                                                            <input className="input" type="file" accept=".xlsx" onChange={(e) => setTemplateFile(e.target.files[0] || null)} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.nameLabel')}</label>
+                                                            <input className="input" placeholder="Facture standard" value={templateForm.name} onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.clientNameCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder="B10" value={templateForm.clientNameCell} onChange={(e) => setTemplateForm({ ...templateForm, clientNameCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.periodCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder="B4" value={templateForm.periodCell} onChange={(e) => setTemplateForm({ ...templateForm, periodCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.tripRowStartLabel')}</label>
+                                                            <input className="input" type="number" min="1" style={{ fontFamily: 'var(--font-mono)' }} placeholder="12" value={templateForm.tripRowStart} onChange={(e) => setTemplateForm({ ...templateForm, tripRowStart: e.target.value })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.dateColLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="A" value={templateForm.dateCol} onChange={(e) => setTemplateForm({ ...templateForm, dateCol: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.descriptionColLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="B" value={templateForm.descriptionCol} onChange={(e) => setTemplateForm({ ...templateForm, descriptionCol: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.departureColLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="C" value={templateForm.departureCol} onChange={(e) => setTemplateForm({ ...templateForm, departureCol: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.arrivalColLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="D" value={templateForm.arrivalCol} onChange={(e) => setTemplateForm({ ...templateForm, arrivalCol: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.amountColLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="E" value={templateForm.amountCol} onChange={(e) => setTemplateForm({ ...templateForm, amountCol: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                    </div>
+                                                    {templateError && <p style={{ color: 'var(--danger, #dc2626)', marginTop: 8, fontSize: 13 }}>{templateError}</p>}
+                                                    <button onClick={() => uploadTemplate(a.id)} className="btn btn--ghost" style={{ marginTop: 10 }} disabled={uploadingTemplate}>
+                                                        {uploadingTemplate ? t('common.save') + '…' : t('admin.clients.template.uploadBtn')}
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>

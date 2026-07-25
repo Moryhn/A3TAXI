@@ -34,6 +34,7 @@ export default function InvoicePrint() {
     const [saving, setSaving] = useState(false);
     const [confirmingFinalize, setConfirmingFinalize] = useState(false);
     const [finalizing, setFinalizing] = useState(false);
+    const [exporting, setExporting] = useState(false);
 
     function refresh() {
         return api.getInvoice(auth.token, id).then(setInvoice);
@@ -84,6 +85,15 @@ export default function InvoicePrint() {
         }
     }
 
+    async function exportXlsx() {
+        setExporting(true);
+        try {
+            await api.exportInvoiceXlsx(auth.token, id);
+        } finally {
+            setExporting(false);
+        }
+    }
+
     async function confirmFinalize() {
         setFinalizing(true);
         try {
@@ -115,6 +125,11 @@ export default function InvoicePrint() {
                     ) : (
                         <>
                             <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoicePrint.printButton')}</button>
+                            {invoice.template_id && (
+                                <button onClick={exportXlsx} className="btn btn--ghost" disabled={exporting}>
+                                    {exporting ? t('common.save') + '…' : t('admin.invoicePrint.exportXlsxButton')}
+                                </button>
+                            )}
                             {!invoice.finalized_at && (
                                 <>
                                     <button onClick={startEdit} className="btn btn--ghost">{t('admin.invoicePrint.editButton')}</button>
