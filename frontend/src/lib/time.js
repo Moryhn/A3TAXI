@@ -16,6 +16,16 @@ export function localInputToUtcIso(value) {
     return value ? new Date(value).toISOString() : value;
 }
 
+// <input type="date"> gives a bare "2026-07-20" string. new Date() parses a
+// date-only ISO string as UTC midnight (unlike datetime-local strings, which
+// parse as local time) — sent straight to the backend, that UTC midnight
+// reads back as the previous day once displayed in Eastern time. Anchoring
+// at local noon before converting keeps the same calendar day regardless of
+// which side of midnight the UTC/Eastern offset falls on.
+export function localDateInputToUtcIso(value) {
+    return value ? new Date(`${value}T12:00`).toISOString() : value;
+}
+
 export function formatRelativeTime(recordedAt, lang = 'en') {
     const seconds = Math.max(0, Math.round((Date.now() - new Date(recordedAt).getTime()) / 1000));
     const rtf = new Intl.RelativeTimeFormat(LOCALE_MAP[lang] || 'en-CA', { numeric: 'auto' });

@@ -4,6 +4,7 @@ import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCurrency, calculateTaxBreakdown } from '../../lib/format.js';
+import { localDateInputToUtcIso } from '../../lib/time.js';
 
 // A3TAXI's own letterhead + tax registration numbers — fixed regardless of
 // which client the invoice is billed to, so they live here rather than in
@@ -70,7 +71,7 @@ export default function InvoicePrint() {
                 departureLocation: r.departure_location,
                 arrivalLocation: r.arrival_location,
                 amount: r.amount,
-                tripDate: r.trip_date,
+                tripDate: localDateInputToUtcIso(r.trip_date),
             })));
             await Promise.all(removedTripIds.map((tripId) => api.deleteTrip(auth.token, tripId)));
             await refresh();
