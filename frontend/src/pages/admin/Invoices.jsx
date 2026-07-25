@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
-import { formatDate, formatCurrency } from '../../lib/format.js';
+import { formatDate, formatCalendarDate, formatCurrency } from '../../lib/format.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 export default function Invoices() {
@@ -93,7 +93,7 @@ export default function Invoices() {
                                 <tr key={inv.id}>
                                     <td className="subtle" style={{ fontFamily: 'var(--font-mono)' }}>{inv.invoice_number || '—'}</td>
                                     <td>{inv.client_name}</td>
-                                    <td className="subtle">{formatDate(inv.period_start, lang)} → {formatDate(inv.period_end, lang)}</td>
+                                    <td className="subtle">{formatCalendarDate(inv.period_start, lang)} → {formatCalendarDate(inv.period_end, lang)}</td>
                                     <td><span className="meter meter--sm">{formatCurrency(inv.total_amount, lang)}</span></td>
                                     <td className="subtle">{formatDate(inv.generated_at, lang)}</td>
                                     <td><Link to={`${inv.id}/print`} style={{ color: 'var(--amber)' }}>{t('admin.invoices.viewPrint')}</Link></td>

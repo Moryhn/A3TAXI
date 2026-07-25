@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
-import { formatDate, formatCurrency } from '../../lib/format.js';
+import { formatCalendarDate, formatCurrency } from '../../lib/format.js';
 import MonthNav, { currentMonthValue, monthParam, monthDateRange } from '../../components/MonthNav.jsx';
 
 export default function MyAccount() {
@@ -61,7 +61,7 @@ export default function MyAccount() {
                         <tbody>
                             {ledger.entries.map((entry) => (
                                 <tr key={entry.id}>
-                                    <td>{formatDate(entry.entry_date, lang)}</td>
+                                    <td>{formatCalendarDate(entry.entry_date, lang)}</td>
                                     <td>{entry.type === 'charge' ? t('driver.account.typeCharge') : t('driver.account.typePayment')}</td>
                                     <td style={{ color: entry.type === 'charge' ? 'var(--danger)' : '#0f8a5f' }}>
                                         {entry.type === 'charge' ? '+' : '-'}{formatCurrency(entry.amount, lang)}

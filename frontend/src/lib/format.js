@@ -5,6 +5,17 @@ export function formatDate(value, lang, opts = {}) {
     return new Date(value).toLocaleDateString(LOCALE_MAP[lang] || 'en-CA', opts);
 }
 
+// For a Postgres DATE column (period_start/period_end, invoice_date,
+// entry_date — no time-of-day, just a calendar day), the API returns it as
+// "2026-07-20T00:00:00.000Z". Formatting that with formatDate() converts to
+// the viewer's local time first, which in Eastern time shows the day before.
+// Reading it back out in UTC instead keeps the exact day that was picked/
+// stored, regardless of the viewer's timezone.
+export function formatCalendarDate(value, lang, opts = {}) {
+    if (!value) return '';
+    return new Date(value).toLocaleDateString(LOCALE_MAP[lang] || 'en-CA', { ...opts, timeZone: 'UTC' });
+}
+
 export function formatDateTime(value, lang, opts = {}) {
     if (!value) return '';
     return new Date(value).toLocaleString(LOCALE_MAP[lang] || 'en-CA', opts);

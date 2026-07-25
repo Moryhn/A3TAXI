@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
-import { formatDate, formatCurrency, calculateTaxBreakdown } from '../../lib/format.js';
+import { formatDate, formatCalendarDate, formatCurrency, calculateTaxBreakdown } from '../../lib/format.js';
 import { localDateInputToUtcIso } from '../../lib/time.js';
 
 // A3TAXI's own letterhead + tax registration numbers — fixed regardless of
@@ -129,7 +129,7 @@ export default function InvoicePrint() {
                             </div>
                         ) : (
                             <>
-                                <div className="subtle">{t('admin.invoicePrint.dateLabel')}: {formatDate(invoiceDate, lang)}</div>
+                                <div className="subtle">{t('admin.invoicePrint.dateLabel')}: {formatCalendarDate(invoiceDate, lang)}</div>
                                 <div className="subtle">{t('admin.invoicePrint.numberLabel')}: {invoiceNumber}</div>
                             </>
                         )}
@@ -145,7 +145,7 @@ export default function InvoicePrint() {
                     )}
                     {invoice.client_phone && <div className="subtle">{invoice.client_phone}</div>}
                     <div className="subtle" style={{ marginTop: 8 }}>
-                        {t('admin.invoicePrint.period')}: {formatDate(invoice.period_start, lang)} — {formatDate(invoice.period_end, lang)}
+                        {t('admin.invoicePrint.period')}: {formatCalendarDate(invoice.period_start, lang)} — {formatCalendarDate(invoice.period_end, lang)}
                     </div>
                     {editing && <p className="subtle" style={{ marginTop: 8, fontSize: 12 }}>{t('admin.invoicePrint.editClientHint')}</p>}
                 </div>
