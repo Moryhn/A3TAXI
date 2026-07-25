@@ -88,7 +88,7 @@ export default function ClientAccounts() {
             setTemplateForm(EMPTY_TEMPLATE_FORM);
             setTemplateFile(null);
         } catch (err) {
-            setTemplateError(err.message);
+            setTemplateError(err.details ? `${err.message}: ${err.details.join('; ')}` : err.message);
         } finally {
             setUploadingTemplate(false);
         }
@@ -222,6 +222,9 @@ export default function ClientAccounts() {
                                                     <p className="subtle" style={{ marginTop: activeTemplate ? 2 : 6, fontSize: 12 }}>
                                                         {t('admin.clients.template.hint')}
                                                     </p>
+                                                    <p className="subtle" style={{ marginTop: 8, fontSize: 12 }}>
+                                                        {t('admin.clients.template.mappingHint')}
+                                                    </p>
 
                                                     <div className="form-row" style={{ marginTop: 12 }}>
                                                         <div className="field">
@@ -234,35 +237,35 @@ export default function ClientAccounts() {
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.clientNameCellLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder="B10" value={templateForm.clientNameCell} onChange={(e) => setTemplateForm({ ...templateForm, clientNameCell: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleB10')} value={templateForm.clientNameCell} onChange={(e) => setTemplateForm({ ...templateForm, clientNameCell: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.periodCellLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder="B4" value={templateForm.periodCell} onChange={(e) => setTemplateForm({ ...templateForm, periodCell: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleB4')} value={templateForm.periodCell} onChange={(e) => setTemplateForm({ ...templateForm, periodCell: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.tripRowStartLabel')}</label>
-                                                            <input className="input" type="number" min="1" style={{ fontFamily: 'var(--font-mono)' }} placeholder="12" value={templateForm.tripRowStart} onChange={(e) => setTemplateForm({ ...templateForm, tripRowStart: e.target.value })} />
+                                                            <input className="input" type="number" min="1" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.example12')} value={templateForm.tripRowStart} onChange={(e) => setTemplateForm({ ...templateForm, tripRowStart: e.target.value })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.dateColLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="A" value={templateForm.dateCol} onChange={(e) => setTemplateForm({ ...templateForm, dateCol: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 90 }} placeholder={t('admin.clients.template.exampleA')} value={templateForm.dateCol} onChange={(e) => setTemplateForm({ ...templateForm, dateCol: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.descriptionColLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="B" value={templateForm.descriptionCol} onChange={(e) => setTemplateForm({ ...templateForm, descriptionCol: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 90 }} placeholder={t('admin.clients.template.exampleB')} value={templateForm.descriptionCol} onChange={(e) => setTemplateForm({ ...templateForm, descriptionCol: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.departureColLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="C" value={templateForm.departureCol} onChange={(e) => setTemplateForm({ ...templateForm, departureCol: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 90 }} placeholder={t('admin.clients.template.exampleC')} value={templateForm.departureCol} onChange={(e) => setTemplateForm({ ...templateForm, departureCol: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.arrivalColLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="D" value={templateForm.arrivalCol} onChange={(e) => setTemplateForm({ ...templateForm, arrivalCol: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 90 }} placeholder={t('admin.clients.template.exampleD')} value={templateForm.arrivalCol} onChange={(e) => setTemplateForm({ ...templateForm, arrivalCol: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.amountColLabel')}</label>
-                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 60 }} placeholder="E" value={templateForm.amountCol} onChange={(e) => setTemplateForm({ ...templateForm, amountCol: e.target.value.toUpperCase() })} />
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)', width: 90 }} placeholder={t('admin.clients.template.exampleE')} value={templateForm.amountCol} onChange={(e) => setTemplateForm({ ...templateForm, amountCol: e.target.value.toUpperCase() })} />
                                                         </div>
                                                     </div>
                                                     {templateError && <p style={{ color: 'var(--danger, #dc2626)', marginTop: 8, fontSize: 13 }}>{templateError}</p>}
