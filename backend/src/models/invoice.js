@@ -14,9 +14,12 @@ export async function createInvoice({
 // One invoice per client per period, no matter how many drivers' trips feed
 // into it or how many times admin re-runs "Generate" — later generations for
 // the same client+period top up this invoice instead of creating a duplicate.
+// Excludes finalized invoices for the same reason as findLatestInvoiceForClient
+// below: once sent to the client, an invoice must stop absorbing new trips,
+// even if the exact same period is requested again.
 export async function findInvoiceByClientAndPeriod(clientAccountId, periodStart, periodEnd) {
     const { rows } = await query(
-        `SELECT * FROM invoices WHERE client_account_id = $1 AND period_start = $2 AND period_end = $3 AND deleted_at IS NULL`,
+        `SELECT * FROM invoices WHERE client_account_id = $1 AND period_start = $2 AND period_end = $3 AND deleted_at IS NULL AND finalized_at IS NULL`,
         [clientAccountId, periodStart, periodEnd]
     );
     return rows[0] || null;
@@ -26,11 +29,25 @@ export async function findInvoiceByClientAndPeriod(clientAccountId, periodStart,
 // again with a different date range than before (e.g. extending the end date
 // to pick up a few more days), this finds that same invoice instead of the
 // exact-period lookup above missing it and starting a second, overlapping one.
-// Admin deletes the invoice (moves it to Trash) to deliberately start fresh.
+// Excludes finalized invoices — once one has been sent to the client it must
+// stop changing, so a finalized invoice never absorbs new trips; the next
+// Generate starts a fresh one instead. Admin can also delete an invoice
+// (Trash, restorable) to deliberately start fresh before finalizing.
 export async function findLatestInvoiceForClient(clientAccountId) {
     const { rows } = await query(
-        `SELECT * FROM invoices WHERE client_account_id = $1 AND deleted_at IS NULL ORDER BY generated_at DESC LIMIT 1`,
+        `SELECT * FROM invoices WHERE client_account_id = $1 AND deleted_at IS NULL AND finalized_at IS NULL ORDER BY generated_at DESC LIMIT 1`,
         [clientAccountId]
+    );
+    return rows[0] || null;
+}
+
+// One-way: once sent to the client, an invoice is locked from further edits
+// and stops absorbing new trips via Generate. To correct a finalized invoice,
+// admin deletes it (Trash, restorable) rather than un-finalizing it in place.
+export async function finalizeInvoice(id) {
+    const { rows } = await query(
+        `UPDATE invoices SET finalized_at = now() WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
+        [id]
     );
     return rows[0] || null;
 }

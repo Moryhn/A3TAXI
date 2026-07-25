@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCalendarDate, formatCurrency, calculateTaxBreakdown } from '../../lib/format.js';
 import { localDateInputToUtcIso } from '../../lib/time.js';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 // A3TAXI's own letterhead + tax registration numbers — fixed regardless of
 // which client the invoice is billed to, so they live here rather than in
@@ -31,6 +32,8 @@ export default function InvoicePrint() {
     const [editTrips, setEditTrips] = useState([]);
     const [removedTripIds, setRemovedTripIds] = useState([]);
     const [saving, setSaving] = useState(false);
+    const [confirmingFinalize, setConfirmingFinalize] = useState(false);
+    const [finalizing, setFinalizing] = useState(false);
 
     function refresh() {
         return api.getInvoice(auth.token, id).then(setInvoice);
@@ -81,6 +84,17 @@ export default function InvoicePrint() {
         }
     }
 
+    async function confirmFinalize() {
+        setFinalizing(true);
+        try {
+            await api.finalizeInvoice(auth.token, id);
+            await refresh();
+            setConfirmingFinalize(false);
+        } finally {
+            setFinalizing(false);
+        }
+    }
+
     if (!invoice) return <div className="theme-light" style={{ minHeight: '100vh', padding: 40 }}>{t('admin.invoicePrint.loading')}</div>;
 
     const tax = calculateTaxBreakdown(invoice.total_amount);
@@ -101,10 +115,21 @@ export default function InvoicePrint() {
                     ) : (
                         <>
                             <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoicePrint.printButton')}</button>
-                            <button onClick={startEdit} className="btn btn--ghost">{t('admin.invoicePrint.editButton')}</button>
+                            {!invoice.finalized_at && (
+                                <>
+                                    <button onClick={startEdit} className="btn btn--ghost">{t('admin.invoicePrint.editButton')}</button>
+                                    <button onClick={() => setConfirmingFinalize(true)} className="btn btn--ghost">{t('admin.invoicePrint.finalizeButton')}</button>
+                                </>
+                            )}
                         </>
                     )}
                 </div>
+
+                {invoice.finalized_at && (
+                    <div className="no-print pill" style={{ marginBottom: 24, color: '#0f8a5f', background: 'rgba(52,211,153,0.15)', display: 'inline-flex' }}>
+                        {t('admin.invoicePrint.finalizedBadge', { date: formatDate(invoice.finalized_at, lang) })}
+                    </div>
+                )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
                     <div>
@@ -218,6 +243,15 @@ export default function InvoicePrint() {
 
                 <p className="subtle" style={{ marginTop: 16 }}>{t('admin.invoicePrint.disclaimer')}</p>
             </div>
+
+            <ConfirmDialog
+                open={confirmingFinalize}
+                title={t('admin.invoicePrint.confirmFinalizeTitle')}
+                message={t('admin.invoicePrint.confirmFinalizeMessage')}
+                confirmLabel={finalizing ? t('common.save') + '…' : t('admin.invoicePrint.finalizeButton')}
+                onConfirm={confirmFinalize}
+                onCancel={() => setConfirmingFinalize(false)}
+            />
 
             <style>{`
                 @media print {

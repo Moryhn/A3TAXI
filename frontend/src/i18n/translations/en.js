@@ -250,6 +250,7 @@ export default {
             delete: 'Delete',
             confirmDeleteTitle: 'Delete this invoice?',
             confirmDeleteMessage: '{{client}} — {{total}}. It\'ll move to Trash, and its trips become available to invoice again. You can restore it later.',
+            finalized: 'Finalized',
         },
         invoicePrint: {
             loading: 'Loading…',
@@ -277,6 +278,10 @@ export default {
             saveChanges: 'Save changes',
             editClientHint: 'Billing name/address come from the client account — edit them on the Clients page to update every future invoice.',
             totalRecalcHint: 'Total recalculates automatically from the line items above once saved.',
+            finalizeButton: 'Finalize invoice',
+            finalizedBadge: 'Finalized on {{date}} — sent to the client, can no longer be edited.',
+            confirmFinalizeTitle: 'Finalize this invoice?',
+            confirmFinalizeMessage: "Once finalized, this invoice can no longer be edited, and this client's new trips will start a separate invoice instead of being added to it. Use this once the invoice has been sent to the client.",
         },
         reservations: {
             eyebrow: 'Reservations',

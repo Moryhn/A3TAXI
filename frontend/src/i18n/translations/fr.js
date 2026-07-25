@@ -250,6 +250,7 @@ export default {
             delete: 'Supprimer',
             confirmDeleteTitle: 'Supprimer cette facture ?',
             confirmDeleteMessage: "{{client}} — {{total}}. Elle sera déplacée vers la corbeille, et ses courses redeviendront disponibles pour une future facturation. Vous pourrez la restaurer plus tard.",
+            finalized: 'Finalisée',
         },
         invoicePrint: {
             loading: 'Chargement…',
@@ -277,6 +278,10 @@ export default {
             saveChanges: 'Enregistrer les modifications',
             editClientHint: "Le nom/l'adresse de facturation viennent du compte client — modifiez-les depuis la page Clients pour mettre à jour toutes les prochaines factures.",
             totalRecalcHint: 'Le total se recalcule automatiquement à partir des lignes ci-dessus une fois enregistré.',
+            finalizeButton: 'Finaliser la facture',
+            finalizedBadge: 'Facture finalisée le {{date}} — envoyée au client, ne peut plus être modifiée.',
+            confirmFinalizeTitle: 'Finaliser cette facture ?',
+            confirmFinalizeMessage: "Une fois finalisée, cette facture ne pourra plus être modifiée et les nouvelles courses de ce client créeront une facture séparée au lieu de s'y ajouter. Utilisez ceci une fois la facture envoyée au client.",
         },
         reservations: {
             eyebrow: 'Réservations',

@@ -62,6 +62,7 @@ export const api = {
     getInvoice: (token, id) => request(`/invoices/${id}`, { token }),
     updateInvoice: (token, id, body) => request(`/invoices/${id}`, { method: 'PATCH', body, token }),
     deleteInvoice: (token, id) => request(`/invoices/${id}`, { method: 'DELETE', token }),
+    finalizeInvoice: (token, id) => request(`/invoices/${id}/finalize`, { method: 'POST', token }),
 
     getDriverPositions: (token) => request('/dispatch/positions', { token }),
     postDriverPosition: (token, lat, lng) => request('/dispatch/positions', { method: 'POST', body: { lat, lng }, token }),

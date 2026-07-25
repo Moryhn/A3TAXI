@@ -91,7 +91,10 @@ export default function Invoices() {
                         <tbody>
                             {invoices.map((inv) => (
                                 <tr key={inv.id}>
-                                    <td className="subtle" style={{ fontFamily: 'var(--font-mono)' }}>{inv.invoice_number || '—'}</td>
+                                    <td className="subtle" style={{ fontFamily: 'var(--font-mono)' }}>
+                                        {inv.invoice_number || '—'}
+                                        {inv.finalized_at && <span className="pill" style={{ marginLeft: 8, padding: '2px 8px', fontSize: 11, color: '#0f8a5f', background: 'rgba(52,211,153,0.15)' }}>{t('admin.invoices.finalized')}</span>}
+                                    </td>
                                     <td>{inv.client_name}</td>
                                     <td className="subtle">{formatCalendarDate(inv.period_start, lang)} → {formatCalendarDate(inv.period_end, lang)}</td>
                                     <td><span className="meter meter--sm">{formatCurrency(inv.total_amount, lang)}</span></td>

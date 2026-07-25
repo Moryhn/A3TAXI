@@ -4,7 +4,7 @@ import { searchTrips, markTripsInvoiced } from '../models/trip.js';
 import {
     createInvoice, listInvoices, findInvoiceById, invoiceTrips,
     findInvoiceByClientAndPeriod, findLatestInvoiceForClient, widenInvoicePeriod,
-    addAmountToInvoice, deleteInvoice, updateInvoice,
+    addAmountToInvoice, deleteInvoice, updateInvoice, finalizeInvoice,
 } from '../models/invoice.js';
 
 const router = Router();
@@ -76,9 +76,23 @@ router.get('/:id', requireAuth('admin'), async (req, res) => {
 // Admin corrects the invoice number/date after the fact (e.g. to match an
 // existing paper numbering scheme) — total/trips/period stay generation-only.
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
+    const existing = await findInvoiceById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Invoice not found' });
+    if (existing.finalized_at) return res.status(409).json({ error: 'This invoice has been finalized and can no longer be changed' });
+
     const invoiceNumber = req.body.invoiceNumber || null;
     const invoiceDate = req.body.invoiceDate || null;
     const invoice = await updateInvoice(req.params.id, { invoiceNumber, invoiceDate });
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    res.json(invoice);
+});
+
+// One-way lock: once an invoice has been sent to the client it must stop
+// changing — no more edits, and it stops absorbing new trips via Generate
+// (see findLatestInvoiceForClient). To correct a finalized invoice, admin
+// deletes it (Trash, restorable) rather than un-finalizing it in place.
+router.post('/:id/finalize', requireAuth('admin'), async (req, res) => {
+    const invoice = await finalizeInvoice(req.params.id);
     if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
     res.json(invoice);
 });

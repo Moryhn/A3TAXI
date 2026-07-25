@@ -3,7 +3,17 @@ import { requireAuth } from '../middleware/auth.js';
 import { uploadReceipt } from '../middleware/upload.js';
 import { uploadReceiptPhoto } from '../services/storage.js';
 import { createTrip, searchTrips, findTripById, updateTrip, deleteTrip } from '../models/trip.js';
-import { recalculateInvoiceTotal } from '../models/invoice.js';
+import { recalculateInvoiceTotal, findInvoiceById } from '../models/invoice.js';
+
+async function rejectIfInvoiceFinalized(res, invoiceId) {
+    if (!invoiceId) return false;
+    const invoice = await findInvoiceById(invoiceId);
+    if (invoice?.finalized_at) {
+        res.status(409).json({ error: 'This invoice has been finalized and can no longer be changed' });
+        return true;
+    }
+    return false;
+}
 
 const router = Router();
 
@@ -59,6 +69,7 @@ router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
 router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
+    if (await rejectIfInvoiceFinalized(res, trip.invoice_id)) return;
 
     const { departureLocation, arrivalLocation, amount, tripDate, direction } = req.body;
     const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount, tripDate, direction });
@@ -72,6 +83,7 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
 router.delete('/:id', requireAuth('admin'), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
+    if (await rejectIfInvoiceFinalized(res, trip.invoice_id)) return;
 
     await deleteTrip(req.params.id);
     if (trip.invoice_id) await recalculateInvoiceTotal(trip.invoice_id);
