@@ -5,7 +5,8 @@ import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 const EMPTY_TEMPLATE_FORM = {
-    name: '', clientNameCell: '', periodCell: '', tripRowStart: '',
+    name: '', clientNameCell: '', periodCell: '', addressCell: '', cityLineCell: '', phoneCell: '',
+    invoiceNumberCell: '', invoiceDateCell: '', tripRowStart: '',
     dateCol: '', descriptionCol: '', departureCol: '', arrivalCol: '', amountCol: '',
 };
 
@@ -67,6 +68,11 @@ export default function ClientAccounts() {
         const fieldMapping = {
             client_name: templateForm.clientNameCell || undefined,
             period: templateForm.periodCell || undefined,
+            client_address: templateForm.addressCell || undefined,
+            client_city_line: templateForm.cityLineCell || undefined,
+            client_phone: templateForm.phoneCell || undefined,
+            invoice_number: templateForm.invoiceNumberCell || undefined,
+            invoice_date: templateForm.invoiceDateCell || undefined,
             trip_row_start: Number(templateForm.tripRowStart),
             trip_columns: {
                 date: templateForm.dateCol,
@@ -242,6 +248,26 @@ export default function ClientAccounts() {
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.periodCellLabel')}</label>
                                                             <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleB4')} value={templateForm.periodCell} onChange={(e) => setTemplateForm({ ...templateForm, periodCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.addressCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleC11')} value={templateForm.addressCell} onChange={(e) => setTemplateForm({ ...templateForm, addressCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.cityLineCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleC12')} value={templateForm.cityLineCell} onChange={(e) => setTemplateForm({ ...templateForm, cityLineCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.phoneCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleC13')} value={templateForm.phoneCell} onChange={(e) => setTemplateForm({ ...templateForm, phoneCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.invoiceNumberCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleG4')} value={templateForm.invoiceNumberCell} onChange={(e) => setTemplateForm({ ...templateForm, invoiceNumberCell: e.target.value.toUpperCase() })} />
+                                                        </div>
+                                                        <div className="field">
+                                                            <label>{t('admin.clients.template.invoiceDateCellLabel')}</label>
+                                                            <input className="input" style={{ fontFamily: 'var(--font-mono)' }} placeholder={t('admin.clients.template.exampleG3')} value={templateForm.invoiceDateCell} onChange={(e) => setTemplateForm({ ...templateForm, invoiceDateCell: e.target.value.toUpperCase() })} />
                                                         </div>
                                                         <div className="field">
                                                             <label>{t('admin.clients.template.tripRowStartLabel')}</label>

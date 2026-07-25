@@ -99,7 +99,17 @@ router.get('/:id/export.xlsx', requireAuth('admin'), async (req, res) => {
     const workbook = await loadWorkbookFromBuffer(buffer);
     const trips = await invoiceTrips(invoice.id);
     const periodLabel = `${new Date(invoice.period_start).toISOString().slice(0, 10)} — ${new Date(invoice.period_end).toISOString().slice(0, 10)}`;
-    fillInvoiceTemplate(workbook, { clientName: invoice.client_name, periodLabel, trips }, template.field_mapping);
+    const clientCityLine = [invoice.client_city, invoice.client_postal_code].filter(Boolean).join(', ');
+    fillInvoiceTemplate(workbook, {
+        clientName: invoice.client_name,
+        periodLabel,
+        trips,
+        clientAddress: invoice.client_address,
+        clientCityLine,
+        clientPhone: invoice.client_phone,
+        invoiceNumber: invoice.invoice_number,
+        invoiceDate: invoice.invoice_date ? new Date(invoice.invoice_date).toISOString().slice(0, 10) : null,
+    }, template.field_mapping);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="facture-${invoice.client_name}-${invoice.id}.xlsx"`);
