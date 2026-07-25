@@ -22,6 +22,33 @@ export async function findInvoiceByClientAndPeriod(clientAccountId, periodStart,
     return rows[0] || null;
 }
 
+// A client has at most one "current" invoice at a time: if Generate is run
+// again with a different date range than before (e.g. extending the end date
+// to pick up a few more days), this finds that same invoice instead of the
+// exact-period lookup above missing it and starting a second, overlapping one.
+// Admin deletes the invoice (moves it to Trash) to deliberately start fresh.
+export async function findLatestInvoiceForClient(clientAccountId) {
+    const { rows } = await query(
+        `SELECT * FROM invoices WHERE client_account_id = $1 AND deleted_at IS NULL ORDER BY generated_at DESC LIMIT 1`,
+        [clientAccountId]
+    );
+    return rows[0] || null;
+}
+
+// Widens an invoice's period to cover both its existing range and a newly
+// requested one, so re-generating with a shifted date range doesn't leave the
+// invoice's stated period narrower than the trips actually listed on it.
+export async function widenInvoicePeriod(id, periodStart, periodEnd) {
+    const { rows } = await query(
+        `UPDATE invoices SET
+            period_start = LEAST(period_start, $2::date),
+            period_end = GREATEST(period_end, $3::date)
+         WHERE id = $1 RETURNING *`,
+        [id, periodStart, periodEnd]
+    );
+    return rows[0] || null;
+}
+
 export async function updateInvoice(id, { invoiceNumber, invoiceDate }) {
     const { rows } = await query(
         `UPDATE invoices SET

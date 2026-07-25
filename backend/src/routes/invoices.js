@@ -3,16 +3,19 @@ import { requireAuth } from '../middleware/auth.js';
 import { searchTrips, markTripsInvoiced } from '../models/trip.js';
 import {
     createInvoice, listInvoices, findInvoiceById, invoiceTrips,
-    findInvoiceByClientAndPeriod, addAmountToInvoice, deleteInvoice, updateInvoice,
+    findInvoiceByClientAndPeriod, findLatestInvoiceForClient, widenInvoicePeriod,
+    addAmountToInvoice, deleteInvoice, updateInvoice,
 } from '../models/invoice.js';
 
 const router = Router();
 
 // Generate an invoice for a client account covering all of its un-invoiced trips
-// in a date range. If an invoice already exists for this exact client+period —
-// from an earlier generation, possibly before every driver had logged their
-// trips yet — newly-qualifying trips are added to it instead of starting a
-// second, duplicate invoice for the same client and period.
+// in a date range. A client has at most one current (non-deleted) invoice at a
+// time: re-running Generate — whether for the exact same period, a narrower
+// one, or one extended to pick up a few more days — always tops up that same
+// invoice (widening its stated period to cover the full range checked so far)
+// instead of starting a second, overlapping invoice for the same client. Admin
+// deletes the invoice (Trash, restorable) to deliberately start a fresh one.
 router.post('/generate', requireAuth('admin'), async (req, res) => {
     const { clientAccountId, periodStart, periodEnd } = req.body;
     const invoiceNumber = req.body.invoiceNumber || null;
@@ -28,10 +31,15 @@ router.post('/generate', requireAuth('admin'), async (req, res) => {
         invoiced: false,
     });
 
-    let invoice = await findInvoiceByClientAndPeriod(clientAccountId, periodStart, periodEnd);
+    let invoice = (await findInvoiceByClientAndPeriod(clientAccountId, periodStart, periodEnd))
+        || (await findLatestInvoiceForClient(clientAccountId));
 
     if (!invoice && newTrips.length === 0) {
         return res.status(400).json({ error: 'No un-invoiced trips found for this client in the given period' });
+    }
+
+    if (invoice) {
+        invoice = await widenInvoicePeriod(invoice.id, periodStart, periodEnd);
     }
 
     if (newTrips.length > 0) {
