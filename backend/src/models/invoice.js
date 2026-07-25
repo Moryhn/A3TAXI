@@ -77,6 +77,17 @@ export async function updateInvoice(id, { invoiceNumber, invoiceDate }) {
     return rows[0] || null;
 }
 
+// Locks in which template an invoice uses the first time one is available for
+// its client — a no-op if it's already set, so uploading a newer template
+// for the client later doesn't silently reshuffle an in-progress invoice.
+export async function setInvoiceTemplateIfUnset(invoiceId, templateId) {
+    const { rows } = await query(
+        `UPDATE invoices SET template_id = $2 WHERE id = $1 AND template_id IS NULL RETURNING *`,
+        [invoiceId, templateId]
+    );
+    return rows[0] || null;
+}
+
 export async function addAmountToInvoice(invoiceId, additionalAmount) {
     const { rows } = await query(
         `UPDATE invoices SET total_amount = total_amount + $2 WHERE id = $1 RETURNING *`,

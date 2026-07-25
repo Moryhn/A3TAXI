@@ -4,8 +4,10 @@ import { searchTrips, markTripsInvoiced } from '../models/trip.js';
 import {
     createInvoice, listInvoices, findInvoiceById, invoiceTrips,
     findInvoiceByClientAndPeriod, findLatestInvoiceForClient, widenInvoicePeriod,
-    addAmountToInvoice, deleteInvoice, updateInvoice, finalizeInvoice,
+    addAmountToInvoice, deleteInvoice, updateInvoice, finalizeInvoice, setInvoiceTemplateIfUnset,
 } from '../models/invoice.js';
+import { findActiveTemplateForClient, findTemplateById } from '../models/invoiceTemplate.js';
+import { loadWorkbookFromBuffer, fillInvoiceTemplate } from '../services/invoiceTemplateFill.js';
 
 const router = Router();
 
@@ -42,6 +44,8 @@ router.post('/generate', requireAuth('admin'), async (req, res) => {
         invoice = await widenInvoicePeriod(invoice.id, periodStart, periodEnd);
     }
 
+    const activeTemplate = await findActiveTemplateForClient(clientAccountId);
+
     if (newTrips.length > 0) {
         const additionalAmount = newTrips.reduce((sum, t) => sum + Number(t.amount), 0);
         if (invoice) {
@@ -52,6 +56,10 @@ router.post('/generate', requireAuth('admin'), async (req, res) => {
             });
         }
         await markTripsInvoiced(newTrips.map((t) => t.id), invoice.id);
+    }
+
+    if (activeTemplate) {
+        invoice = (await setInvoiceTemplateIfUnset(invoice.id, activeTemplate.id)) || invoice;
     }
 
     const trips = await invoiceTrips(invoice.id);
@@ -71,6 +79,32 @@ router.get('/:id', requireAuth('admin'), async (req, res) => {
 
     const trips = await invoiceTrips(req.params.id);
     res.json({ ...invoice, trips });
+});
+
+// Fills the invoice's attached client template with its current trip data
+// and streams the result — generated on demand, not stored, so it always
+// reflects the invoice's latest state right up until it's finalized.
+router.get('/:id/export.xlsx', requireAuth('admin'), async (req, res) => {
+    const invoice = await findInvoiceById(req.params.id);
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    if (!invoice.template_id) {
+        return res.status(404).json({ error: 'This invoice has no Excel template attached — use Print instead' });
+    }
+
+    const template = await findTemplateById(invoice.template_id);
+    const fileRes = await fetch(template.file_url);
+    if (!fileRes.ok) return res.status(502).json({ error: 'Could not load the stored template file' });
+    const buffer = Buffer.from(await fileRes.arrayBuffer());
+
+    const workbook = await loadWorkbookFromBuffer(buffer);
+    const trips = await invoiceTrips(invoice.id);
+    const periodLabel = `${new Date(invoice.period_start).toISOString().slice(0, 10)} — ${new Date(invoice.period_end).toISOString().slice(0, 10)}`;
+    fillInvoiceTemplate(workbook, { clientName: invoice.client_name, periodLabel, trips }, template.field_mapping);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="facture-${invoice.client_name}-${invoice.id}.xlsx"`);
+    await workbook.xlsx.write(res);
+    res.end();
 });
 
 // Admin corrects the invoice number/date after the fact (e.g. to match an

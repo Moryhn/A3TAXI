@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { uploadReceipt } from '../middleware/upload.js';
+import { uploadReceipt, multerErrors } from '../middleware/upload.js';
 import { uploadReceiptPhoto } from '../services/storage.js';
 import { createTrip, searchTrips, findTripById, updateTrip, deleteTrip } from '../models/trip.js';
 import { recalculateInvoiceTotal, findInvoiceById } from '../models/invoice.js';
@@ -18,7 +18,7 @@ async function rejectIfInvoiceFinalized(res, invoiceId) {
 const router = Router();
 
 // Driver submits a trip with a receipt photo
-router.post('/', requireAuth('driver'), uploadReceipt.single('receipt'), async (req, res) => {
+router.post('/', requireAuth('driver'), multerErrors(uploadReceipt.single('receipt')), async (req, res) => {
     const { clientAccountId, departureLocation, arrivalLocation, amount, direction } = req.body;
     if (!clientAccountId || !departureLocation || !arrivalLocation || !amount) {
         return res.status(400).json({ error: 'clientAccountId, departureLocation, arrivalLocation and amount are required' });
