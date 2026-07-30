@@ -41,6 +41,25 @@ export function validateFieldMapping(mapping) {
     return errors;
 }
 
+// A real invoice template's trip table almost always ends in a running
+// total like "=SUM(F16:F29)" somewhere below it — that formula's own range
+// is the most reliable signal for how many rows the table actually spans,
+// since neither the mapping nor the sheet's dimensions say so directly.
+function findTableExtent(sheet, amountCol, startRow) {
+    const sumPattern = new RegExp(`SUM\\(\\$?${amountCol}\\$?${startRow}:\\$?${amountCol}\\$?(\\d+)\\)`, 'i');
+    let extent = null;
+    sheet.eachRow({ includeEmpty: false }, (row) => {
+        if (extent !== null) return;
+        row.eachCell({ includeEmpty: false }, (cell) => {
+            if (extent !== null) return;
+            const formula = cell.formula;
+            const match = typeof formula === 'string' && formula.match(sumPattern);
+            if (match) extent = parseInt(match[1], 10);
+        });
+    });
+    return extent;
+}
+
 // Writes invoice data into a loaded template workbook's mapped cells,
 // in place. The caller streams/uploads the workbook afterward.
 export function fillInvoiceTemplate(workbook, {
@@ -58,29 +77,18 @@ export function fillInvoiceTemplate(workbook, {
 
     const cols = mapping.trip_columns;
 
-    // Some templates (e.g. an amount column computed as rate*quantity) use
-    // Excel "shared formulas" across the whole trip-row range: one master
-    // cell holds the formula, the rest just point back at it. Overwriting
-    // only some of those cells with plain values leaves the others pointing
-    // at a master that's no longer a formula, which exceljs refuses to save
-    // ("Shared Formula master must exist..."). A shared-formula master
-    // carries a `ref` (e.g. "G17:G26") naming the group's full extent —
-    // clearing exactly that range breaks the group cleanly before real data
-    // goes in, without touching unrelated formulas further down the sheet
-    // (a subtotal row, say) that just happen to sit in the same column.
-    const scanThroughRow = mapping.trip_row_start + 200;
-    for (const col of Object.values(cols)) {
-        let refEndRow = null;
-        for (let r = mapping.trip_row_start; r <= scanThroughRow; r++) {
-            const raw = sheet.getCell(`${col}${r}`).value;
-            const ref = raw && typeof raw === 'object' ? raw.ref : null;
-            const match = typeof ref === 'string' && ref.match(/:[A-Z]+(\d+)$/);
-            if (match) { refEndRow = parseInt(match[1], 10); break; }
-        }
-        if (refEndRow !== null) {
-            for (let r = mapping.trip_row_start; r <= refEndRow; r++) {
-                const cell = sheet.getCell(`${col}${r}`);
-                if (cell.type === ExcelJS.ValueType.Formula) cell.value = null;
+    // Clear the whole known table extent before writing real data — both
+    // reasons matter: (1) a shared-formula column (amount = rate*quantity
+    // dragged down many rows) leaves orphaned formula cells pointing at a
+    // master we're about to overwrite, which exceljs refuses to save; and
+    // (2) a reused template can carry old example rows (leftover text from
+    // a previous invoice) past however many real trips we're writing this
+    // time, which would otherwise bleed through onto the export untouched.
+    const tableExtent = findTableExtent(sheet, cols.amount, mapping.trip_row_start);
+    if (tableExtent !== null) {
+        for (const col of Object.values(cols)) {
+            for (let r = mapping.trip_row_start; r <= tableExtent; r++) {
+                sheet.getCell(`${col}${r}`).value = null;
             }
         }
     }
