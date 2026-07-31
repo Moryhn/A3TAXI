@@ -23,11 +23,11 @@ export async function searchTrips({ driverId, clientAccountId, dateFrom, dateTo,
         params.push(clientAccountId);
     }
     if (dateFrom) {
-        conditions.push(`t.trip_date >= $${i++}`);
+        conditions.push(`t.trip_date::date >= $${i++}`);
         params.push(dateFrom);
     }
     if (dateTo) {
-        conditions.push(`t.trip_date <= $${i++}`);
+        conditions.push(`t.trip_date::date <= $${i++}`);
         params.push(dateTo);
     }
     if (invoiced === false) {
