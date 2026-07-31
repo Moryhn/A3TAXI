@@ -19,47 +19,90 @@ export default function InvoiceReceipts() {
 
     return (
         <div className="theme-light invoice-print" style={{ minHeight: '100vh', padding: '40px 20px' }}>
-            <div style={{ maxWidth: 720, margin: '0 auto' }}>
-                <div className="no-print" style={{ marginBottom: 24, display: 'flex', gap: 10 }}>
+            <div className="no-print" style={{ maxWidth: 720, margin: '0 auto 24px' }}>
+                <div style={{ marginBottom: 24, display: 'flex', gap: 10 }}>
                     <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoiceReceipts.printButton')}</button>
                 </div>
-
                 <h1 className="h1" style={{ fontSize: 24, marginBottom: 4 }}>{t('admin.invoiceReceipts.title')}</h1>
-                <p className="subtle" style={{ marginBottom: 32 }}>
+                <p className="subtle">
                     {invoice.client_name} — {formatDate(invoice.period_start, lang)} — {formatDate(invoice.period_end, lang)}
                 </p>
-
-                {invoice.trips.map((trip, idx) => (
-                    <div key={trip.id} className="receipt-page" style={{ marginBottom: 32, paddingBottom: 32, borderBottom: idx < invoice.trips.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontSize: 14 }}>
-                            <div>
-                                <div style={{ fontWeight: 600 }}>{formatDate(trip.trip_date, lang)} — {trip.driver_name}</div>
-                                <div className="subtle">{trip.departure_location} → {trip.arrival_location}</div>
-                            </div>
-                            <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{formatCurrency(trip.amount, lang)}</div>
-                        </div>
-                        {trip.receipt_photo_url ? (
-                            <img
-                                src={receiptUrl(trip.receipt_photo_url)}
-                                alt=""
-                                style={{ maxWidth: '100%', maxHeight: 900, display: 'block', border: '1px solid var(--border)' }}
-                            />
-                        ) : (
-                            <p className="subtle">{t('admin.invoiceReceipts.noReceipt')}</p>
-                        )}
-                    </div>
-                ))}
-
-                {invoice.trips.length === 0 && (
-                    <p className="subtle">{t('admin.invoiceReceipts.noTrips')}</p>
-                )}
             </div>
 
+            {invoice.trips.map((trip) => (
+                <div key={trip.id} className="receipt-page">
+                    <div className="receipt-page__meta">
+                        <div>
+                            <div style={{ fontWeight: 600 }}>{formatDate(trip.trip_date, lang)} — {trip.driver_name}</div>
+                            <div className="subtle">{trip.departure_location} → {trip.arrival_location}</div>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>{formatCurrency(trip.amount, lang)}</div>
+                    </div>
+                    {trip.receipt_photo_url ? (
+                        <div className="receipt-page__image-wrap">
+                            <img src={receiptUrl(trip.receipt_photo_url)} alt="" className="receipt-page__image" />
+                        </div>
+                    ) : (
+                        <p className="subtle">{t('admin.invoiceReceipts.noReceipt')}</p>
+                    )}
+                </div>
+            ))}
+
+            {invoice.trips.length === 0 && (
+                <p className="subtle" style={{ maxWidth: 720, margin: '0 auto' }}>{t('admin.invoiceReceipts.noTrips')}</p>
+            )}
+
             <style>{`
+                .receipt-page {
+                    max-width: 720px;
+                    margin: 0 auto 32px;
+                    padding-bottom: 32px;
+                    border-bottom: 1px solid var(--border);
+                }
+                .receipt-page:last-child { border-bottom: none; }
+                .receipt-page__meta {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 12px;
+                    font-size: 14px;
+                }
+                .receipt-page__image-wrap { text-align: center; }
+                .receipt-page__image {
+                    max-width: 100%;
+                    max-height: 900px;
+                    border: 1px solid var(--border);
+                }
                 @media print {
                     .no-print { display: none; }
-                    .invoice-print { background: #fff !important; color: #111 !important; }
-                    .receipt-page { break-inside: avoid; page-break-after: always; }
+                    .invoice-print { background: #fff !important; color: #111 !important; padding: 0 !important; }
+                    .receipt-page {
+                        max-width: none;
+                        margin: 0;
+                        padding: 12mm;
+                        border-bottom: none;
+                        box-sizing: border-box;
+                        height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                        page-break-after: always;
+                        break-inside: avoid;
+                    }
+                    .receipt-page:last-child { page-break-after: auto; }
+                    .receipt-page__meta { flex: 0 0 auto; }
+                    .receipt-page__image-wrap {
+                        flex: 1 1 auto;
+                        min-height: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .receipt-page__image {
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                    }
                 }
             `}</style>
         </div>
