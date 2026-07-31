@@ -108,70 +108,68 @@ export default function MyAccount() {
                     <div className="empty__title">{t('driver.account.tripsEmptyTitle')}</div>
                 </div>
             ) : (
-                <div className="table-wrap">
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th>{t('driver.account.tripsColDate')}</th>
-                                <th>{t('driver.account.tripsColClient')}</th>
-                                <th>{t('driver.account.tripsColRoute')}</th>
-                                <th>{t('driver.account.tripsColDirection')}</th>
-                                <th>{t('driver.account.tripsColAmount')}</th>
-                                <th>{t('driver.account.tripsColReceipt')}</th>
-                                <th className="no-print"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {trips.map((trip) => (
-                                <tr key={trip.id}>
-                                    {editingId === trip.id ? (
-                                        <>
-                                            <td><input className="input" type="date" style={{ padding: '6px 8px' }} value={editForm.tripDate} onChange={(e) => setEditForm({ ...editForm, tripDate: e.target.value })} /></td>
-                                            <td>{trip.client_name}</td>
-                                            <td className="subtle">{trip.departure_location} → {trip.arrival_location}</td>
-                                            <td>
-                                                <select className="select" style={{ padding: '6px 8px' }} value={editForm.direction} onChange={(e) => setEditForm({ ...editForm, direction: e.target.value })}>
-                                                    <option value="aller">{t('driver.account.directionAller')}</option>
-                                                    <option value="retour">{t('driver.account.directionRetour')}</option>
-                                                    <option value="aller_retour">{t('driver.account.directionAllerRetour')}</option>
-                                                </select>
-                                            </td>
-                                            <td><input className="input" type="number" step="0.01" style={{ padding: '6px 8px', width: 80 }} value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} /></td>
-                                            <td>
-                                                <input className="input" type="file" accept="image/*" capture="environment" onChange={handleEditReceiptChange} style={{ padding: 4, fontSize: 12, width: 140 }} />
-                                                {compressing && <div className="subtle" style={{ fontSize: 11 }}>{t('driver.tripEntry.processingPhoto')}</div>}
-                                            </td>
-                                            <td>
-                                                <div style={{ display: 'flex', gap: 8 }}>
-                                                    <button onClick={() => saveEdit(trip.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }} disabled={saving || compressing}>{t('common.save')}</button>
-                                                    <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }} disabled={saving}>{t('common.cancel')}</button>
-                                                </div>
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td className="subtle">{formatDate(trip.trip_date, lang)}</td>
-                                            <td>{trip.client_name}</td>
-                                            <td>{trip.departure_location} → {trip.arrival_location}</td>
-                                            <td className="subtle">{t(`driver.account.direction${trip.direction === 'aller_retour' ? 'AllerRetour' : trip.direction === 'retour' ? 'Retour' : 'Aller'}`)}</td>
-                                            <td style={{ fontFamily: 'var(--font-mono)' }}>{formatCurrency(trip.amount, lang)}</td>
-                                            <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('driver.account.viewReceipt')}</a> : <span className="subtle">—</span>}</td>
-                                            <td>
-                                                {trip.invoice_id ? (
-                                                    <span className="subtle">{t('admin.trips.invoiced')}</span>
-                                                ) : (
-                                                    <div style={{ display: 'flex', gap: 8 }}>
-                                                        <button onClick={() => startEdit(trip)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.edit')}</button>
-                                                        <button onClick={() => setPendingDelete(trip)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.delete')}</button>
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {trips.map((trip) => (
+                        <div key={trip.id} className="card">
+                            {editingId === trip.id ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                    <div className="field">
+                                        <label>{t('driver.account.tripsColDate')}</label>
+                                        <input className="input" type="date" value={editForm.tripDate} onChange={(e) => setEditForm({ ...editForm, tripDate: e.target.value })} />
+                                    </div>
+                                    <div className="field">
+                                        <label>{t('driver.account.tripsColAmount')}</label>
+                                        <input className="input" type="number" step="0.01" inputMode="decimal" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
+                                    </div>
+                                    <div className="field">
+                                        <label>{t('driver.account.tripsColDirection')}</label>
+                                        <select className="select" value={editForm.direction} onChange={(e) => setEditForm({ ...editForm, direction: e.target.value })}>
+                                            <option value="aller">{t('driver.account.directionAller')}</option>
+                                            <option value="retour">{t('driver.account.directionRetour')}</option>
+                                            <option value="aller_retour">{t('driver.account.directionAllerRetour')}</option>
+                                        </select>
+                                    </div>
+                                    <div className="field">
+                                        <label>{t('driver.tripEntry.receiptLabel')}</label>
+                                        <input className="input" type="file" accept="image/*" capture="environment" onChange={handleEditReceiptChange} style={{ padding: 10 }} />
+                                        {compressing && <div className="subtle" style={{ marginTop: 6 }}>{t('driver.tripEntry.processingPhoto')}</div>}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 10 }}>
+                                        <button onClick={() => saveEdit(trip.id)} className="btn btn--primary" style={{ flex: 1, padding: '13px 16px' }} disabled={saving || compressing}>
+                                            {saving ? t('driver.tripEntry.saving') : t('common.save')}
+                                        </button>
+                                        <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ flex: 1, padding: '13px 16px' }} disabled={saving}>{t('common.cancel')}</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 600 }}>{formatDate(trip.trip_date, lang)}</div>
+                                            <div className="subtle" style={{ fontSize: 13 }}>{trip.client_name}</div>
+                                        </div>
+                                        <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18 }}>{formatCurrency(trip.amount, lang)}</div>
+                                    </div>
+                                    <div className="subtle" style={{ marginTop: 8 }}>{trip.departure_location} → {trip.arrival_location}</div>
+                                    <div className="subtle" style={{ fontSize: 13, marginTop: 2 }}>
+                                        {t(`driver.account.direction${trip.direction === 'aller_retour' ? 'AllerRetour' : trip.direction === 'retour' ? 'Retour' : 'Aller'}`)}
+                                        {' · '}
+                                        {trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('driver.account.viewReceipt')}</a> : t('driver.account.tripsColReceipt') + ' —'}
+                                    </div>
+                                    <div style={{ marginTop: 12 }}>
+                                        {trip.invoice_id ? (
+                                            <span className="subtle">{t('admin.trips.invoiced')}</span>
+                                        ) : (
+                                            <div style={{ display: 'flex', gap: 10 }}>
+                                                <button onClick={() => startEdit(trip)} className="btn btn--ghost" style={{ flex: 1, padding: '10px 14px', fontSize: 13 }}>{t('common.edit')}</button>
+                                                <button onClick={() => setPendingDelete(trip)} className="btn btn--danger" style={{ flex: 1, padding: '10px 14px', fontSize: 13 }}>{t('common.delete')}</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    ))}
                 </div>
             )}
 
