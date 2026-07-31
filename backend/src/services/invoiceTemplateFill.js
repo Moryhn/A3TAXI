@@ -3,6 +3,15 @@ import ExcelJS from 'exceljs';
 const CELL_REF = /^[A-Z]{1,3}\d{1,7}$/;
 const COL_REF = /^[A-Z]{1,3}$/;
 
+// trip_date is a timestamptz (a real moment), not a calendar date — the
+// admin's Print view shows it in the browser's local time (Eastern), so a
+// trip logged late evening can fall on the *next* UTC day. The server runs
+// in UTC (Render), so a plain toISOString().slice(0,10) would silently
+// disagree with what Print already shows for the same trip.
+function toEasternDateString(value) {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto' }).format(new Date(value));
+}
+
 export async function loadWorkbookFromBuffer(buffer) {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
@@ -96,7 +105,7 @@ export function fillInvoiceTemplate(workbook, {
 
     let row = mapping.trip_row_start;
     for (const trip of trips) {
-        sheet.getCell(`${cols.date}${row}`).value = new Date(trip.trip_date).toISOString().slice(0, 10);
+        sheet.getCell(`${cols.date}${row}`).value = toEasternDateString(trip.trip_date);
         sheet.getCell(`${cols.description}${row}`).value = clientInvoiceDescription || trip.driver_name || '';
         sheet.getCell(`${cols.departure}${row}`).value = trip.departure_location;
         sheet.getCell(`${cols.arrival}${row}`).value = trip.arrival_location;
