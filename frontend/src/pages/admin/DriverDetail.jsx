@@ -83,7 +83,7 @@ export default function DriverDetail() {
                     <div className="eyebrow">{t('admin.driverDetail.eyebrow')}</div>
                     <h1 className="h1">{driver.name}</h1>
                 </div>
-                <div className="meter meter--sm" style={{ color: ledger.balance > 0 ? 'var(--danger)' : undefined }}>
+                <div className="meter meter--sm" style={{ color: ledger.balance < 0 ? 'var(--danger)' : undefined }}>
                     {formatCurrency(ledger.balance, lang)}<span className="meter__unit">{t('admin.driverDetail.balanceOwed')}</span>
                 </div>
             </div>

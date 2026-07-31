@@ -23,11 +23,14 @@ export async function listLedgerEntries(driverId, { dateFrom, dateTo } = {}) {
     return rows;
 }
 
-// Dues owed minus payments received minus the value of every trip the driver
-// has completed — trip revenue always credits against dues, whether or not
-// that trip has since been invoiced to the client (invoicing is a separate,
-// company-level event and doesn't change what the driver has already earned
-// toward their own dues).
+// The value of every trip the driver has completed (trip revenue always
+// credits against dues, whether or not that trip has since been invoiced to
+// the client — invoicing is a separate, company-level event and doesn't
+// change what the driver has already earned toward their own dues), minus
+// dues owed, minus payments already made. Negative means the driver is
+// still short of covering this month's dues (e.g. -345 before logging any
+// trips, if dues are 345); it crosses zero and goes positive once trips
+// credited exceed what's owed.
 //
 // asOfDate makes this a historical snapshot instead of the live balance: a
 // trip only counts if it happened by that date, and a client only counts as
@@ -37,15 +40,15 @@ export async function listLedgerEntries(driverId, { dateFrom, dateTo } = {}) {
 export async function getDriverBalance(driverId, asOfDate = new Date()) {
     const { rows } = await query(
         `SELECT
-            COALESCE((SELECT SUM(CASE WHEN type = 'charge' THEN amount ELSE -amount END)
-                      FROM driver_ledger_entries
-                      WHERE driver_id = $1 AND deleted_at IS NULL AND entry_date <= $2::date), 0)
-            - COALESCE((SELECT SUM(t.amount)
+            COALESCE((SELECT SUM(t.amount)
                         FROM trips t
                         JOIN client_accounts c ON c.id = t.client_account_id
                         WHERE t.driver_id = $1 AND t.deleted_at IS NULL
                           AND t.trip_date::date <= $2::date
                           AND (c.deleted_at IS NULL OR c.deleted_at::date > $2::date)), 0)
+            - COALESCE((SELECT SUM(CASE WHEN type = 'charge' THEN amount ELSE -amount END)
+                      FROM driver_ledger_entries
+                      WHERE driver_id = $1 AND deleted_at IS NULL AND entry_date <= $2::date), 0)
             AS balance`,
         [driverId, asOfDate]
     );

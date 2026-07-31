@@ -92,9 +92,9 @@ export default function MyAccount() {
                     <p className="subtle" style={{ marginTop: 4 }}>{t('driver.account.tripsCount', { count: trips.length })}</p>
                 </div>
 
-                <div className="card" style={{ boxShadow: ledger.balance > 0 ? 'inset 0 0 0 1px rgba(240,85,76,0.4)' : undefined }}>
+                <div className="card" style={{ boxShadow: ledger.balance < 0 ? 'inset 0 0 0 1px rgba(240,85,76,0.4)' : undefined }}>
                     <div className="eyebrow">{t('driver.account.balanceEyebrow')}</div>
-                    <div style={{ fontSize: 28, fontWeight: 600, marginTop: 6, color: ledger.balance > 0 ? 'var(--danger)' : undefined }}>
+                    <div style={{ fontSize: 28, fontWeight: 600, marginTop: 6, color: ledger.balance < 0 ? 'var(--danger)' : undefined }}>
                         {formatCurrency(ledger.balance, lang)}
                     </div>
                     <p className="subtle" style={{ marginTop: 4 }}>{t('driver.account.balanceHint')}</p>
