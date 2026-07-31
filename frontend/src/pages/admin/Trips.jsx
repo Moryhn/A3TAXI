@@ -127,15 +127,10 @@ export default function Trips() {
                                             <td><span className="meter meter--sm">{formatCurrency(trip.amount, lang)}</span></td>
                                             <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('admin.trips.view')}</a> : <span className="subtle">—</span>}</td>
                                             <td>
-                                                <div style={{ display: 'flex', gap: 8 }}>
-                                                    {trip.invoice_id ? (
-                                                        <span className="subtle" title={t('admin.trips.invoiced')}>{t('admin.trips.invoiced')}</span>
-                                                    ) : (
-                                                        <>
-                                                            <button onClick={() => startEdit(trip)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.trips.edit')}</button>
-                                                            <button onClick={() => setPendingDelete(trip)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.trips.delete')}</button>
-                                                        </>
-                                                    )}
+                                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                                    {trip.invoice_id && <span className="subtle" style={{ fontSize: 11 }} title={t('admin.trips.invoiced')}>{t('admin.trips.invoiced')}</span>}
+                                                    <button onClick={() => startEdit(trip)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.trips.edit')}</button>
+                                                    <button onClick={() => setPendingDelete(trip)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('admin.trips.delete')}</button>
                                                 </div>
                                             </td>
                                         </>
