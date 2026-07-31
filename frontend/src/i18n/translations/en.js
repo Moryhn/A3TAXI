@@ -317,8 +317,15 @@ export default {
             finalizeButton: 'Finalize invoice',
             finalizedBadge: 'Finalized on {{date}} — sent to the client, can no longer be edited.',
             exportXlsxButton: 'Export to Excel',
+            viewReceiptsButton: 'View receipts',
             confirmFinalizeTitle: 'Finalize this invoice?',
             confirmFinalizeMessage: "Once finalized, this invoice can no longer be edited, and this client's new trips will start a separate invoice instead of being added to it. Use this once the invoice has been sent to the client.",
+        },
+        invoiceReceipts: {
+            title: 'Trip receipts',
+            printButton: 'Print / Save as PDF',
+            noReceipt: 'No receipt photo for this trip.',
+            noTrips: 'No trips on this invoice.',
         },
         reservations: {
             eyebrow: 'Reservations',

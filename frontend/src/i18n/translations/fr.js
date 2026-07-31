@@ -317,8 +317,15 @@ export default {
             finalizeButton: 'Finaliser la facture',
             finalizedBadge: 'Facture finalisée le {{date}} — envoyée au client, ne peut plus être modifiée.',
             exportXlsxButton: 'Exporter en Excel',
+            viewReceiptsButton: 'Voir les reçus',
             confirmFinalizeTitle: 'Finaliser cette facture ?',
             confirmFinalizeMessage: "Une fois finalisée, cette facture ne pourra plus être modifiée et les nouvelles courses de ce client créeront une facture séparée au lieu de s'y ajouter. Utilisez ceci une fois la facture envoyée au client.",
+        },
+        invoiceReceipts: {
+            title: 'Reçus des courses',
+            printButton: 'Imprimer / Enregistrer en PDF',
+            noReceipt: 'Aucune photo de reçu pour cette course.',
+            noTrips: 'Aucune course sur cette facture.',
         },
         reservations: {
             eyebrow: 'Réservations',

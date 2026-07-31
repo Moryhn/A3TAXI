@@ -10,6 +10,7 @@ import DriverDetail from './admin/DriverDetail.jsx';
 import Trips from './admin/Trips.jsx';
 import Invoices from './admin/Invoices.jsx';
 import InvoicePrint from './admin/InvoicePrint.jsx';
+import InvoiceReceipts from './admin/InvoiceReceipts.jsx';
 import DispatchMap from './admin/DispatchMap.jsx';
 import Reservations from './admin/Reservations.jsx';
 import Trash from './admin/Trash.jsx';
@@ -48,6 +49,14 @@ export default function AdminDashboard() {
         return (
             <Routes>
                 <Route path="invoices/:id/print" element={<InvoicePrint />} />
+            </Routes>
+        );
+    }
+
+    if (location.pathname.endsWith('/receipts')) {
+        return (
+            <Routes>
+                <Route path="invoices/:id/receipts" element={<InvoiceReceipts />} />
             </Routes>
         );
     }
@@ -112,6 +121,7 @@ export default function AdminDashboard() {
                     <Route key={tab.path} path={tab.path} element={<div className="page">{tab.element}</div>} />
                 ))}
                 <Route path="invoices/:id/print" element={<InvoicePrint />} />
+                <Route path="invoices/:id/receipts" element={<InvoiceReceipts />} />
                 <Route path="drivers/:id" element={<div className="page"><DriverDetail /></div>} />
             </Routes>
         </div>

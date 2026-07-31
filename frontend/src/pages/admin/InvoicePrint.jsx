@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
@@ -125,6 +125,7 @@ export default function InvoicePrint() {
                     ) : (
                         <>
                             <button onClick={() => window.print()} className="btn btn--primary">{t('admin.invoicePrint.printButton')}</button>
+                            <Link to={`/admin/invoices/${id}/receipts`} className="btn btn--ghost">{t('admin.invoicePrint.viewReceiptsButton')}</Link>
                             {invoice.template_id && (
                                 <button onClick={exportXlsx} className="btn btn--ghost" disabled={exporting}>
                                     {exporting ? t('common.save') + '…' : t('admin.invoicePrint.exportXlsxButton')}

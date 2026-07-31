@@ -171,7 +171,7 @@ export async function listDeletedInvoices() {
 
 export async function invoiceTrips(invoiceId) {
     const { rows } = await query(
-        `SELECT t.id, t.trip_date, t.departure_location, t.arrival_location, t.amount, d.name AS driver_name
+        `SELECT t.id, t.trip_date, t.departure_location, t.arrival_location, t.amount, t.receipt_photo_url, d.name AS driver_name
          FROM trips t JOIN drivers d ON d.id = t.driver_id
          WHERE t.invoice_id = $1 AND t.deleted_at IS NULL
          ORDER BY t.trip_date`,
