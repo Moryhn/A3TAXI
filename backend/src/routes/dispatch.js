@@ -12,14 +12,14 @@ import {
     assignDriverToJob,
     findDispatchJobByTrackingToken,
     latestPositionForDriver,
-    listAvailableDriversWithPositions,
     findDispatchJobById,
     findJobsDueForTrackingSms,
     markTrackingSmsSent,
 } from '../models/dispatch.js';
+import { setAutoDispatchEnabled, findAdminWithAutoDispatchEnabled } from '../models/adminUser.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
-import { getDrivingDistance } from '../services/distance.js';
+import { findNearestAvailableDriver } from '../services/autoDispatch.js';
 import { sendSms } from '../services/sms.js';
 
 const router = Router();
@@ -69,6 +69,17 @@ router.post('/requests', async (req, res) => {
         estimatedPrice: quote.estimatedPrice,
         jobType: 'ride',
     });
+
+    const admin = await findAdminWithAutoDispatchEnabled();
+    if (admin) {
+        const nearest = await findNearestAvailableDriver(pickupLocation);
+        if (nearest) {
+            const assigned = await assignDriverToJob(job.id, nearest.driver.driver_id, admin.id);
+            sendJobNotification(nearest.driver.driver_id, assigned).catch((err) => console.error('sendJobNotification failed:', err.message));
+            return res.status(201).json(assigned);
+        }
+    }
+
     res.status(201).json(job);
 });
 
@@ -155,25 +166,31 @@ router.post('/jobs/:id/auto-assign', requireAuth('admin'), async (req, res) => {
     if (!job) return res.status(404).json({ error: 'Job not found' });
     if (job.driver_id) return res.status(409).json({ error: 'This job already has a driver assigned' });
 
-    const candidates = await listAvailableDriversWithPositions();
-    if (candidates.length === 0) {
-        return res.status(409).json({ error: 'No available driver right now — every driver is either off-shift or already on a job' });
+    const nearest = await findNearestAvailableDriver(job.address);
+    if (!nearest) {
+        return res.status(409).json({ error: 'No available driver right now — every driver is either off-shift, already on a job, or unreachable' });
     }
-
-    const distances = await Promise.all(candidates.map(async (driver) => {
-        const distance = await getDrivingDistance({ lat: driver.lat, lng: driver.lng }, job.address);
-        return { driver, distance };
-    }));
-    const reachable = distances.filter((d) => d.distance !== null);
-    if (reachable.length === 0) {
-        return res.status(502).json({ error: 'Could not calculate driving distance to any available driver — try assigning manually' });
-    }
-    reachable.sort((a, b) => a.distance.distanceKm - b.distance.distanceKm);
-    const nearest = reachable[0];
 
     const updated = await assignDriverToJob(job.id, nearest.driver.driver_id, req.user.sub);
     sendJobNotification(nearest.driver.driver_id, updated).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.json({ ...updated, driver_name: nearest.driver.driver_name, distanceKm: nearest.distance.distanceKm });
+});
+
+// Persistent toggle: while enabled, every new "book now" request below gets
+// auto-assigned the instant it's created instead of waiting in "Demandes
+// entrantes" — for when the admin is away and can't click Assign in real time.
+router.get('/settings', requireAuth('admin'), async (req, res) => {
+    const admin = await findAdminWithAutoDispatchEnabled();
+    res.json({ autoDispatchEnabled: !!admin });
+});
+
+router.patch('/settings', requireAuth('admin'), async (req, res) => {
+    const { autoDispatchEnabled } = req.body;
+    if (typeof autoDispatchEnabled !== 'boolean') {
+        return res.status(400).json({ error: 'autoDispatchEnabled must be a boolean' });
+    }
+    await setAutoDispatchEnabled(req.user.sub, autoDispatchEnabled);
+    res.json({ autoDispatchEnabled });
 });
 
 // Public "track my ride" page — looked up by unguessable token, never by id

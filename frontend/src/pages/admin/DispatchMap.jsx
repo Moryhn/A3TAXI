@@ -6,6 +6,7 @@ import GoogleMapView from '../../components/GoogleMapView.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 import MicButton from '../../components/MicButton.jsx';
+import ToggleChip from '../../components/ToggleChip.jsx';
 import { formatRelativeTime, isStale, localInputToUtcIso } from '../../lib/time.js';
 
 const RESERVATION_SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
@@ -35,6 +36,8 @@ export default function DispatchMap() {
     const [resForm, setResForm] = useState(INITIAL_RESERVATION_FORM);
     const [resSubmitting, setResSubmitting] = useState(false);
     const [resStatus, setResStatus] = useState(null);
+    const [autoDispatchEnabled, setAutoDispatchEnabled] = useState(false);
+    const [autoDispatchSaving, setAutoDispatchSaving] = useState(false);
 
     async function refresh() {
         setPositions(await api.getDriverPositions(auth.token));
@@ -44,9 +47,20 @@ export default function DispatchMap() {
 
     useEffect(() => {
         refresh();
+        api.getDispatchSettings(auth.token).then((s) => setAutoDispatchEnabled(s.autoDispatchEnabled));
         const interval = setInterval(refresh, 15000);
         return () => clearInterval(interval);
     }, []);
+
+    async function toggleAutoDispatch(next) {
+        setAutoDispatchSaving(true);
+        try {
+            const s = await api.updateDispatchSettings(auth.token, next);
+            setAutoDispatchEnabled(s.autoDispatchEnabled);
+        } finally {
+            setAutoDispatchSaving(false);
+        }
+    }
 
     async function handleDispatch(e) {
         e.preventDefault();
@@ -128,10 +142,22 @@ export default function DispatchMap() {
                     <div className="eyebrow">{t('admin.dispatch.eyebrow')}</div>
                     <h1 className="h1">{t('admin.dispatch.title')}</h1>
                 </div>
-                <div className="meter meter--sm">
-                    {positions.length}<span className="meter__unit">{t('admin.dispatch.onShift')}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <ToggleChip
+                        label={autoDispatchSaving ? t('admin.dispatch.autoDispatchSaving') : t('admin.dispatch.autoDispatchToggle')}
+                        checked={autoDispatchEnabled}
+                        onChange={toggleAutoDispatch}
+                    />
+                    <div className="meter meter--sm">
+                        {positions.length}<span className="meter__unit">{t('admin.dispatch.onShift')}</span>
+                    </div>
                 </div>
             </div>
+            {autoDispatchEnabled && (
+                <p className="subtle" style={{ marginTop: -8, marginBottom: 16, fontSize: 12 }}>
+                    {t('admin.dispatch.autoDispatchHint')}
+                </p>
+            )}
 
             <div className="dispatch-grid">
                 <div className="card" style={{ padding: 0, overflow: 'hidden' }}>

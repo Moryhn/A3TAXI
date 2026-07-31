@@ -102,6 +102,8 @@ export const api = {
     deleteDispatchJob: (token, id) => request(`/dispatch/jobs/${id}`, { method: 'DELETE', token }),
     assignDispatchJob: (token, id, driverId) => request(`/dispatch/jobs/${id}/assign`, { method: 'PATCH', body: { driverId }, token }),
     autoAssignDispatchJob: (token, id) => request(`/dispatch/jobs/${id}/auto-assign`, { method: 'POST', token }),
+    getDispatchSettings: (token) => request('/dispatch/settings', { token }),
+    updateDispatchSettings: (token, autoDispatchEnabled) => request('/dispatch/settings', { method: 'PATCH', body: { autoDispatchEnabled }, token }),
     createRideRequest: (body) => request('/dispatch/requests', { method: 'POST', body }),
     trackRide: (token) => request(`/dispatch/track/${token}`),
 
