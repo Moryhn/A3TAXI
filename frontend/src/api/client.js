@@ -53,7 +53,7 @@ export const api = {
         return request(`/trips${qs ? `?${qs}` : ''}`, { token });
     },
     createTrip: (token, formData) => request('/trips', { method: 'POST', body: formData, token, isFormData: true }),
-    updateTrip: (token, id, body) => request(`/trips/${id}`, { method: 'PATCH', body, token }),
+    updateTrip: (token, id, body) => request(`/trips/${id}`, { method: 'PATCH', body, token, isFormData: body instanceof FormData }),
     deleteTrip: (token, id) => request(`/trips/${id}`, { method: 'DELETE', token }),
 
     generateInvoice: (token, body) => request('/invoices/generate', { method: 'POST', body, token }),

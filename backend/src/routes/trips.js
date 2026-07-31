@@ -63,26 +63,48 @@ router.get('/', requireAuth('admin', 'driver'), async (req, res) => {
     res.json(trips);
 });
 
-// Admin edits a trip. Editing one that's already on an invoice is allowed —
-// the invoice's total is recalculated from its line items right after, so it
-// never goes stale relative to what it actually lists.
-router.patch('/:id', requireAuth('admin'), async (req, res) => {
+// Admin edits any trip; a driver may edit only their own — same rule a
+// finalized invoice already enforces against admin. Accepts an optional new
+// receipt photo (replacing a blurry/wrong one) alongside the usual fields;
+// editing one that's already on an (unfinalized) invoice recalculates that
+// invoice's total right after, so it never goes stale relative to what it
+// actually lists.
+router.patch('/:id', requireAuth('admin', 'driver'), multerErrors(uploadReceipt.single('receipt')), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
+    if (req.user.role === 'driver') {
+        if (trip.driver_id !== req.user.sub) {
+            return res.status(403).json({ error: 'You can only edit your own trips' });
+        }
+        if (trip.invoice_id) {
+            return res.status(409).json({ error: 'This trip has already been invoiced — ask admin to correct it' });
+        }
+    }
     if (await rejectIfInvoiceFinalized(res, trip.invoice_id)) return;
 
     const { departureLocation, arrivalLocation, amount, tripDate, direction } = req.body;
-    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount, tripDate, direction });
+    const receiptPhotoUrl = req.file ? await uploadReceiptPhoto(req.file) : null;
+    const updated = await updateTrip(req.params.id, { departureLocation, arrivalLocation, amount, tripDate, direction, receiptPhotoUrl });
     if (trip.invoice_id) await recalculateInvoiceTotal(trip.invoice_id);
     res.json(updated);
 });
 
-// Admin deletes a trip. If it was on an invoice, that invoice's total is
-// recalculated (and, if it was the last line, the invoice is left at $0
-// rather than deleted outright — admin can delete the invoice separately).
-router.delete('/:id', requireAuth('admin'), async (req, res) => {
+// Admin deletes any trip; a driver may delete only their own, and only
+// before it's been invoiced (once billed, it's the admin's record to
+// correct). If it was on an invoice, that invoice's total is recalculated
+// (and, if it was the last line, the invoice is left at $0 rather than
+// deleted outright — admin can delete the invoice separately).
+router.delete('/:id', requireAuth('admin', 'driver'), async (req, res) => {
     const trip = await findTripById(req.params.id);
     if (!trip) return res.status(404).json({ error: 'Trip not found' });
+    if (req.user.role === 'driver') {
+        if (trip.driver_id !== req.user.sub) {
+            return res.status(403).json({ error: 'You can only delete your own trips' });
+        }
+        if (trip.invoice_id) {
+            return res.status(409).json({ error: 'This trip has already been invoiced — ask admin to delete it' });
+        }
+    }
     if (await rejectIfInvoiceFinalized(res, trip.invoice_id)) return;
 
     await deleteTrip(req.params.id);

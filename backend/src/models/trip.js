@@ -58,16 +58,17 @@ export async function findTripById(id) {
     return rows[0] || null;
 }
 
-export async function updateTrip(id, { departureLocation, arrivalLocation, amount, tripDate, direction }) {
+export async function updateTrip(id, { departureLocation, arrivalLocation, amount, tripDate, direction, receiptPhotoUrl }) {
     const { rows } = await query(
         `UPDATE trips SET
             departure_location = COALESCE($2, departure_location),
             arrival_location = COALESCE($3, arrival_location),
             amount = COALESCE($4, amount),
             trip_date = COALESCE($5, trip_date),
-            direction = COALESCE($6, direction)
+            direction = COALESCE($6, direction),
+            receipt_photo_url = COALESCE($7, receipt_photo_url)
          WHERE id = $1 RETURNING *`,
-        [id, departureLocation, arrivalLocation, amount, tripDate, direction]
+        [id, departureLocation, arrivalLocation, amount, tripDate, direction, receiptPhotoUrl]
     );
     return rows[0] || null;
 }
