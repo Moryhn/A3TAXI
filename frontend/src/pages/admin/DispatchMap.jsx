@@ -29,6 +29,8 @@ export default function DispatchMap() {
     const [editForm, setEditForm] = useState({ address: '', notes: '' });
     const [pendingDelete, setPendingDelete] = useState(null);
     const [assigning, setAssigning] = useState({});
+    const [autoAssigning, setAutoAssigning] = useState({});
+    const [autoAssignError, setAutoAssignError] = useState({});
     const [showReservationForm, setShowReservationForm] = useState(false);
     const [resForm, setResForm] = useState(INITIAL_RESERVATION_FORM);
     const [resSubmitting, setResSubmitting] = useState(false);
@@ -85,6 +87,19 @@ export default function DispatchMap() {
         await api.assignDispatchJob(auth.token, jobId, driverId);
         setAssigning((a) => ({ ...a, [jobId]: '' }));
         refresh();
+    }
+
+    async function autoAssign(jobId) {
+        setAutoAssignError((e) => ({ ...e, [jobId]: '' }));
+        setAutoAssigning((a) => ({ ...a, [jobId]: true }));
+        try {
+            await api.autoAssignDispatchJob(auth.token, jobId);
+            refresh();
+        } catch (err) {
+            setAutoAssignError((e) => ({ ...e, [jobId]: err.message }));
+        } finally {
+            setAutoAssigning((a) => ({ ...a, [jobId]: false }));
+        }
     }
 
     async function handleCreateReservation(e) {
@@ -297,7 +312,7 @@ export default function DispatchMap() {
                                         <td>{j.customer_phone ? <a href={`tel:${j.customer_phone}`} style={{ color: 'var(--amber)' }}>{j.customer_phone}</a> : '—'}</td>
                                         <td className="subtle">{j.estimated_price != null ? `$${Number(j.estimated_price).toFixed(2)}` : '—'}</td>
                                         <td>
-                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                                                 <select
                                                     className="select"
                                                     style={{ padding: '6px 10px', fontSize: 12 }}
@@ -310,7 +325,13 @@ export default function DispatchMap() {
                                                 <button onClick={() => assignDriver(j.id)} className="btn btn--primary" style={{ padding: '6px 12px', fontSize: 12 }} disabled={!assigning[j.id]}>
                                                     {t('admin.dispatch.assign')}
                                                 </button>
+                                                <button onClick={() => autoAssign(j.id)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }} disabled={autoAssigning[j.id]}>
+                                                    {autoAssigning[j.id] ? t('admin.dispatch.autoAssigning') : t('admin.dispatch.autoAssign')}
+                                                </button>
                                             </div>
+                                            {autoAssignError[j.id] && (
+                                                <div className="subtle" style={{ color: 'var(--danger)', fontSize: 11, marginTop: 4 }}>{autoAssignError[j.id]}</div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

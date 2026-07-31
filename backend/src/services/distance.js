@@ -1,10 +1,20 @@
 const ROUTES_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const ROUTES_ENDPOINT = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 
+// Routes API accepts either a free-text address or a lat/lng pair for origin
+// and destination — a driver's last known position is already coordinates,
+// so passing those directly skips a wasted reverse-geocode round trip.
+function toWaypoint(place) {
+    if (typeof place === 'object' && place !== null && 'lat' in place && 'lng' in place) {
+        return { location: { latLng: { latitude: place.lat, longitude: place.lng } } };
+    }
+    return { address: place };
+}
+
 // Falls back to null when the server-side Google Maps key isn't configured (local dev,
 // or Routes API not yet enabled on the Cloud project) — callers should degrade
 // gracefully (hide the price estimate) rather than fail the whole request.
-export async function getDrivingDistance(originAddress, destinationAddress) {
+export async function getDrivingDistance(origin, destination) {
     if (!ROUTES_API_KEY) {
         console.log('[distance:stub] GOOGLE_MAPS_API_KEY not configured, skipping distance lookup');
         return null;
@@ -20,8 +30,8 @@ export async function getDrivingDistance(originAddress, destinationAddress) {
                 'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration',
             },
             body: JSON.stringify({
-                origin: { address: originAddress },
-                destination: { address: destinationAddress },
+                origin: toWaypoint(origin),
+                destination: toWaypoint(destination),
                 travelMode: 'DRIVE',
                 units: 'METRIC',
             }),

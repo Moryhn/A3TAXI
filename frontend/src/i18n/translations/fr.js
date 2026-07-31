@@ -241,6 +241,8 @@ export default {
             incomingRequestsEyebrow: 'Demandes entrantes',
             noIncomingRequests: 'Aucune demande "commander maintenant" en attente.',
             assign: 'Assigner',
+            autoAssign: 'Assigner automatiquement',
+            autoAssigning: 'Recherche…',
             colDriver: 'Chauffeur',
             colType: 'Type',
             colAddress: 'Adresse',

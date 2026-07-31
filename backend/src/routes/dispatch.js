@@ -12,11 +12,14 @@ import {
     assignDriverToJob,
     findDispatchJobByTrackingToken,
     latestPositionForDriver,
+    listAvailableDriversWithPositions,
+    findDispatchJobById,
     findJobsDueForTrackingSms,
     markTrackingSmsSent,
 } from '../models/dispatch.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
+import { getDrivingDistance } from '../services/distance.js';
 import { sendSms } from '../services/sms.js';
 
 const router = Router();
@@ -138,6 +141,39 @@ router.patch('/jobs/:id/assign', requireAuth('admin'), async (req, res) => {
     if (!job) return res.status(404).json({ error: 'Job not found' });
     sendJobNotification(driverId, job).catch((err) => console.error('sendJobNotification failed:', err.message));
     res.json(job);
+});
+
+// Admin triggers automatic assignment: among drivers who are active, have
+// shared a position in the last 15 minutes, and aren't already mid-job,
+// finds whichever is closest by real driving distance to the job's pickup
+// address and assigns them — same effect as picking a driver by hand, just
+// computed instead of guessed. Real driving distance (not straight-line)
+// since a river or highway can make the visually-closest driver not
+// actually the fastest one to reach the pickup.
+router.post('/jobs/:id/auto-assign', requireAuth('admin'), async (req, res) => {
+    const job = await findDispatchJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (job.driver_id) return res.status(409).json({ error: 'This job already has a driver assigned' });
+
+    const candidates = await listAvailableDriversWithPositions();
+    if (candidates.length === 0) {
+        return res.status(409).json({ error: 'No available driver right now — every driver is either off-shift or already on a job' });
+    }
+
+    const distances = await Promise.all(candidates.map(async (driver) => {
+        const distance = await getDrivingDistance({ lat: driver.lat, lng: driver.lng }, job.address);
+        return { driver, distance };
+    }));
+    const reachable = distances.filter((d) => d.distance !== null);
+    if (reachable.length === 0) {
+        return res.status(502).json({ error: 'Could not calculate driving distance to any available driver — try assigning manually' });
+    }
+    reachable.sort((a, b) => a.distance.distanceKm - b.distance.distanceKm);
+    const nearest = reachable[0];
+
+    const updated = await assignDriverToJob(job.id, nearest.driver.driver_id, req.user.sub);
+    sendJobNotification(nearest.driver.driver_id, updated).catch((err) => console.error('sendJobNotification failed:', err.message));
+    res.json({ ...updated, driver_name: nearest.driver.driver_name, distanceKm: nearest.distance.distanceKm });
 });
 
 // Public "track my ride" page — looked up by unguessable token, never by id

@@ -67,6 +67,27 @@ export async function findDispatchJobByTrackingToken(token) {
     return rows[0] || null;
 }
 
+// Candidates for auto-dispatch: active drivers with a recent position who
+// aren't already mid-job. 15 minutes is deliberately more forgiving than the
+// live map's 90s "stale" indicator (meant for a real-time dot going dark) —
+// a driver idling between jobs may not get a fresh GPS ping for a while
+// without actually being unavailable.
+export async function listAvailableDriversWithPositions() {
+    const { rows } = await query(
+        `SELECT DISTINCT ON (dp.driver_id) dp.driver_id, d.name AS driver_name, dp.lat, dp.lng, dp.recorded_at
+         FROM driver_positions dp
+         JOIN drivers d ON d.id = dp.driver_id
+         WHERE d.is_active = true
+           AND dp.recorded_at > now() - interval '15 minutes'
+           AND dp.driver_id NOT IN (
+             SELECT driver_id FROM dispatch_jobs
+             WHERE driver_id IS NOT NULL AND deleted_at IS NULL AND status IN ('pending', 'accepted')
+           )
+         ORDER BY dp.driver_id, dp.recorded_at DESC`
+    );
+    return rows;
+}
+
 export async function latestPositionForDriver(driverId) {
     const { rows } = await query(
         `SELECT driver_id, lat, lng, recorded_at FROM driver_positions
@@ -83,6 +104,11 @@ export async function assignDriverToJob(jobId, driverId, adminId) {
         `UPDATE dispatch_jobs SET driver_id = $2, assigned_by = $3, updated_at = now() WHERE id = $1 RETURNING *`,
         [jobId, driverId, adminId]
     );
+    return rows[0] || null;
+}
+
+export async function findDispatchJobById(jobId) {
+    const { rows } = await query('SELECT * FROM dispatch_jobs WHERE id = $1 AND deleted_at IS NULL', [jobId]);
     return rows[0] || null;
 }
 

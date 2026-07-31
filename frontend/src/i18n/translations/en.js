@@ -241,6 +241,8 @@ export default {
             incomingRequestsEyebrow: 'Incoming requests',
             noIncomingRequests: 'No incoming "book now" requests.',
             assign: 'Assign',
+            autoAssign: 'Auto-assign',
+            autoAssigning: 'Finding driver…',
             colDriver: 'Driver',
             colType: 'Type',
             colAddress: 'Address',
