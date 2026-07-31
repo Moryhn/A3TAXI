@@ -106,6 +106,7 @@ router.get('/:id/export.xlsx', requireAuth('admin'), async (req, res) => {
         trips,
         clientAddress: invoice.client_address,
         clientCityLine,
+        clientInvoiceDescription: invoice.client_invoice_description,
         clientPhone: invoice.client_phone,
         invoiceNumber: invoice.invoice_number,
         invoiceDate: invoice.invoice_date ? new Date(invoice.invoice_date).toISOString().slice(0, 10) : null,

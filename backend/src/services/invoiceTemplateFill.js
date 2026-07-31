@@ -64,6 +64,7 @@ function findTableExtent(sheet, amountCol, startRow) {
 // in place. The caller streams/uploads the workbook afterward.
 export function fillInvoiceTemplate(workbook, {
     clientName, periodLabel, trips, clientAddress, clientCityLine, clientPhone, invoiceNumber, invoiceDate,
+    clientInvoiceDescription,
 }, mapping) {
     const sheet = workbook.worksheets[0];
 
@@ -96,7 +97,7 @@ export function fillInvoiceTemplate(workbook, {
     let row = mapping.trip_row_start;
     for (const trip of trips) {
         sheet.getCell(`${cols.date}${row}`).value = new Date(trip.trip_date).toISOString().slice(0, 10);
-        sheet.getCell(`${cols.description}${row}`).value = trip.driver_name || '';
+        sheet.getCell(`${cols.description}${row}`).value = clientInvoiceDescription || trip.driver_name || '';
         sheet.getCell(`${cols.departure}${row}`).value = trip.departure_location;
         sheet.getCell(`${cols.arrival}${row}`).value = trip.arrival_location;
         sheet.getCell(`${cols.amount}${row}`).value = Number(trip.amount);
