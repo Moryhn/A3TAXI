@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { api } from '../../api/client.js';
+import { api, receiptUrl } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
-import { formatCalendarDate, formatCurrency } from '../../lib/format.js';
+import { formatCalendarDate, formatDate, formatCurrency } from '../../lib/format.js';
 import MonthNav, { currentMonthValue, monthParam, monthDateRange } from '../../components/MonthNav.jsx';
 
 export default function MyAccount() {
@@ -42,6 +42,40 @@ export default function MyAccount() {
                     <p className="subtle" style={{ marginTop: 4 }}>{t('driver.account.balanceHint')}</p>
                 </div>
             </div>
+
+            <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>{t('driver.account.tripsEyebrow')}</div>
+            {trips.length === 0 ? (
+                <div className="card empty">
+                    <div className="empty__title">{t('driver.account.tripsEmptyTitle')}</div>
+                </div>
+            ) : (
+                <div className="table-wrap">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th>{t('driver.account.tripsColDate')}</th>
+                                <th>{t('driver.account.tripsColClient')}</th>
+                                <th>{t('driver.account.tripsColRoute')}</th>
+                                <th>{t('driver.account.tripsColDirection')}</th>
+                                <th>{t('driver.account.tripsColAmount')}</th>
+                                <th>{t('driver.account.tripsColReceipt')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {trips.map((trip) => (
+                                <tr key={trip.id}>
+                                    <td className="subtle">{formatDate(trip.trip_date, lang)}</td>
+                                    <td>{trip.client_name}</td>
+                                    <td>{trip.departure_location} → {trip.arrival_location}</td>
+                                    <td className="subtle">{t(`driver.account.direction${trip.direction === 'aller_retour' ? 'AllerRetour' : trip.direction === 'retour' ? 'Retour' : 'Aller'}`)}</td>
+                                    <td style={{ fontFamily: 'var(--font-mono)' }}>{formatCurrency(trip.amount, lang)}</td>
+                                    <td>{trip.receipt_photo_url ? <a href={receiptUrl(trip.receipt_photo_url)} target="_blank" rel="noreferrer" style={{ color: 'var(--amber)' }}>{t('driver.account.viewReceipt')}</a> : <span className="subtle">—</span>}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
             <div className="eyebrow" style={{ marginTop: 24, marginBottom: 10 }}>{t('driver.account.historyEyebrow')}</div>
             {ledger.entries.length === 0 ? (
