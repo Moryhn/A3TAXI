@@ -464,6 +464,14 @@ export default {
             speakDeparture: 'Speak departure',
             speakArrival: 'Speak arrival',
         },
+        photoCrop: {
+            choosePhoto: 'Take or choose a photo',
+            change: 'Change photo',
+            hint: 'Adjust the frame around the receipt, then confirm',
+            rotate: 'Rotate',
+            confirm: 'Confirm',
+            processing: 'Processing…',
+        },
         account: {
             eyebrow: 'My account',
             title: 'My account',

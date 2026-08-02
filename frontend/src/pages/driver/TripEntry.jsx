@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 import MicButton from '../../components/MicButton.jsx';
-import { compressImage } from '../../lib/image.js';
+import ReceiptPhotoField from '../../components/ReceiptPhotoField.jsx';
 
 export default function TripEntry() {
     const { auth } = useAuth();
@@ -13,17 +13,8 @@ export default function TripEntry() {
     const [clients, setClients] = useState([]);
     const [form, setForm] = useState({ clientAccountId: '', departureLocation: '', arrivalLocation: '', amount: '', direction: 'aller' });
     const [receipt, setReceipt] = useState(null);
-    const [compressing, setCompressing] = useState(false);
     const [status, setStatus] = useState(null);
     const [saving, setSaving] = useState(false);
-
-    async function handleReceiptChange(e) {
-        const file = e.target.files[0];
-        if (!file) return setReceipt(null);
-        setCompressing(true);
-        setReceipt(await compressImage(file));
-        setCompressing(false);
-    }
 
     useEffect(() => {
         api.listClientAccounts(auth.token).then(setClients);
@@ -112,11 +103,10 @@ export default function TripEntry() {
 
                 <div className="field">
                     <label>{t('driver.tripEntry.receiptLabel')}</label>
-                    <input className="input" type="file" accept="image/*" capture="environment" onChange={handleReceiptChange} style={{ padding: 10 }} />
-                    {compressing && <div className="subtle" style={{ marginTop: 6 }}>{t('driver.tripEntry.processingPhoto')}</div>}
+                    <ReceiptPhotoField onChange={setReceipt} />
                 </div>
 
-                <button type="submit" className="btn btn--primary" style={{ padding: '15px 18px', fontSize: 16 }} disabled={saving || compressing}>
+                <button type="submit" className="btn btn--primary" style={{ padding: '15px 18px', fontSize: 16 }} disabled={saving}>
                     {saving ? t('driver.tripEntry.saving') : t('driver.tripEntry.saveTrip')}
                 </button>
 

@@ -4,9 +4,9 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatCalendarDate, formatDate, formatCurrency } from '../../lib/format.js';
 import { localDateInputToUtcIso } from '../../lib/time.js';
-import { compressImage } from '../../lib/image.js';
 import MonthNav, { currentMonthValue, monthParam, monthDateRange } from '../../components/MonthNav.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import ReceiptPhotoField from '../../components/ReceiptPhotoField.jsx';
 
 export default function MyAccount() {
     const { auth } = useAuth();
@@ -17,7 +17,6 @@ export default function MyAccount() {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({ tripDate: '', amount: '', direction: 'aller' });
     const [editReceipt, setEditReceipt] = useState(null);
-    const [compressing, setCompressing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [pendingDelete, setPendingDelete] = useState(null);
     const [error, setError] = useState('');
@@ -37,14 +36,6 @@ export default function MyAccount() {
         setEditingId(trip.id);
         setEditForm({ tripDate: trip.trip_date.slice(0, 10), amount: trip.amount, direction: trip.direction });
         setEditReceipt(null);
-    }
-
-    async function handleEditReceiptChange(e) {
-        const file = e.target.files[0];
-        if (!file) return setEditReceipt(null);
-        setCompressing(true);
-        setEditReceipt(await compressImage(file));
-        setCompressing(false);
     }
 
     async function saveEdit(id) {
@@ -131,11 +122,10 @@ export default function MyAccount() {
                                     </div>
                                     <div className="field">
                                         <label>{t('driver.tripEntry.receiptLabel')}</label>
-                                        <input className="input" type="file" accept="image/*" capture="environment" onChange={handleEditReceiptChange} style={{ padding: 10 }} />
-                                        {compressing && <div className="subtle" style={{ marginTop: 6 }}>{t('driver.tripEntry.processingPhoto')}</div>}
+                                        <ReceiptPhotoField onChange={setEditReceipt} />
                                     </div>
                                     <div style={{ display: 'flex', gap: 10 }}>
-                                        <button onClick={() => saveEdit(trip.id)} className="btn btn--primary" style={{ flex: 1, padding: '13px 16px' }} disabled={saving || compressing}>
+                                        <button onClick={() => saveEdit(trip.id)} className="btn btn--primary" style={{ flex: 1, padding: '13px 16px' }} disabled={saving}>
                                             {saving ? t('driver.tripEntry.saving') : t('common.save')}
                                         </button>
                                         <button onClick={() => setEditingId(null)} className="btn btn--ghost" style={{ flex: 1, padding: '13px 16px' }} disabled={saving}>{t('common.cancel')}</button>
