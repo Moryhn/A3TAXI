@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api, receiptUrl } from '../../api/client.js';
+import { api, receiptPrintUrl } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDate, formatCurrency } from '../../lib/format.js';
@@ -40,7 +40,7 @@ export default function InvoiceReceipts() {
                     </div>
                     {trip.receipt_photo_url ? (
                         <div className="receipt-page__image-wrap">
-                            <img src={receiptUrl(trip.receipt_photo_url)} alt="" className="receipt-page__image" />
+                            <img src={receiptPrintUrl(trip.receipt_photo_url)} alt="" className="receipt-page__image" />
                         </div>
                     ) : (
                         <p className="subtle">{t('admin.invoiceReceipts.noReceipt')}</p>

@@ -7,6 +7,17 @@ export function receiptUrl(path) {
     return /^https?:\/\//.test(path) ? path : `${API_ORIGIN}${path}`;
 }
 
+// The "Voir les reçus" print page (one receipt per PDF page) is what admins
+// save-as-PDF to attach to a client's paperwork — some of those (insurance
+// case files) reject anything over ~2MB. Cloudinary can downsize/recompress
+// on the fly via a URL transformation, so this asks for a print-appropriate
+// version instead of the full-resolution original — no re-upload, no change
+// to the stored file used everywhere else (admin zoom, driver's own view).
+export function receiptPrintUrl(path) {
+    const url = receiptUrl(path);
+    return url.replace('/image/upload/', '/image/upload/w_1000,q_auto:eco,f_auto/');
+}
+
 async function request(path, { method = 'GET', body, token, isFormData = false } = {}) {
     const headers = {};
     if (!isFormData) headers['Content-Type'] = 'application/json';
