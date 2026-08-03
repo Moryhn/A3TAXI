@@ -26,7 +26,10 @@ const router = Router();
 
 async function sendTrackingSms(job) {
     const trackingUrl = `${(process.env.FRONTEND_URL || '').replace(/\/$/, '')}/A3TAXI/#/track/${job.tracking_token}`;
-    await sendSms(job.customer_phone, `Votre chauffeur A3TAXI est en route ! Suivez votre course en direct : ${trackingUrl}`);
+    await sendSms(
+        job.customer_phone,
+        `Votre chauffeur A3TAXI est en route ! / Your A3TAXI driver is on the way!\nSuivez votre course en direct / Track live: ${trackingUrl}`
+    );
     await markTrackingSmsSent(job.id);
 }
 
