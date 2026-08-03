@@ -118,6 +118,11 @@ export const api = {
     createRideRequest: (body) => request('/dispatch/requests', { method: 'POST', body }),
     trackRide: (token) => request(`/dispatch/track/${token}`),
 
+    listQuickMessageButtons: (token) => request('/quick-messages/buttons', { token }),
+    updateQuickMessageButton: (token, position, body) => request(`/quick-messages/buttons/${position}`, { method: 'PATCH', body, token }),
+    sendQuickMessage: (token, { phone, position, jobId }) => request('/quick-messages/send', { method: 'POST', body: { phone, position, jobId }, token }),
+    listQuickMessageLogs: (token) => request('/quick-messages/logs', { token }),
+
     getVapidPublicKey: (token) => request('/push/vapid-public-key', { token }),
     subscribePush: (token, subscription) => request('/push/subscribe', { method: 'POST', body: { subscription }, token }),
     unsubscribePush: (token, endpoint) => request('/push/unsubscribe', { method: 'POST', body: { endpoint }, token }),

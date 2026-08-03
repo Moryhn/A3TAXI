@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 
-export default function ConfirmDialog({ open, title, message, confirmLabel, onConfirm, onCancel }) {
+export default function ConfirmDialog({ open, title, message, confirmLabel, onConfirm, onCancel, variant = 'danger' }) {
     const { t } = useLanguage();
     const cancelRef = useRef(null);
 
@@ -34,12 +34,12 @@ export default function ConfirmDialog({ open, title, message, confirmLabel, onCo
                 aria-modal="true"
                 aria-labelledby="confirm-dialog-title"
             >
-                <div className="eyebrow" style={{ color: 'var(--danger)' }}>{t('common.confirm')}</div>
+                <div className="eyebrow" style={variant === 'danger' ? { color: 'var(--danger)' } : undefined}>{t('common.confirm')}</div>
                 <div id="confirm-dialog-title" style={{ fontWeight: 600, fontSize: 17, margin: '8px 0' }}>{title}</div>
                 {message && <p className="subtle" style={{ marginBottom: 20, lineHeight: 1.5 }}>{message}</p>}
                 <div style={{ display: 'flex', gap: 10, marginTop: message ? 0 : 16 }}>
                     <button ref={cancelRef} onClick={onCancel} className="btn btn--ghost" style={{ flex: 1 }}>{t('common.cancel')}</button>
-                    <button onClick={onConfirm} className="btn btn--danger" style={{ flex: 1 }}>{confirmLabel || t('common.delete')}</button>
+                    <button onClick={onConfirm} className={`btn ${variant === 'danger' ? 'btn--danger' : 'btn--primary'}`} style={{ flex: 1 }}>{confirmLabel || t('common.delete')}</button>
                 </div>
             </div>
         </div>

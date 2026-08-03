@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { isPushSupported, getExistingPushSubscription, enablePushNotifications, disablePushNotifications } from '../../push.js';
 import { formatDateTime } from '../../lib/format.js';
+import QuickMessageSender from '../../components/QuickMessageSender.jsx';
 
 const SHARING_KEY = 'a3taxi_driver_sharing';
 
@@ -187,6 +188,11 @@ export default function MyJobs() {
                 <p className="subtle" style={{ marginTop: -12, marginBottom: 20, color: 'var(--danger)' }}>{notifError}</p>
             )}
 
+            <div className="card" style={{ marginBottom: 20 }}>
+                <div className="eyebrow" style={{ marginBottom: 10 }}>{t('driver.quickMessages.eyebrow')}</div>
+                <QuickMessageSender />
+            </div>
+
             {jobs.length === 0 ? (
                 <div className="card empty">
                     <div className="empty__title">{t('driver.myJobs.emptyTitle')}</div>
@@ -215,6 +221,11 @@ export default function MyJobs() {
                             )}
                             {j.status === 'accepted' && (
                                 <button onClick={() => updateStatus(j.id, 'completed')} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.markComplete')}</button>
+                            )}
+                            {j.status === 'completed' && j.customer_phone && (
+                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                                    <QuickMessageSender phone={j.customer_phone} jobId={j.id} />
+                                </div>
                             )}
                         </div>
                     ))}

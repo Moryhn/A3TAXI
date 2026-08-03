@@ -19,6 +19,7 @@ import reservationRoutes from './routes/reservations.js';
 import trashRoutes from './routes/trash.js';
 import exportRoutes from './routes/export.js';
 import pushRoutes from './routes/push.js';
+import quickMessageRoutes from './routes/quickMessages.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/api/reservations', reservationRoutes);
 app.use('/api/trash', trashRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/quick-messages', quickMessageRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err);

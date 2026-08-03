@@ -13,6 +13,7 @@ import InvoicePrint from './admin/InvoicePrint.jsx';
 import InvoiceReceipts from './admin/InvoiceReceipts.jsx';
 import DispatchMap from './admin/DispatchMap.jsx';
 import Reservations from './admin/Reservations.jsx';
+import QuickMessages from './admin/QuickMessages.jsx';
 import Trash from './admin/Trash.jsx';
 
 export default function AdminDashboard() {
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
         { path: 'reservations', label: t('nav.reservations'), element: <Reservations /> },
         { path: 'clients', label: t('nav.clients'), element: <ClientAccounts /> },
         { path: 'drivers', label: t('nav.drivers'), element: <Drivers /> },
+        { path: 'quick-messages', label: t('nav.quickMessages'), element: <QuickMessages /> },
         { path: 'trash', label: t('nav.trash'), element: <Trash /> },
     ];
 
