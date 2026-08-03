@@ -1,21 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { isPushSupported, getExistingPushSubscription, enablePushNotifications, disablePushNotifications } from '../../push.js';
 import { formatDateTime } from '../../lib/format.js';
 
+const SHARING_KEY = 'a3taxi_driver_sharing';
+
+// Tracked at module scope, not component state — a phone that sits idle
+// auto-locks its screen, which suspends this page's JS and drops the driver
+// off the live map within 90s (the admin's staleness threshold). Keeping the
+// watcher/wake-lock handles here means a re-mount of this page (route change,
+// or the OS reloading a backgrounded tab) can detect one is already running
+// instead of quietly starting a duplicate.
+let activeWatchId = null;
+let activeWakeLock = null;
+
+async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+        activeWakeLock = await navigator.wakeLock.request('screen');
+    } catch {
+        // Not fatal — position sharing still works, the screen just isn't
+        // held awake (e.g. low battery mode can refuse the lock on some phones).
+    }
+}
+
+function releaseWakeLock() {
+    activeWakeLock?.release().catch(() => {});
+    activeWakeLock = null;
+}
+
 export default function MyJobs() {
     const { auth } = useAuth();
     const { t, lang } = useLanguage();
     const [jobs, setJobs] = useState([]);
-    const [sharing, setSharing] = useState(false);
-    const [watchId, setWatchId] = useState(null);
+    const [sharing, setSharing] = useState(() => activeWatchId !== null);
     // unsupported | off | on | denied — starts synchronously so the button shows right
     // away instead of staying hidden while async feature checks (serviceWorker.ready,
     // getSubscription) are still pending.
     const [notifState, setNotifState] = useState(() => (isPushSupported() ? 'off' : 'unsupported'));
     const [notifError, setNotifError] = useState('');
+    const authRef = useRef(auth);
+    authRef.current = auth;
 
     async function refresh() {
         setJobs(await api.listMyJobs(auth.token));
@@ -25,6 +52,42 @@ export default function MyJobs() {
         refresh();
         const interval = setInterval(refresh, 20000);
         return () => clearInterval(interval);
+    }, []);
+
+    function startWatch() {
+        activeWatchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                api.postDriverPosition(authRef.current.token, pos.coords.latitude, pos.coords.longitude).catch(() => {});
+            },
+            (err) => console.error('Geolocation error:', err),
+            { enableHighAccuracy: true, maximumAge: 10000 }
+        );
+    }
+
+    // A screen that auto-locks from inactivity is exactly what suspends this
+    // page's JS and stops position updates — the Wake Lock keeps the screen
+    // (and this tab) awake for as long as sharing stays on. If the OS still
+    // reclaims the tab in the background and later reloads it, the effect
+    // below picks the sharing preference back up from localStorage on mount
+    // instead of leaving the driver silently unshared without realizing.
+    useEffect(() => {
+        if (localStorage.getItem(SHARING_KEY) === '1' && activeWatchId === null) {
+            startWatch();
+            acquireWakeLock();
+            setSharing(true);
+        }
+
+        function onVisibilityChange() {
+            if (document.visibilityState !== 'visible' || activeWatchId === null) return;
+            acquireWakeLock();
+            navigator.geolocation.getCurrentPosition(
+                (pos) => api.postDriverPosition(authRef.current.token, pos.coords.latitude, pos.coords.longitude).catch(() => {}),
+                () => {},
+                { enableHighAccuracy: true, maximumAge: 0 }
+            );
+        }
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
     }, []);
 
     useEffect(() => {
@@ -59,20 +122,17 @@ export default function MyJobs() {
 
     function toggleSharing() {
         if (sharing) {
-            if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-            setWatchId(null);
+            if (activeWatchId !== null) navigator.geolocation.clearWatch(activeWatchId);
+            activeWatchId = null;
+            releaseWakeLock();
+            localStorage.removeItem(SHARING_KEY);
             setSharing(false);
             return;
         }
 
-        const id = navigator.geolocation.watchPosition(
-            (pos) => {
-                api.postDriverPosition(auth.token, pos.coords.latitude, pos.coords.longitude).catch(() => {});
-            },
-            (err) => console.error('Geolocation error:', err),
-            { enableHighAccuracy: true, maximumAge: 10000 }
-        );
-        setWatchId(id);
+        startWatch();
+        acquireWakeLock();
+        localStorage.setItem(SHARING_KEY, '1');
         setSharing(true);
     }
 
