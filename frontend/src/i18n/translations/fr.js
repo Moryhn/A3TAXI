@@ -377,8 +377,12 @@ export default {
         quickMessages: {
             eyebrow: 'Chauffeurs',
             title: 'Messages rapides',
-            intro: "Quatre boutons que le chauffeur peut utiliser pour envoyer un texto au client en un seul tap — par exemple un remerciement avec votre lien d'avis Google. Le chauffeur peut s'en servir pour une course du système ou en tapant lui-même le numéro du client.",
+            intro: "Des boutons que le chauffeur peut utiliser pour envoyer un texto au client en un seul tap — par exemple un remerciement avec votre lien d'avis Google. Ajoutez-en autant que vous voulez. Le chauffeur peut s'en servir pour une course du système ou en tapant lui-même le numéro du client.",
             buttonNumber: 'Bouton {{n}}',
+            addButton: '+ Ajouter un bouton',
+            adding: 'Ajout…',
+            confirmDeleteTitle: 'Supprimer ce bouton ?',
+            confirmDeleteMessage: 'Le bouton « {{label}} » sera retiré de l\'application des chauffeurs. L\'historique des envois déjà faits est conservé.',
             active: 'Actif',
             inactive: 'Inactif',
             labelField: 'Texte du bouton',

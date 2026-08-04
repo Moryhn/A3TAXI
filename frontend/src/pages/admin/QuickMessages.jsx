@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDateTime } from '../../lib/format.js';
 import ToggleChip from '../../components/ToggleChip.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 function composePreview(draft) {
     return (draft.message_template || '').replaceAll('{lien}', draft.google_review_link || '');
@@ -15,12 +16,39 @@ export default function QuickMessages() {
     const [drafts, setDrafts] = useState([]);
     const [logs, setLogs] = useState([]);
     const [savingPosition, setSavingPosition] = useState(null);
+    const [adding, setAdding] = useState(false);
+    const [pendingDelete, setPendingDelete] = useState(null);
     const [status, setStatus] = useState(null);
 
     useEffect(() => {
         api.listQuickMessageButtons(auth.token).then(setDrafts);
         api.listQuickMessageLogs(auth.token).then(setLogs);
     }, []);
+
+    async function addButton() {
+        setAdding(true);
+        setStatus(null);
+        try {
+            const created = await api.createQuickMessageButton(auth.token);
+            setDrafts((all) => [...all, created]);
+        } catch (err) {
+            setStatus({ ok: false, message: err.message });
+        } finally {
+            setAdding(false);
+        }
+    }
+
+    async function confirmDelete() {
+        const position = pendingDelete.position;
+        setPendingDelete(null);
+        setStatus(null);
+        try {
+            await api.deleteQuickMessageButton(auth.token, position);
+            setDrafts((all) => all.filter((b) => b.position !== position));
+        } catch (err) {
+            setStatus({ ok: false, message: err.message });
+        }
+    }
 
     function updateDraft(position, patch) {
         setDrafts((all) => all.map((b) => (b.position === position ? { ...b, ...patch } : b)));
@@ -73,10 +101,10 @@ export default function QuickMessages() {
             )}
 
             <div className="dispatch-grid" style={{ marginBottom: 24 }}>
-                {drafts.map((draft) => (
+                {drafts.map((draft, index) => (
                     <div key={draft.position} className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                            <div className="eyebrow">{t('admin.quickMessages.buttonNumber', { n: draft.position })}</div>
+                            <div className="eyebrow">{t('admin.quickMessages.buttonNumber', { n: index + 1 })}</div>
                             <ToggleChip
                                 label={draft.is_active ? t('admin.quickMessages.active') : t('admin.quickMessages.inactive')}
                                 checked={draft.is_active}
@@ -124,17 +152,35 @@ export default function QuickMessages() {
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => save(draft)}
-                            className="btn btn--primary"
-                            style={{ width: '100%' }}
-                            disabled={savingPosition === draft.position}
-                        >
-                            {savingPosition === draft.position ? t('admin.quickMessages.saving') : t('common.save')}
-                        </button>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button
+                                onClick={() => save(draft)}
+                                className="btn btn--primary"
+                                style={{ flex: 1 }}
+                                disabled={savingPosition === draft.position}
+                            >
+                                {savingPosition === draft.position ? t('admin.quickMessages.saving') : t('common.save')}
+                            </button>
+                            <button
+                                onClick={() => setPendingDelete(draft)}
+                                className="btn btn--danger"
+                                style={{ padding: '0 16px' }}
+                            >
+                                {t('common.delete')}
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
+
+            <button
+                onClick={addButton}
+                className="btn btn--ghost"
+                style={{ marginBottom: 24 }}
+                disabled={adding}
+            >
+                {adding ? t('admin.quickMessages.adding') : t('admin.quickMessages.addButton')}
+            </button>
 
             <div className="card">
                 <div className="eyebrow">{t('admin.quickMessages.historyEyebrow')}</div>
@@ -174,6 +220,14 @@ export default function QuickMessages() {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                open={!!pendingDelete}
+                title={t('admin.quickMessages.confirmDeleteTitle')}
+                message={pendingDelete ? t('admin.quickMessages.confirmDeleteMessage', { label: pendingDelete.label || `#${pendingDelete.position}` }) : ''}
+                onConfirm={confirmDelete}
+                onCancel={() => setPendingDelete(null)}
+            />
         </div>
     );
 }

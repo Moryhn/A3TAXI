@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { listButtons, getButton, updateButton, createLog, listLogs } from '../models/quickMessage.js';
+import { listButtons, getButton, createButton, updateButton, deleteButton, createLog, listLogs } from '../models/quickMessage.js';
 import { findDispatchJobById } from '../models/dispatch.js';
 import { sendSms } from '../services/sms.js';
 
@@ -14,15 +14,25 @@ router.get('/buttons', requireAuth('admin', 'driver'), async (req, res) => {
     res.json(await listButtons());
 });
 
+router.post('/buttons', requireAuth('admin'), async (req, res) => {
+    res.status(201).json(await createButton());
+});
+
 router.patch('/buttons/:position', requireAuth('admin'), async (req, res) => {
     const position = Number(req.params.position);
-    if (!Number.isInteger(position) || position < 1 || position > 4) {
-        return res.status(400).json({ error: 'position must be 1, 2, 3 or 4' });
+    if (!Number.isInteger(position) || position < 1) {
+        return res.status(400).json({ error: 'position must be a positive integer' });
     }
     const { label, messageTemplate, googleReviewLink, isActive } = req.body;
     const button = await updateButton(position, { label, messageTemplate, googleReviewLink, isActive });
     if (!button) return res.status(404).json({ error: 'Button not found' });
     res.json(button);
+});
+
+router.delete('/buttons/:position', requireAuth('admin'), async (req, res) => {
+    const deleted = await deleteButton(Number(req.params.position));
+    if (!deleted) return res.status(404).json({ error: 'Button not found' });
+    res.status(204).end();
 });
 
 // jobId is optional — drivers also pick up rides outside the app (direct

@@ -119,7 +119,9 @@ export const api = {
     trackRide: (token) => request(`/dispatch/track/${token}`),
 
     listQuickMessageButtons: (token) => request('/quick-messages/buttons', { token }),
+    createQuickMessageButton: (token) => request('/quick-messages/buttons', { method: 'POST', token }),
     updateQuickMessageButton: (token, position, body) => request(`/quick-messages/buttons/${position}`, { method: 'PATCH', body, token }),
+    deleteQuickMessageButton: (token, position) => request(`/quick-messages/buttons/${position}`, { method: 'DELETE', token }),
     sendQuickMessage: (token, { phone, position, jobId }) => request('/quick-messages/send', { method: 'POST', body: { phone, position, jobId }, token }),
     listQuickMessageLogs: (token) => request('/quick-messages/logs', { token }),
 

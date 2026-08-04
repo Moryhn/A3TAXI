@@ -377,8 +377,12 @@ export default {
         quickMessages: {
             eyebrow: 'Drivers',
             title: 'Quick messages',
-            intro: 'Four buttons a driver can use to text a customer in one tap — for example a thank-you with your Google review link. Drivers can use them for a job from the system, or by typing the customer\'s number themselves.',
+            intro: 'Buttons a driver can use to text a customer in one tap — for example a thank-you with your Google review link. Add as many as you need. Drivers can use them for a job from the system, or by typing the customer\'s number themselves.',
             buttonNumber: 'Button {{n}}',
+            addButton: '+ Add a button',
+            adding: 'Adding…',
+            confirmDeleteTitle: 'Delete this button?',
+            confirmDeleteMessage: 'The "{{label}}" button will be removed from the driver app. Messages already sent stay in the history.',
             active: 'Active',
             inactive: 'Inactive',
             labelField: 'Button text',

@@ -10,6 +10,23 @@ export async function getButton(position) {
     return rows[0] || null;
 }
 
+// Appends past the highest existing position rather than filling gaps left by
+// deletions — a position is a button's stable key (drivers may have the list
+// open while the admin edits it), so reusing one would silently repoint it.
+export async function createButton() {
+    const { rows } = await query(
+        `INSERT INTO quick_message_buttons (position)
+         VALUES ((SELECT COALESCE(MAX(position), 0) + 1 FROM quick_message_buttons))
+         RETURNING *`
+    );
+    return rows[0];
+}
+
+export async function deleteButton(position) {
+    const { rowCount } = await query('DELETE FROM quick_message_buttons WHERE position = $1', [position]);
+    return rowCount > 0;
+}
+
 export async function updateButton(position, { label, messageTemplate, googleReviewLink, isActive }) {
     const { rows } = await query(
         `UPDATE quick_message_buttons
