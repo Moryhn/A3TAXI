@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { Car, BatteryCharging, KeyRound, MapPin, Clock, LocateFixed } from 'lucide-react';
+import { MapPin, Clock, LocateFixed } from 'lucide-react';
 import PlaceAutocompleteInput from '../PlaceAutocompleteInput.jsx';
 import RecentAddressChips from './RecentAddressChips.jsx';
 import { loadGoogleMapsLibrary } from '../../lib/googleMaps.js';
 
-const SERVICE_ICONS = { ride: Car, battery_boost: BatteryCharging, lockout: KeyRound };
-const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
 const DESTINATION_CATEGORIES = ['airport', 'montreal', 'longDistance', 'local'];
 
 export default function TripStep({ form, setForm, isRide, t }) {
@@ -69,23 +67,6 @@ export default function TripStep({ form, setForm, isRide, t }) {
                     </div>
                 </div>
             )}
-
-            <div className="tabbar" style={{ width: '100%' }}>
-                {SERVICE_TYPES.map((s) => {
-                    const Icon = SERVICE_ICONS[s];
-                    return (
-                        <button
-                            key={s}
-                            type="button"
-                            className={`tabbar__btn ${form.serviceType === s ? 'tabbar__btn--active' : ''}`}
-                            style={{ flex: 1, fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                            onClick={() => setForm({ ...form, serviceType: s })}
-                        >
-                            <Icon size={14} /> {t(`booking.service.${s}`)}
-                        </button>
-                    );
-                })}
-            </div>
 
             <div className="field">
                 <label htmlFor="pickup"><MapPin size={12} style={{ verticalAlign: -2, marginRight: 4 }} />{isRide ? t('booking.pickupLabel') : t('booking.serviceLocationLabel')}</label>
