@@ -4,19 +4,21 @@ export async function createReservation({
     clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
     serviceType = 'ride', passengerCount = 1, carryOnCount = 0, checkedLuggageCount = 0,
     isRoundTrip = false, distanceKm = null, isNightRate = null, estimatedPrice = null,
-    destinationCategory = 'local',
+    destinationCategory = 'local', vehicleType = null, returnFlightNumber = null, returnArrivalTime = null,
 }) {
     const { rows } = await query(
         `INSERT INTO reservations (
             client_name, client_phone, client_email, pickup_location, dropoff_location, requested_time,
             service_type, passenger_count, carry_on_count, checked_luggage_count,
-            is_round_trip, distance_km, is_night_rate, estimated_price, destination_category
+            is_round_trip, distance_km, is_night_rate, estimated_price, destination_category,
+            vehicle_type, return_flight_number, return_arrival_time
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
         [
             clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
             isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
+            vehicleType, returnFlightNumber, returnArrivalTime,
         ]
     );
     return rows[0];
@@ -50,6 +52,7 @@ export async function updateReservation(id, {
     clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
     serviceType, passengerCount, carryOnCount, checkedLuggageCount,
     isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
+    vehicleType, returnFlightNumber, returnArrivalTime,
 }) {
     const { rows } = await query(
         `UPDATE reservations SET
@@ -68,12 +71,16 @@ export async function updateReservation(id, {
             distance_km = COALESCE($14, distance_km),
             is_night_rate = COALESCE($15, is_night_rate),
             estimated_price = COALESCE($16, estimated_price),
-            destination_category = COALESCE($17, destination_category)
+            destination_category = COALESCE($17, destination_category),
+            vehicle_type = COALESCE($18, vehicle_type),
+            return_flight_number = COALESCE($19, return_flight_number),
+            return_arrival_time = COALESCE($20, return_arrival_time)
          WHERE id = $1 RETURNING *`,
         [
             id, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
             isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
+            vehicleType, returnFlightNumber, returnArrivalTime,
         ]
     );
     return rows[0] || null;

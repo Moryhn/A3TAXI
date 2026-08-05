@@ -80,6 +80,14 @@ export default {
             montreal: 'Montreal',
             longDistance: 'Long distance',
         },
+        vehicleTypeLabel: 'Vehicle type',
+        vehicleType: {
+            car: 'Car',
+            minivan: 'Minivan',
+        },
+        returnFlightNumberLabel: 'Return flight number',
+        returnFlightNumberPlaceholder: 'e.g. AC1234',
+        returnArrivalTimeLabel: 'Expected arrival date & time at the airport',
     },
     bookNow: {
         title: 'Book now',
@@ -373,6 +381,7 @@ export default {
             },
             passengersShort: '{{count}} passenger(s)',
             luggageShort: '{{carryOn}} carry-on, {{checked}} checked',
+            returnFlightEyebrow: 'Return flight',
         },
         quickMessages: {
             eyebrow: 'Drivers',

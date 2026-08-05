@@ -20,6 +20,7 @@ const INITIAL_FORM = {
     pickupLocation: '', dropoffLocation: '', requestedTime: '',
     isRoundTrip: false, passengerCount: 1, carryOnCount: 0, checkedLuggageCount: 0,
     destinationCategory: 'local',
+    vehicleType: '', returnFlightNumber: '', returnArrivalTime: '',
 };
 
 export default function ReservationForm() {
@@ -93,7 +94,11 @@ export default function ReservationForm() {
         e.preventDefault();
         setStatus(null);
         try {
-            await api.createReservation({ ...form, requestedTime: localInputToUtcIso(form.requestedTime) });
+            await api.createReservation({
+                ...form,
+                requestedTime: localInputToUtcIso(form.requestedTime),
+                returnArrivalTime: localInputToUtcIso(form.returnArrivalTime) || null,
+            });
             addRecentAddress(form.pickupLocation);
             addRecentAddress(form.dropoffLocation);
             setStatus({ ok: true, message: t('booking.successMessage') });

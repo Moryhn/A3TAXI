@@ -249,6 +249,16 @@ export default function Reservations() {
                                         {t('admin.reservations.passengersShort', { count: selected.passenger_count })}
                                         {(selected.carry_on_count > 0 || selected.checked_luggage_count > 0) &&
                                             ` · ${t('admin.reservations.luggageShort', { carryOn: selected.carry_on_count, checked: selected.checked_luggage_count })}`}
+                                        {selected.vehicle_type &&
+                                            ` · ${t(`booking.vehicleType.${selected.vehicle_type}`)}`}
+                                    </p>
+                                )}
+                                {(selected.return_flight_number || selected.return_arrival_time) && (
+                                    <p className="subtle" style={{ lineHeight: 1.6, marginBottom: 8 }}>
+                                        <strong>{t('admin.reservations.returnFlightEyebrow')}</strong><br />
+                                        {selected.return_flight_number}
+                                        {selected.return_flight_number && selected.return_arrival_time && ' — '}
+                                        {selected.return_arrival_time && formatDateTime(selected.return_arrival_time, lang)}
                                     </p>
                                 )}
                                 {selected.estimated_price != null && (

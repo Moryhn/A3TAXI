@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
     const {
         clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType = 'ride', passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip,
-        destinationCategory,
+        destinationCategory, vehicleType, returnFlightNumber, returnArrivalTime,
     } = req.body;
 
     if (!SERVICE_TYPES.includes(serviceType)) {
@@ -64,6 +64,9 @@ router.post('/', async (req, res) => {
         isNightRate: quote.isNightRate,
         estimatedPrice: quote.estimatedPrice,
         destinationCategory: destinationCategory || 'local',
+        vehicleType: vehicleType || null,
+        returnFlightNumber: returnFlightNumber || null,
+        returnArrivalTime: returnArrivalTime || null,
     });
 
     try {
@@ -98,6 +101,7 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const {
         status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip, destinationCategory,
+        vehicleType, returnFlightNumber, returnArrivalTime,
     } = req.body;
     if (status && !['pending', 'confirmed', 'cancelled'].includes(status)) {
         return res.status(400).json({ error: 'status must be pending, confirmed, or cancelled' });
@@ -108,6 +112,7 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const reservation = await updateReservation(req.params.id, {
         status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip, destinationCategory,
+        vehicleType, returnFlightNumber, returnArrivalTime,
     });
     if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
     res.json(reservation);
