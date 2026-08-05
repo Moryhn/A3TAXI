@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -41,6 +41,14 @@ export default function Reservations() {
     const [feedUrl, setFeedUrl] = useState('');
     const [copyStatus, setCopyStatus] = useState('');
 
+    const [outlookConnected, setOutlookConnected] = useState(false);
+    const [calendarSource, setCalendarSource] = useState('a3taxi');
+    const [outlookEvents, setOutlookEvents] = useState([]);
+    const [outlookLoading, setOutlookLoading] = useState(false);
+    const [outlookError, setOutlookError] = useState('');
+    const [connectedToast, setConnectedToast] = useState(false);
+    const visibleRangeRef = useRef(null);
+
     async function refresh() {
         setReservations(await api.listReservations(auth.token));
     }
@@ -48,7 +56,56 @@ export default function Reservations() {
     useEffect(() => {
         refresh();
         api.listDrivers(auth.token).then(setDrivers);
+
+        const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
+        if (params.get('outlook') === 'connected') {
+            setConnectedToast(true);
+            window.history.replaceState(null, '', window.location.pathname + window.location.hash.split('?')[0]);
+            setTimeout(() => setConnectedToast(false), 4000);
+        }
+
+        api.getOutlookStatus(auth.token).then(({ connected }) => {
+            setOutlookConnected(connected);
+            if (connected) setCalendarSource('outlook');
+        });
     }, []);
+
+    async function fetchOutlookEvents(range) {
+        if (!range) return;
+        setOutlookLoading(true);
+        setOutlookError('');
+        try {
+            const events = await api.listOutlookEvents(auth.token, range.start.toISOString(), range.end.toISOString());
+            setOutlookEvents(events);
+        } catch (err) {
+            setOutlookError(err.message);
+        } finally {
+            setOutlookLoading(false);
+        }
+    }
+
+    function handleDatesSet(info) {
+        visibleRangeRef.current = { start: info.start, end: info.end };
+        if (calendarSource === 'outlook') fetchOutlookEvents(visibleRangeRef.current);
+    }
+
+    function switchCalendarSource(source) {
+        setCalendarSource(source);
+        setSelected(null);
+        if (source === 'outlook') fetchOutlookEvents(visibleRangeRef.current);
+    }
+
+    async function connectOutlook() {
+        const { authUrl } = await api.getOutlookConnectUrl(auth.token);
+        window.location.href = authUrl;
+    }
+
+    async function disconnectOutlook() {
+        await api.disconnectOutlook(auth.token);
+        setOutlookConnected(false);
+        setOutlookEvents([]);
+        setCalendarSource('a3taxi');
+    }
 
     async function toggleCalendarSync() {
         if (!showCalendarSync && !feedUrl) {
@@ -126,7 +183,7 @@ export default function Reservations() {
         refresh();
     }
 
-    const events = reservations.map((r) => ({
+    const a3taxiEvents = reservations.map((r) => ({
         id: String(r.id),
         title: r.dropoff_location
             ? `${r.client_name} — ${r.pickup_location} → ${r.dropoff_location}`
@@ -138,6 +195,18 @@ export default function Reservations() {
         extendedProps: r,
     }));
 
+    const outlookCalendarEvents = outlookEvents.map((e) => ({
+        id: `outlook-${e.id}`,
+        title: e.location ? `${e.subject} — ${e.location}` : e.subject,
+        start: e.start,
+        end: e.end,
+        allDay: e.isAllDay,
+        backgroundColor: '#5b6472',
+        borderColor: '#5b6472',
+        textColor: '#f2f2f2',
+    }));
+
+    const events = calendarSource === 'outlook' ? outlookCalendarEvents : a3taxiEvents;
     const pendingCount = reservations.filter((r) => r.status === 'pending').length;
 
     return (
@@ -147,13 +216,54 @@ export default function Reservations() {
                     <div className="eyebrow">{t('admin.reservations.eyebrow')}</div>
                     <h1 className="h1">{t('admin.reservations.title')}</h1>
                 </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {outlookConnected && (
+                        <div className="tabbar" style={{ padding: 2 }}>
+                            <button
+                                type="button"
+                                className={`tabbar__btn ${calendarSource === 'outlook' ? 'tabbar__btn--active' : ''}`}
+                                style={{ fontSize: 12 }}
+                                onClick={() => switchCalendarSource('outlook')}
+                            >
+                                {t('admin.reservations.viewOutlook')}
+                            </button>
+                            <button
+                                type="button"
+                                className={`tabbar__btn ${calendarSource === 'a3taxi' ? 'tabbar__btn--active' : ''}`}
+                                style={{ fontSize: 12 }}
+                                onClick={() => switchCalendarSource('a3taxi')}
+                            >
+                                {t('admin.reservations.viewA3taxi')}
+                            </button>
+                        </div>
+                    )}
                     <button onClick={toggleCalendarSync} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
                         {t('admin.reservations.calendarSyncToggle')}
                     </button>
+                    {outlookConnected ? (
+                        <button onClick={disconnectOutlook} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                            {t('admin.reservations.disconnectOutlook')}
+                        </button>
+                    ) : (
+                        <button onClick={connectOutlook} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                            {t('admin.reservations.connectOutlook')}
+                        </button>
+                    )}
                     <div className="meter meter--sm">{pendingCount}<span className="meter__unit">{t('admin.reservations.pending')}</span></div>
                 </div>
             </div>
+
+            {connectedToast && (
+                <div className="pill" style={{ flexShrink: 0, marginBottom: 10, padding: '10px 14px', color: '#0f8a5f', background: 'rgba(52,211,153,0.15)' }}>
+                    {t('admin.reservations.outlookConnectedToast')}
+                </div>
+            )}
+
+            {outlookError && calendarSource === 'outlook' && (
+                <div className="pill" style={{ flexShrink: 0, marginBottom: 10, padding: '10px 14px', color: 'var(--danger)', background: 'rgba(240,85,76,0.12)' }}>
+                    {outlookError}
+                </div>
+            )}
 
             {showCalendarSync && (
                 <div className="card" style={{ flexShrink: 0, marginBottom: 10 }}>
@@ -180,8 +290,18 @@ export default function Reservations() {
                         expandRows
                         slotDuration="02:00:00"
                         slotMaxTime="24:30:00"
-                        eventClick={(info) => { setSelected(info.event.extendedProps); setEditing(false); setSendDriverId(''); setSendStatus(null); }}
+                        datesSet={handleDatesSet}
+                        eventClick={(info) => {
+                            if (calendarSource !== 'a3taxi') return;
+                            setSelected(info.event.extendedProps);
+                            setEditing(false);
+                            setSendDriverId('');
+                            setSendStatus(null);
+                        }}
                     />
+                    {outlookLoading && calendarSource === 'outlook' && (
+                        <p className="subtle" style={{ marginTop: 8, fontSize: 12 }}>{t('admin.reservations.outlookLoading')}</p>
+                    )}
                 </div>
 
                 {selected && (
