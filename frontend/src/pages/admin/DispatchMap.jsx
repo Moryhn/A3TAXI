@@ -260,13 +260,13 @@ export default function DispatchMap() {
                                 )}
                                 <input className="input" type="datetime-local" value={resForm.requestedTime} onChange={(e) => setResForm({ ...resForm, requestedTime: e.target.value })} required />
                                 {isResRide && (
-                                    <div className="tabbar" style={{ width: '100%' }}>
+                                    <div className="tabbar tabbar--compact" style={{ width: '100%' }}>
                                         {DESTINATION_CATEGORIES.map((cat) => (
                                             <button
                                                 key={cat}
                                                 type="button"
                                                 className={`tabbar__btn ${resForm.destinationCategory === cat ? 'tabbar__btn--active' : ''}`}
-                                                style={{ flex: 1, fontSize: 11 }}
+                                                style={{ flex: 1 }}
                                                 onClick={() => setResForm({ ...resForm, destinationCategory: cat })}
                                             >
                                                 {t(`booking.destinationCategory.${cat}`)}

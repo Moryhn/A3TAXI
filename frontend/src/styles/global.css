@@ -750,6 +750,18 @@ textarea {
     color: var(--amber-ink);
 }
 
+/* Tighter padding/type for tab bars with several single-word uppercase
+   labels (destination category: "Aéroport", "Montréal") — the default
+   padding/font-size left too little room, so overflow-wrap: anywhere was
+   splitting those words mid-letter ("AÉROPOR" / "T"). Shrinking here means
+   they fit on one line in the common case; overflow-wrap stays as a
+   fallback for extreme widths. */
+.tabbar--compact .tabbar__btn {
+    padding: 8px 4px;
+    font-size: 10.5px;
+    letter-spacing: 0.01em;
+}
+
 /* FullCalendar — dispatch-board theming */
 .theme-dark .fc {
     --fc-border-color: var(--line);
