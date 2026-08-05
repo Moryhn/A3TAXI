@@ -51,23 +51,6 @@ export default function TripStep({ form, setForm, isRide, t }) {
 
     return (
         <div className="wizard-step" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div className="tabbar" style={{ width: '100%' }}>
-                {SERVICE_TYPES.map((s) => {
-                    const Icon = SERVICE_ICONS[s];
-                    return (
-                        <button
-                            key={s}
-                            type="button"
-                            className={`tabbar__btn ${form.serviceType === s ? 'tabbar__btn--active' : ''}`}
-                            style={{ flex: 1, fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                            onClick={() => setForm({ ...form, serviceType: s })}
-                        >
-                            <Icon size={14} /> {t(`booking.service.${s}`)}
-                        </button>
-                    );
-                })}
-            </div>
-
             {isRide && (
                 <div className="field">
                     <label>{t('booking.destinationCategoryLabel')}</label>
@@ -86,6 +69,23 @@ export default function TripStep({ form, setForm, isRide, t }) {
                     </div>
                 </div>
             )}
+
+            <div className="tabbar" style={{ width: '100%' }}>
+                {SERVICE_TYPES.map((s) => {
+                    const Icon = SERVICE_ICONS[s];
+                    return (
+                        <button
+                            key={s}
+                            type="button"
+                            className={`tabbar__btn ${form.serviceType === s ? 'tabbar__btn--active' : ''}`}
+                            style={{ flex: 1, fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                            onClick={() => setForm({ ...form, serviceType: s })}
+                        >
+                            <Icon size={14} /> {t(`booking.service.${s}`)}
+                        </button>
+                    );
+                })}
+            </div>
 
             <div className="field">
                 <label htmlFor="pickup"><MapPin size={12} style={{ verticalAlign: -2, marginRight: 4 }} />{isRide ? t('booking.pickupLabel') : t('booking.serviceLocationLabel')}</label>
