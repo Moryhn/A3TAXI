@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { query } from '../config/db.js';
 
 export async function createReservation({
@@ -6,22 +7,32 @@ export async function createReservation({
     isRoundTrip = false, distanceKm = null, isNightRate = null, estimatedPrice = null,
     destinationCategory = 'local', vehicleType = null, returnFlightNumber = null, returnArrivalTime = null,
 }) {
+    // Every reservation gets a private single-event calendar link (see
+    // GET /reservations/event/:token.ics) — generated unconditionally, not
+    // just for admin-notified bookings, so it stays valid if the number list
+    // changes later.
+    const eventToken = crypto.randomBytes(24).toString('base64url');
     const { rows } = await query(
         `INSERT INTO reservations (
             client_name, client_phone, client_email, pickup_location, dropoff_location, requested_time,
             service_type, passenger_count, carry_on_count, checked_luggage_count,
             is_round_trip, distance_km, is_night_rate, estimated_price, destination_category,
-            vehicle_type, return_flight_number, return_arrival_time
+            vehicle_type, return_flight_number, return_arrival_time, event_token
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
         [
             clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
             isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
-            vehicleType, returnFlightNumber, returnArrivalTime,
+            vehicleType, returnFlightNumber, returnArrivalTime, eventToken,
         ]
     );
     return rows[0];
+}
+
+export async function findReservationByEventToken(token) {
+    const { rows } = await query('SELECT * FROM reservations WHERE event_token = $1', [token]);
+    return rows[0] || null;
 }
 
 export async function markReservationSmsSent(id) {

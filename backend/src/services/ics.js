@@ -44,15 +44,27 @@ function buildEvent(reservation) {
     ].join('\r\n');
 }
 
-export function buildReservationsIcs(reservations) {
+function wrapCalendar(calName, events) {
     return [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         'PRODID:-//A3TAXI//Reservations//EN',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
-        'X-WR-CALNAME:A3TAXI Reservations',
-        ...reservations.map(buildEvent),
+        `X-WR-CALNAME:${calName}`,
+        ...events,
         'END:VCALENDAR',
     ].join('\r\n');
+}
+
+export function buildReservationsIcs(reservations) {
+    return wrapCalendar('A3TAXI Reservations', reservations.map(buildEvent));
+}
+
+// Single-event file behind the per-reservation link texted to the admin —
+// tapping it on iOS/Android offers "Add to Calendar" directly, sidestepping
+// the subscribe-and-poll delay of buildReservationsIcs entirely for that one
+// booking.
+export function buildSingleReservationIcs(reservation) {
+    return wrapCalendar('A3TAXI Reservation', [buildEvent(reservation)]);
 }

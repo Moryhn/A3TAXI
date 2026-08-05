@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { listSubscriptionsForDriver, deleteSubscriptionByEndpoint } from '../models/pushSubscriptions.js';
+import { listSubscriptionsForDriver, listSubscriptionsForAdmin, deleteSubscriptionByEndpoint } from '../models/pushSubscriptions.js';
 
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     webpush.setVapidDetails(
@@ -9,19 +9,7 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
     );
 }
 
-// Fire-and-forget: notifies every device a driver has enabled notifications on.
-// Dead subscriptions (uninstalled app, revoked permission) are pruned as they're found.
-export async function sendJobNotification(driverId, job) {
-    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
-
-    const subscriptions = await listSubscriptionsForDriver(driverId);
-    const payload = JSON.stringify({
-        title: 'New job',
-        body: job.address,
-        url: '/#/driver/jobs',
-        tag: `a3taxi-job-${job.id}`,
-    });
-
+async function sendToSubscriptions(subscriptions, payload) {
     await Promise.all(
         subscriptions.map(async (sub) => {
             const pushSubscription = {
@@ -29,7 +17,7 @@ export async function sendJobNotification(driverId, job) {
                 keys: { p256dh: sub.p256dh, auth: sub.auth },
             };
             try {
-                await webpush.sendNotification(pushSubscription, payload);
+                await webpush.sendNotification(pushSubscription, JSON.stringify(payload));
             } catch (err) {
                 if (err.statusCode === 404 || err.statusCode === 410) {
                     await deleteSubscriptionByEndpoint(sub.endpoint);
@@ -39,4 +27,33 @@ export async function sendJobNotification(driverId, job) {
             }
         })
     );
+}
+
+// Fire-and-forget: notifies every device a driver has enabled notifications on.
+// Dead subscriptions (uninstalled app, revoked permission) are pruned as they're found.
+export async function sendJobNotification(driverId, job) {
+    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+
+    const subscriptions = await listSubscriptionsForDriver(driverId);
+    await sendToSubscriptions(subscriptions, {
+        title: 'New job',
+        body: job.address,
+        url: '/#/driver/jobs',
+        tag: `a3taxi-job-${job.id}`,
+    });
+}
+
+// Fires the moment a public "book a ride" reservation is created — the
+// admin's fastest way to know, instead of waiting on an external calendar's
+// own polling schedule (see services/ics.js).
+export async function sendReservationNotification(reservation) {
+    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+
+    const subscriptions = await listSubscriptionsForAdmin();
+    await sendToSubscriptions(subscriptions, {
+        title: 'Nouvelle réservation',
+        body: `${reservation.client_name} — ${reservation.pickup_location}`,
+        url: '/#/admin/reservations',
+        tag: `a3taxi-reservation-${reservation.id}`,
+    });
 }

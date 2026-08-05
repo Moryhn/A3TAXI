@@ -7,11 +7,14 @@ import {
     listReservations,
     updateReservation,
     deleteReservation,
+    findReservationByEventToken,
 } from '../models/reservation.js';
 import { findAdminById, findAdminByCalendarFeedToken, setCalendarFeedToken } from '../models/adminUser.js';
+import { listActivePhones, listPhones, createPhone, updatePhone, deletePhone } from '../models/adminNotificationPhone.js';
 import { sendSms } from '../services/sms.js';
 import { getRideEstimate } from '../services/quote.js';
-import { buildReservationsIcs } from '../services/ics.js';
+import { buildReservationsIcs, buildSingleReservationIcs } from '../services/ics.js';
+import { sendReservationNotification } from '../services/push.js';
 
 const router = Router();
 
@@ -87,8 +90,31 @@ router.post('/', async (req, res) => {
         console.error('Failed to send reservation SMS:', err);
     }
 
+    // Admin-facing "someone just booked" alert — separate from the
+    // customer's own confirmation SMS above. Never blocks the customer's
+    // response: a failure here just gets logged.
+    notifyAdminsOfNewReservation(reservation).catch((err) => console.error('Admin reservation notification failed:', err.message));
+
     res.status(201).json(reservation);
 });
+
+async function notifyAdminsOfNewReservation(reservation) {
+    const eventUrl = `${(process.env.PUBLIC_API_URL || '').replace(/\/$/, '')}/api/reservations/event/${reservation.event_token}.ics`;
+    const formattedTime = new Date(reservation.requested_time).toLocaleString('en-US', {
+        timeZone: 'America/Toronto',
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    });
+    const route = reservation.dropoff_location
+        ? `${reservation.pickup_location} → ${reservation.dropoff_location}`
+        : reservation.pickup_location;
+    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}. Ajouter à mon calendrier : ${eventUrl}`;
+
+    const phones = await listActivePhones();
+    await Promise.all(phones.map((p) => sendSms(p.phone, message).catch((err) => console.error(`Admin SMS to ${p.phone} failed:`, err.message))));
+
+    await sendReservationNotification(reservation);
+}
 
 // Admin calendar view
 router.get('/', requireAuth('admin'), async (req, res) => {
@@ -153,6 +179,42 @@ router.get('/calendar/:token.ics', async (req, res) => {
     const reservations = (await listReservations()).filter((r) => r.status !== 'cancelled');
     res.set('Content-Type', 'text/calendar; charset=utf-8');
     res.send(buildReservationsIcs(reservations));
+});
+
+// Public — no login. The link texted to the admin's notification numbers;
+// tapping it on a phone offers "Add to Calendar" directly (no
+// Content-Disposition: attachment — that would force a download prompt
+// instead of the native calendar handoff on iOS/Android).
+router.get('/event/:token.ics', async (req, res) => {
+    const reservation = await findReservationByEventToken(req.params.token);
+    if (!reservation) return res.status(404).send('Not found');
+
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.send(buildSingleReservationIcs(reservation));
+});
+
+// Admin-managed list of phone numbers texted for every new public booking.
+router.get('/notification-phones', requireAuth('admin'), async (req, res) => {
+    res.json(await listPhones());
+});
+
+router.post('/notification-phones', requireAuth('admin'), async (req, res) => {
+    const { phone, label } = req.body;
+    if (!phone) return res.status(400).json({ error: 'phone is required' });
+    res.status(201).json(await createPhone({ phone, label }));
+});
+
+router.patch('/notification-phones/:id', requireAuth('admin'), async (req, res) => {
+    const { phone, label, isActive } = req.body;
+    const updated = await updatePhone(req.params.id, { phone, label, isActive });
+    if (!updated) return res.status(404).json({ error: 'Phone not found' });
+    res.json(updated);
+});
+
+router.delete('/notification-phones/:id', requireAuth('admin'), async (req, res) => {
+    const deleted = await deletePhone(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Phone not found' });
+    res.status(204).end();
 });
 
 export default router;

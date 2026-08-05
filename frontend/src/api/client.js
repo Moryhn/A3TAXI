@@ -141,6 +141,11 @@ export const api = {
     updateReservation: (token, id, body) => request(`/reservations/${id}`, { method: 'PATCH', body, token }),
     deleteReservation: (token, id) => request(`/reservations/${id}`, { method: 'DELETE', token }),
 
+    listNotificationPhones: (token) => request('/reservations/notification-phones', { token }),
+    createNotificationPhone: (token, body) => request('/reservations/notification-phones', { method: 'POST', body, token }),
+    updateNotificationPhone: (token, id, body) => request(`/reservations/notification-phones/${id}`, { method: 'PATCH', body, token }),
+    deleteNotificationPhone: (token, id) => request(`/reservations/notification-phones/${id}`, { method: 'DELETE', token }),
+
     listTrash: (token) => request('/trash', { token }),
     restoreTrashItem: (token, type, id) => request(`/trash/${type}/${id}/restore`, { method: 'POST', token }),
     permanentlyDeleteTrashItem: (token, type, id) => request(`/trash/${type}/${id}`, { method: 'DELETE', token }),

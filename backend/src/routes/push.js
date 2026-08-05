@@ -4,20 +4,21 @@ import { saveSubscription, deleteSubscriptionByEndpoint } from '../models/pushSu
 
 const router = Router();
 
-router.get('/vapid-public-key', requireAuth('driver'), (req, res) => {
+router.get('/vapid-public-key', requireAuth('admin', 'driver'), (req, res) => {
     res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || null });
 });
 
-router.post('/subscribe', requireAuth('driver'), async (req, res) => {
+router.post('/subscribe', requireAuth('admin', 'driver'), async (req, res) => {
     const { subscription } = req.body;
     if (!subscription?.endpoint || !subscription?.keys) {
         return res.status(400).json({ error: 'subscription with endpoint and keys is required' });
     }
-    await saveSubscription(req.user.sub, subscription);
+    const owner = req.user.role === 'admin' ? { adminId: req.user.sub } : { driverId: req.user.sub };
+    await saveSubscription(owner, subscription);
     res.status(201).json({ ok: true });
 });
 
-router.post('/unsubscribe', requireAuth('driver'), async (req, res) => {
+router.post('/unsubscribe', requireAuth('admin', 'driver'), async (req, res) => {
     const { endpoint } = req.body;
     if (!endpoint) return res.status(400).json({ error: 'endpoint is required' });
     await deleteSubscriptionByEndpoint(endpoint);

@@ -9,8 +9,10 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDateTime, formatCurrency } from '../../lib/format.js';
 import { localInputToUtcIso } from '../../lib/time.js';
+import { isPushSupported, getExistingPushSubscription, enablePushNotifications, disablePushNotifications } from '../../push.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import MicButton from '../../components/MicButton.jsx';
+import ToggleChip from '../../components/ToggleChip.jsx';
 
 const statusColors = {
     pending: '#f5b700',
@@ -40,6 +42,16 @@ export default function Reservations() {
     const [showCalendarSync, setShowCalendarSync] = useState(false);
     const [feedUrl, setFeedUrl] = useState('');
     const [copyStatus, setCopyStatus] = useState('');
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notificationPhones, setNotificationPhones] = useState([]);
+    const [newPhone, setNewPhone] = useState('');
+    const [newPhoneLabel, setNewPhoneLabel] = useState('');
+    const [addingPhone, setAddingPhone] = useState(false);
+    const [savingPhoneId, setSavingPhoneId] = useState(null);
+    const [phoneStatus, setPhoneStatus] = useState(null);
+    // unsupported | off | on | denied — same convention as MyJobs.jsx on the driver side.
+    const [notifState, setNotifState] = useState(() => (isPushSupported() ? 'off' : 'unsupported'));
+    const [notifError, setNotifError] = useState('');
 
     async function refresh() {
         setReservations(await api.listReservations(auth.token));
@@ -48,7 +60,84 @@ export default function Reservations() {
     useEffect(() => {
         refresh();
         api.listDrivers(auth.token).then(setDrivers);
+        api.listNotificationPhones(auth.token).then(setNotificationPhones);
     }, []);
+
+    useEffect(() => {
+        if (!isPushSupported()) return;
+        if (Notification.permission === 'denied') {
+            setNotifState('denied');
+            return;
+        }
+        getExistingPushSubscription()
+            .then((sub) => setNotifState(sub ? 'on' : 'off'))
+            .catch(() => {});
+    }, []);
+
+    async function togglePushNotifications() {
+        setNotifError('');
+        try {
+            if (notifState === 'on') {
+                await disablePushNotifications(auth.token);
+                setNotifState('off');
+            } else {
+                await enablePushNotifications(auth.token);
+                setNotifState('on');
+            }
+        } catch (err) {
+            if (err.message === 'permission-denied') {
+                setNotifState('denied');
+            } else {
+                setNotifError(err.message || String(err));
+            }
+        }
+    }
+
+    async function addPhone() {
+        if (!newPhone.trim()) return;
+        setAddingPhone(true);
+        setPhoneStatus(null);
+        try {
+            const created = await api.createNotificationPhone(auth.token, { phone: newPhone.trim(), label: newPhoneLabel.trim() });
+            setNotificationPhones((all) => [...all, created]);
+            setNewPhone('');
+            setNewPhoneLabel('');
+        } catch (err) {
+            setPhoneStatus({ ok: false, message: err.message });
+        } finally {
+            setAddingPhone(false);
+        }
+    }
+
+    function updatePhoneDraft(id, patch) {
+        setNotificationPhones((all) => all.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    }
+
+    async function savePhone(phone) {
+        setSavingPhoneId(phone.id);
+        setPhoneStatus(null);
+        try {
+            const saved = await api.updateNotificationPhone(auth.token, phone.id, {
+                phone: phone.phone,
+                label: phone.label,
+                isActive: phone.is_active,
+            });
+            updatePhoneDraft(saved.id, saved);
+        } catch (err) {
+            setPhoneStatus({ ok: false, message: err.message });
+        } finally {
+            setSavingPhoneId(null);
+        }
+    }
+
+    async function deletePhoneRow(id) {
+        try {
+            await api.deleteNotificationPhone(auth.token, id);
+            setNotificationPhones((all) => all.filter((p) => p.id !== id));
+        } catch (err) {
+            setPhoneStatus({ ok: false, message: err.message });
+        }
+    }
 
     async function toggleCalendarSync() {
         if (!showCalendarSync && !feedUrl) {
@@ -148,12 +237,100 @@ export default function Reservations() {
                     <h1 className="h1">{t('admin.reservations.title')}</h1>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <button onClick={() => setShowNotifications((v) => !v)} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
+                        {t('admin.reservations.notifications.toggle')}
+                    </button>
                     <button onClick={toggleCalendarSync} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }}>
                         {t('admin.reservations.calendarSyncToggle')}
                     </button>
                     <div className="meter meter--sm">{pendingCount}<span className="meter__unit">{t('admin.reservations.pending')}</span></div>
                 </div>
             </div>
+
+            {showNotifications && (
+                <div className="card" style={{ flexShrink: 0, marginBottom: 10 }}>
+                    <div className="eyebrow">{t('admin.reservations.notifications.eyebrow')}</div>
+                    <p className="subtle" style={{ marginTop: 6 }}>{t('admin.reservations.notifications.intro')}</p>
+
+                    {notifState !== 'unsupported' && (
+                        <button
+                            onClick={notifState === 'denied' ? undefined : togglePushNotifications}
+                            className={`btn ${notifState === 'on' ? 'btn--primary' : 'btn--ghost'}`}
+                            disabled={notifState === 'denied'}
+                            style={{ marginTop: 12, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}
+                        >
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: notifState === 'on' ? 'var(--amber-ink)' : 'var(--text-muted)', display: 'inline-block' }} />
+                            {notifState === 'denied'
+                                ? t('admin.reservations.notifications.pushDenied')
+                                : notifState === 'on'
+                                ? t('admin.reservations.notifications.pushOn')
+                                : t('admin.reservations.notifications.pushOff')}
+                        </button>
+                    )}
+                    {notifError && <p className="subtle" style={{ marginTop: 6, color: 'var(--danger)' }}>{notifError}</p>}
+
+                    <div className="eyebrow" style={{ marginTop: 18, marginBottom: 4 }}>{t('admin.reservations.notifications.phonesEyebrow')}</div>
+                    {phoneStatus && (
+                        <p className="subtle" style={{ marginTop: 4, color: phoneStatus.ok ? undefined : 'var(--danger)' }}>{phoneStatus.message}</p>
+                    )}
+
+                    {notificationPhones.length === 0 && (
+                        <p className="subtle" style={{ marginTop: 6 }}>{t('admin.reservations.notifications.noPhones')}</p>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                        {notificationPhones.map((phone) => (
+                            <div key={phone.id} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <input
+                                    className="input"
+                                    style={{ width: 160 }}
+                                    placeholder={t('admin.reservations.notifications.phonePlaceholder')}
+                                    value={phone.phone}
+                                    onChange={(e) => updatePhoneDraft(phone.id, { phone: e.target.value })}
+                                />
+                                <input
+                                    className="input"
+                                    style={{ width: 160 }}
+                                    placeholder={t('admin.reservations.notifications.labelPlaceholder')}
+                                    value={phone.label}
+                                    onChange={(e) => updatePhoneDraft(phone.id, { label: e.target.value })}
+                                />
+                                <ToggleChip
+                                    label={phone.is_active ? t('admin.reservations.notifications.active') : t('admin.reservations.notifications.inactive')}
+                                    checked={phone.is_active}
+                                    onChange={(v) => updatePhoneDraft(phone.id, { is_active: v })}
+                                />
+                                <button onClick={() => savePhone(phone)} className="btn btn--primary" style={{ padding: '8px 14px', fontSize: 12 }} disabled={savingPhoneId === phone.id}>
+                                    {t('common.save')}
+                                </button>
+                                <button onClick={() => deletePhoneRow(phone.id)} className="btn btn--danger" style={{ padding: '8px 14px', fontSize: 12 }}>
+                                    {t('common.delete')}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                        <input
+                            className="input"
+                            style={{ width: 160 }}
+                            placeholder={t('admin.reservations.notifications.phonePlaceholder')}
+                            value={newPhone}
+                            onChange={(e) => setNewPhone(e.target.value)}
+                        />
+                        <input
+                            className="input"
+                            style={{ width: 160 }}
+                            placeholder={t('admin.reservations.notifications.labelPlaceholder')}
+                            value={newPhoneLabel}
+                            onChange={(e) => setNewPhoneLabel(e.target.value)}
+                        />
+                        <button onClick={addPhone} className="btn btn--ghost" style={{ padding: '8px 14px', fontSize: 12 }} disabled={!newPhone.trim() || addingPhone}>
+                            {addingPhone ? t('admin.reservations.notifications.adding') : t('admin.reservations.notifications.addPhone')}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showCalendarSync && (
                 <div className="card" style={{ flexShrink: 0, marginBottom: 10 }}>
