@@ -204,10 +204,18 @@ export default function ReservationForm() {
                         )}
                         {isRide && quote && (
                             <MeterPanel
-                                value={quote.estimatedPrice}
+                                // Backend doubles estimatedPrice for a round trip (see
+                                // pricing.js) — showing that combined total scares
+                                // customers off, so the client only ever sees the
+                                // one-way amount, with a note that the return is similar.
+                                value={form.isRoundTrip ? quote.estimatedPrice / 2 : quote.estimatedPrice}
                                 lang={lang}
-                                label={t('booking.estimatedPriceLabel')}
-                                note={[quote.isNightRate ? t('booking.nightRateNote') : null, t('booking.priceDisclaimer')].filter(Boolean).join(' · ')}
+                                label={form.isRoundTrip ? t('booking.estimatedPriceLabelOneWay') : t('booking.estimatedPriceLabel')}
+                                note={[
+                                    quote.isNightRate ? t('booking.nightRateNote') : null,
+                                    form.isRoundTrip ? t('booking.roundTripPriceNote') : null,
+                                    t('booking.priceDisclaimer'),
+                                ].filter(Boolean).join(' · ')}
                             />
                         )}
 
