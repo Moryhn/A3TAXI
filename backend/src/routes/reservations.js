@@ -181,15 +181,19 @@ router.get('/calendar/:token.ics', async (req, res) => {
     res.send(buildReservationsIcs(reservations));
 });
 
-// Public — no login. The link texted to the admin's notification numbers;
-// tapping it on a phone offers "Add to Calendar" directly (no
-// Content-Disposition: attachment — that would force a download prompt
-// instead of the native calendar handoff on iOS/Android).
+// Public — no login. The link texted to the admin's notification numbers.
+// Content-Disposition: attachment is required here, confirmed by testing on
+// a real iPhone: without it, Safari/Messages treats a bare text/calendar
+// network URL as a live feed to subscribe to (the confusing "Ajouter un
+// calendrier par abonnement" screen) regardless of the VCALENDAR body having
+// no METHOD/X-WR-CALNAME. Forcing it to download as a file is what makes iOS
+// hand it to Calendar's one-time "Add Event" import instead.
 router.get('/event/:token.ics', async (req, res) => {
     const reservation = await findReservationByEventToken(req.params.token);
     if (!reservation) return res.status(404).send('Not found');
 
     res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="reservation-${reservation.id}.ics"`);
     res.send(buildSingleReservationIcs(reservation));
 });
 
