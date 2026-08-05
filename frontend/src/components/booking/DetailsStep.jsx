@@ -10,7 +10,7 @@ export default function DetailsStep({ form, setForm, t }) {
     return (
         <div className="wizard-step" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <ToggleChip
-                label={t('booking.roundTripLabel')}
+                label={isAirport ? t('booking.returnTransportQuestion') : t('booking.roundTripLabel')}
                 checked={form.isRoundTrip}
                 onChange={(v) => setForm({ ...form, isRoundTrip: v })}
             />

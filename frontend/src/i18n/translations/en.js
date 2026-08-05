@@ -88,6 +88,7 @@ export default {
         returnFlightNumberLabel: 'Return flight number',
         returnFlightNumberPlaceholder: 'e.g. AC1234',
         returnArrivalTimeLabel: 'Expected arrival date & time at the airport',
+        returnTransportQuestion: 'Would you like transportation for the return?',
     },
     bookNow: {
         title: 'Book now',
