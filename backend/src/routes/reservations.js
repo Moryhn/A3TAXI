@@ -108,7 +108,7 @@ async function notifyAdminsOfNewReservation(reservation) {
     const route = reservation.dropoff_location
         ? `${reservation.pickup_location} → ${reservation.dropoff_location}`
         : reservation.pickup_location;
-    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}. Ajouter à mon calendrier : ${eventUrl}`;
+    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}. Touchez ce lien pour l'ajouter à votre calendrier : ${eventUrl}`;
 
     const phones = await listActivePhones();
     await Promise.all(phones.map((p) => sendSms(p.phone, message).catch((err) => console.error(`Admin SMS to ${p.phone} failed:`, err.message))));

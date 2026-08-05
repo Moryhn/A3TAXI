@@ -8,6 +8,16 @@ function toIcsDate(date) {
     return new Date(date).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 }
 
+// Human-readable (not the ICS date fields above) — for the DESCRIPTION text,
+// in the same timezone the rest of the app displays times in.
+function formatDisplayDateTime(date) {
+    return new Date(date).toLocaleString('en-US', {
+        timeZone: 'America/Toronto',
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    });
+}
+
 // Escapes text per RFC 5545 §3.3.11 — commas, semicolons, backslashes, and
 // newlines all need escaping inside a text value.
 function escapeText(value) {
@@ -28,6 +38,8 @@ function buildEvent(reservation) {
         `Phone: ${reservation.client_phone}`,
         `Status: ${reservation.status}`,
         reservation.estimated_price != null ? `Estimated: $${Number(reservation.estimated_price).toFixed(2)}` : null,
+        reservation.return_flight_number ? `Return flight: ${reservation.return_flight_number}` : null,
+        reservation.return_arrival_time ? `Return arrival: ${formatDisplayDateTime(reservation.return_arrival_time)}` : null,
     ].filter(Boolean);
 
     return [
@@ -44,27 +56,30 @@ function buildEvent(reservation) {
     ].join('\r\n');
 }
 
-function wrapCalendar(calName, events) {
+function wrapCalendar(events, { calName, method } = {}) {
     return [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         'PRODID:-//A3TAXI//Reservations//EN',
         'CALSCALE:GREGORIAN',
-        'METHOD:PUBLISH',
-        `X-WR-CALNAME:${calName}`,
+        method ? `METHOD:${method}` : null,
+        calName ? `X-WR-CALNAME:${calName}` : null,
         ...events,
         'END:VCALENDAR',
-    ].join('\r\n');
+    ].filter(Boolean).join('\r\n');
 }
 
 export function buildReservationsIcs(reservations) {
-    return wrapCalendar('A3TAXI Reservations', reservations.map(buildEvent));
+    return wrapCalendar(reservations.map(buildEvent), { calName: 'A3TAXI Reservations', method: 'PUBLISH' });
 }
 
-// Single-event file behind the per-reservation link texted to the admin —
-// tapping it on iOS/Android offers "Add to Calendar" directly, sidestepping
-// the subscribe-and-poll delay of buildReservationsIcs entirely for that one
-// booking.
+// Single-event file behind the per-reservation link texted to the admin.
+// Deliberately no METHOD/X-WR-CALNAME here — those two properties are what
+// several calendar apps (notably Google Calendar's .ics import on Android)
+// read as "this file describes a whole calendar to subscribe to", which
+// produced exactly the confusing "subscription calendar" prompt this link
+// exists to avoid. A bare VEVENT with nothing declaring it as a feed is what
+// gets offered as a plain one-tap "Add event" on iOS/Android/Outlook.
 export function buildSingleReservationIcs(reservation) {
-    return wrapCalendar('A3TAXI Reservation', [buildEvent(reservation)]);
+    return wrapCalendar([buildEvent(reservation)]);
 }
