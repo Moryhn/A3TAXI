@@ -20,6 +20,15 @@ const router = Router();
 
 const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Live price-estimate preview while the customer is filling out the booking form
 router.post('/quote', async (req, res) => {
     const { pickupLocation, dropoffLocation, requestedTime, isRoundTrip, serviceType } = req.body;
@@ -99,7 +108,9 @@ router.post('/', async (req, res) => {
 });
 
 async function notifyAdminsOfNewReservation(reservation) {
-    const eventUrl = `${(process.env.PUBLIC_API_URL || '').replace(/\/$/, '')}/api/reservations/event/${reservation.event_token}.ics`;
+    // The HTML landing page (button-triggered Blob download), not the raw
+    // .ics link — see the long comment on GET /event/:token for why.
+    const eventUrl = `${(process.env.PUBLIC_API_URL || '').replace(/\/$/, '')}/api/reservations/event/${reservation.event_token}`;
     const formattedTime = new Date(reservation.requested_time).toLocaleString('en-US', {
         timeZone: 'America/Toronto',
         dateStyle: 'medium',
@@ -108,7 +119,7 @@ async function notifyAdminsOfNewReservation(reservation) {
     const route = reservation.dropoff_location
         ? `${reservation.pickup_location} → ${reservation.dropoff_location}`
         : reservation.pickup_location;
-    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}. Touchez ce lien pour l'ajouter à votre calendrier : ${eventUrl}`;
+    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}. Touchez ce lien, puis « Ajouter à mon calendrier » : ${eventUrl}`;
 
     const phones = await listActivePhones();
     await Promise.all(phones.map((p) => sendSms(p.phone, message).catch((err) => console.error(`Admin SMS to ${p.phone} failed:`, err.message))));
@@ -181,13 +192,13 @@ router.get('/calendar/:token.ics', async (req, res) => {
     res.send(buildReservationsIcs(reservations));
 });
 
-// Public — no login. The link texted to the admin's notification numbers.
-// Content-Disposition: attachment is required here, confirmed by testing on
-// a real iPhone: without it, Safari/Messages treats a bare text/calendar
-// network URL as a live feed to subscribe to (the confusing "Ajouter un
-// calendrier par abonnement" screen) regardless of the VCALENDAR body having
-// no METHOD/X-WR-CALNAME. Forcing it to download as a file is what makes iOS
-// hand it to Calendar's one-time "Add Event" import instead.
+// Public — no login. Raw .ics file. NOT the link texted to the admin
+// anymore — confirmed on a real iPhone that a network text/calendar URL
+// gets treated as "subscribe to a live feed" regardless of headers
+// (METHOD/X-WR-CALNAME removed, then Content-Disposition: attachment added
+// — neither changed the behavior). Kept around for anything that wants the
+// raw file directly; see the HTML landing page below for what's actually
+// linked from the SMS.
 router.get('/event/:token.ics', async (req, res) => {
     const reservation = await findReservationByEventToken(req.params.token);
     if (!reservation) return res.status(404).send('Not found');
@@ -195,6 +206,74 @@ router.get('/event/:token.ics', async (req, res) => {
     res.set('Content-Type', 'text/calendar; charset=utf-8');
     res.set('Content-Disposition', `attachment; filename="reservation-${reservation.id}.ics"`);
     res.send(buildSingleReservationIcs(reservation));
+});
+
+// Public — no login. This is the link actually texted to the admin. A tap
+// on the button below turns the ICS text (embedded in the page, no extra
+// fetch) into a same-origin Blob and clicks a hidden download link — that
+// local-file download is what reliably hands off to Calendar's one-time
+// "Add Event" import on iOS/Android, since there's no network origin left
+// for the OS to treat as a subscribable feed.
+router.get('/event/:token', async (req, res) => {
+    const reservation = await findReservationByEventToken(req.params.token);
+    if (!reservation) return res.status(404).send('<!doctype html><meta charset="utf-8"><p>Réservation introuvable.</p>');
+
+    const icsContent = buildSingleReservationIcs(reservation);
+    const formattedTime = new Date(reservation.requested_time).toLocaleString('fr-CA', {
+        timeZone: 'America/Toronto',
+        dateStyle: 'full',
+        timeStyle: 'short',
+    });
+    const route = reservation.dropoff_location
+        ? `${reservation.pickup_location} → ${reservation.dropoff_location}`
+        : reservation.pickup_location;
+    // Safe to embed: JSON.stringify escapes quotes/backslashes/newlines into
+    // a valid JS string literal; the extra "</" guard stops a (implausible
+    // but public-form-submitted) address containing "</script>" from
+    // closing the tag early.
+    const icsJs = JSON.stringify(icsContent).replace(/<\//g, '<\\/');
+
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(`<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A3TAXI — Ajouter au calendrier</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; background:#0c0f12; color:#f4f4f4; margin:0; padding:40px 20px; }
+  .card { max-width:420px; margin:0 auto; background:#171b20; border-radius:16px; padding:24px; text-align:center; }
+  h1 { font-size:19px; margin:0 0 14px; }
+  p { color:#b7c0c9; line-height:1.6; margin:6px 0; font-size:15px; }
+  button { margin-top:22px; width:100%; padding:16px; font-size:17px; font-weight:600; border:none; border-radius:12px; background:#f5b700; color:#1b1b0d; }
+  button:active { opacity:0.85; }
+  .hint { margin-top:14px; font-size:13px; color:#7c8792; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>${escapeHtml(reservation.client_name)}</h1>
+    <p>${escapeHtml(route)}</p>
+    <p>${escapeHtml(formattedTime)}</p>
+    <button onclick="addToCalendar()">📅 Ajouter à mon calendrier</button>
+    <p class="hint">Votre téléphone va proposer d'ajouter cet événement à Calendrier.</p>
+  </div>
+  <script>
+    var icsContent = ${icsJs};
+    function addToCalendar() {
+      var blob = new Blob([icsContent], { type: 'text/calendar' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'reservation-${reservation.id}.ics';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+    }
+  </script>
+</body>
+</html>`);
 });
 
 // Admin-managed list of phone numbers texted for every new public booking.
