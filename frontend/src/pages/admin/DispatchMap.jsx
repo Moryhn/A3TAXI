@@ -10,7 +10,7 @@ import ToggleChip from '../../components/ToggleChip.jsx';
 import { formatRelativeTime, isStale, localInputToUtcIso } from '../../lib/time.js';
 
 const RESERVATION_SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
-const DESTINATION_CATEGORIES = ['local', 'airport', 'montreal', 'longDistance'];
+const DESTINATION_CATEGORIES = ['airport', 'montreal', 'longDistance', 'local'];
 const INITIAL_RESERVATION_FORM = {
     clientName: '', clientPhone: '', pickupLocation: '', dropoffLocation: '',
     requestedTime: '', serviceType: 'ride', destinationCategory: 'local',

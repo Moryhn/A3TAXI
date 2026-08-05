@@ -6,7 +6,7 @@ import { loadGoogleMapsLibrary } from '../../lib/googleMaps.js';
 
 const SERVICE_ICONS = { ride: Car, battery_boost: BatteryCharging, lockout: KeyRound };
 const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
-const DESTINATION_CATEGORIES = ['local', 'airport', 'montreal', 'longDistance'];
+const DESTINATION_CATEGORIES = ['airport', 'montreal', 'longDistance', 'local'];
 
 export default function TripStep({ form, setForm, isRide, t }) {
     const [locating, setLocating] = useState(false);
