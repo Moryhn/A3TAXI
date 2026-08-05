@@ -125,11 +125,6 @@ export const api = {
     sendQuickMessage: (token, { phone, position, jobId }) => request('/quick-messages/send', { method: 'POST', body: { phone, position, jobId }, token }),
     listQuickMessageLogs: (token) => request('/quick-messages/logs', { token }),
 
-    getOutlookStatus: (token) => request('/outlook/status', { token }),
-    getOutlookConnectUrl: (token) => request('/outlook/connect', { token }),
-    disconnectOutlook: (token) => request('/outlook/disconnect', { method: 'POST', token }),
-    listOutlookEvents: (token, start, end) => request(`/outlook/events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, { token }),
-
     getVapidPublicKey: (token) => request('/push/vapid-public-key', { token }),
     subscribePush: (token, subscription) => request('/push/subscribe', { method: 'POST', body: { subscription }, token }),
     unsubscribePush: (token, endpoint) => request('/push/unsubscribe', { method: 'POST', body: { endpoint }, token }),

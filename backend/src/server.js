@@ -20,7 +20,6 @@ import trashRoutes from './routes/trash.js';
 import exportRoutes from './routes/export.js';
 import pushRoutes from './routes/push.js';
 import quickMessageRoutes from './routes/quickMessages.js';
-import outlookCalendarRoutes from './routes/outlookCalendar.js';
 
 dotenv.config();
 
@@ -42,7 +41,6 @@ app.use('/api/trash', trashRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/quick-messages', quickMessageRoutes);
-app.use('/api/outlook', outlookCalendarRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err);
