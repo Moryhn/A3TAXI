@@ -536,8 +536,9 @@ export default {
             sent: 'Message envoyé.',
         },
         photoCrop: {
-            choosePhoto: 'Prendre ou choisir une photo',
-            change: 'Changer la photo',
+            takePhoto: '📷 Prendre une photo',
+            chooseFromGallery: '🖼️ Choisir dans la galerie',
+            photoAttached: 'Photo ajoutée',
             hint: 'Ajustez le cadre sur le reçu, puis confirmez',
             rotate: 'Pivoter',
             confirm: 'Confirmer',

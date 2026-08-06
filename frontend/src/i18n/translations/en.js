@@ -536,8 +536,9 @@ export default {
             sent: 'Message sent.',
         },
         photoCrop: {
-            choosePhoto: 'Take or choose a photo',
-            change: 'Change photo',
+            takePhoto: '📷 Take a photo',
+            chooseFromGallery: '🖼️ Choose from gallery',
+            photoAttached: 'Photo attached',
             hint: 'Adjust the frame around the receipt, then confirm',
             rotate: 'Rotate',
             confirm: 'Confirm',
