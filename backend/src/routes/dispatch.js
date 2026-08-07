@@ -17,6 +17,7 @@ import {
     markTrackingSmsSent,
 } from '../models/dispatch.js';
 import { setAutoDispatchEnabled, findAdminWithAutoDispatchEnabled } from '../models/adminUser.js';
+import { listMessagesForJob, createOutboundMessage } from '../models/jobMessage.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
 import { findNearestAvailableDriver } from '../services/autoDispatch.js';
@@ -231,6 +232,37 @@ router.post('/send-scheduled-tracking-sms', async (req, res) => {
 router.delete('/jobs/:id', requireAuth('admin'), async (req, res) => {
     await deleteDispatchJob(req.params.id);
     res.status(204).end();
+});
+
+// Free-form SMS conversation with the customer, scoped to one job — separate
+// from the quick-message canned templates (quickMessages.js). Inbound rows
+// arrive via routes/smsGateWebhook.js.
+router.get('/jobs/:id/messages', requireAuth('admin', 'driver'), async (req, res) => {
+    const job = await findDispatchJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (req.user.role === 'driver' && job.driver_id !== req.user.sub) {
+        return res.status(403).json({ error: 'Not your job' });
+    }
+    res.json(await listMessagesForJob(req.params.id));
+});
+
+router.post('/jobs/:id/messages', requireAuth('admin', 'driver'), async (req, res) => {
+    const { text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'text is required' });
+
+    const job = await findDispatchJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (req.user.role === 'driver' && job.driver_id !== req.user.sub) {
+        return res.status(403).json({ error: 'Not your job' });
+    }
+    if (!job.customer_phone) return res.status(400).json({ error: 'This job has no customer phone number' });
+
+    try {
+        await sendSms(job.customer_phone, text);
+        res.status(201).json(await createOutboundMessage(req.params.id, text, 'sent'));
+    } catch (err) {
+        res.status(502).json(await createOutboundMessage(req.params.id, text, 'failed', err.message));
+    }
 });
 
 export default router;

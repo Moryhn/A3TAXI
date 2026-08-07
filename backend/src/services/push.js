@@ -57,3 +57,18 @@ export async function sendReservationNotification(reservation) {
         tag: `a3taxi-reservation-${reservation.id}`,
     });
 }
+
+// Fires when a customer's SMS reply comes in through the SMS Gate webhook
+// (routes/smsGateWebhook.js) — the driver's phone might not have the app
+// open, so a push is the only way they'd notice a reply arrived.
+export async function sendJobMessageNotification(driverId, jobId, body) {
+    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+
+    const subscriptions = await listSubscriptionsForDriver(driverId);
+    await sendToSubscriptions(subscriptions, {
+        title: 'Nouveau message du client',
+        body,
+        url: '/#/driver/jobs',
+        tag: `a3taxi-job-message-${jobId}`,
+    });
+}

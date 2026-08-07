@@ -5,6 +5,7 @@ import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { isPushSupported, getExistingPushSubscription, enablePushNotifications, disablePushNotifications } from '../../push.js';
 import { formatDateTime } from '../../lib/format.js';
 import QuickMessageSender from '../../components/QuickMessageSender.jsx';
+import JobMessageThread from '../../components/JobMessageThread.jsx';
 
 const SHARING_KEY = 'a3taxi_driver_sharing';
 
@@ -36,6 +37,7 @@ export default function MyJobs() {
     const { auth } = useAuth();
     const { t, lang } = useLanguage();
     const [jobs, setJobs] = useState([]);
+    const [expandedMessagesJobId, setExpandedMessagesJobId] = useState(null);
     const [sharing, setSharing] = useState(() => activeWatchId !== null);
     // unsupported | off | on | denied — starts synchronously so the button shows right
     // away instead of staying hidden while async feature checks (serviceWorker.ready,
@@ -221,6 +223,23 @@ export default function MyJobs() {
                             )}
                             {j.status === 'accepted' && (
                                 <button onClick={() => updateStatus(j.id, 'completed')} className="btn btn--primary" style={{ width: '100%' }}>{t('driver.myJobs.markComplete')}</button>
+                            )}
+                            {j.customer_phone && j.status !== 'cancelled' && (
+                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+                                    <button
+                                        type="button"
+                                        className="btn btn--ghost"
+                                        style={{ width: '100%' }}
+                                        onClick={() => setExpandedMessagesJobId(expandedMessagesJobId === j.id ? null : j.id)}
+                                    >
+                                        {t('driver.jobMessages.toggle')}
+                                    </button>
+                                    {expandedMessagesJobId === j.id && (
+                                        <div style={{ marginTop: 10 }}>
+                                            <JobMessageThread jobId={j.id} />
+                                        </div>
+                                    )}
+                                </div>
                             )}
                             {j.status === 'completed' && j.customer_phone && (
                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>

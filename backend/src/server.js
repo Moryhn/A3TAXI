@@ -20,13 +20,18 @@ import trashRoutes from './routes/trash.js';
 import exportRoutes from './routes/export.js';
 import pushRoutes from './routes/push.js';
 import quickMessageRoutes from './routes/quickMessages.js';
+import smsGateWebhookRoutes from './routes/smsGateWebhook.js';
+import { ensureWebhookRegistered } from './services/smsGateWebhook.js';
 
 dotenv.config();
 
 const app = express();
 
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
-app.use(express.json());
+// verify captures the raw request body alongside the parsed one — the SMS
+// Gate webhook route needs the exact original bytes to check its HMAC
+// signature, which the parsed/re-serialized JSON object can't guarantee.
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
@@ -41,6 +46,7 @@ app.use('/api/trash', trashRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/quick-messages', quickMessageRoutes);
+app.use('/api/sms-gate', smsGateWebhookRoutes);
 
 app.use((err, req, res, next) => {
     console.error(err);
@@ -48,4 +54,7 @@ app.use((err, req, res, next) => {
 });
 
 const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`A3TAXI API listening on port ${port}`));
+app.listen(port, () => {
+    console.log(`A3TAXI API listening on port ${port}`);
+    ensureWebhookRegistered();
+});

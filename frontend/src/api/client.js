@@ -117,6 +117,8 @@ export const api = {
     updateDispatchSettings: (token, autoDispatchEnabled) => request('/dispatch/settings', { method: 'PATCH', body: { autoDispatchEnabled }, token }),
     createRideRequest: (body) => request('/dispatch/requests', { method: 'POST', body }),
     trackRide: (token) => request(`/dispatch/track/${token}`),
+    listJobMessages: (token, jobId) => request(`/dispatch/jobs/${jobId}/messages`, { token }),
+    sendJobMessage: (token, jobId, text) => request(`/dispatch/jobs/${jobId}/messages`, { method: 'POST', body: { text }, token }),
 
     listQuickMessageButtons: (token) => request('/quick-messages/buttons', { token }),
     createQuickMessageButton: (token) => request('/quick-messages/buttons', { method: 'POST', token }),

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { api } from '../../api/client.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useLanguage } from '../../i18n/LanguageContext.jsx';
@@ -7,6 +7,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 import MicButton from '../../components/MicButton.jsx';
 import ToggleChip from '../../components/ToggleChip.jsx';
+import JobMessageThread from '../../components/JobMessageThread.jsx';
 import { formatRelativeTime, isStale, localInputToUtcIso } from '../../lib/time.js';
 
 const RESERVATION_SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
@@ -37,6 +38,7 @@ export default function DispatchMap() {
     const [resSubmitting, setResSubmitting] = useState(false);
     const [resStatus, setResStatus] = useState(null);
     const [autoDispatchEnabled, setAutoDispatchEnabled] = useState(false);
+    const [expandedMessagesJobId, setExpandedMessagesJobId] = useState(null);
     const [autoDispatchSaving, setAutoDispatchSaving] = useState(false);
 
     async function refresh() {
@@ -377,7 +379,8 @@ export default function DispatchMap() {
                             <thead><tr><th>{t('admin.dispatch.colDriver')}</th><th>{t('admin.dispatch.colType')}</th><th>{t('admin.dispatch.colAddress')}</th><th>{t('admin.dispatch.colNotes')}</th><th>{t('admin.dispatch.colStatus')}</th><th>{t('admin.dispatch.colActions')}</th></tr></thead>
                             <tbody>
                                 {recentJobs.map((j) => (
-                                    <tr key={j.id}>
+                                    <Fragment key={j.id}>
+                                    <tr>
                                         <td>{j.driver_name}</td>
                                         <td className="subtle">{t(`admin.dispatch.jobType.${j.job_type}`)}</td>
                                         {editingId === j.id ? (
@@ -400,12 +403,29 @@ export default function DispatchMap() {
                                                 <td>
                                                     <div style={{ display: 'flex', gap: 8 }}>
                                                         <button onClick={() => startEdit(j)} className="btn btn--ghost" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.edit')}</button>
+                                                        {j.customer_phone && (
+                                                            <button
+                                                                onClick={() => setExpandedMessagesJobId(expandedMessagesJobId === j.id ? null : j.id)}
+                                                                className="btn btn--ghost"
+                                                                style={{ padding: '6px 12px', fontSize: 12 }}
+                                                            >
+                                                                💬
+                                                            </button>
+                                                        )}
                                                         <button onClick={() => setPendingDelete(j)} className="btn btn--danger" style={{ padding: '6px 12px', fontSize: 12 }}>{t('common.delete')}</button>
                                                     </div>
                                                 </td>
                                             </>
                                         )}
                                     </tr>
+                                    {expandedMessagesJobId === j.id && (
+                                        <tr>
+                                            <td colSpan={6} style={{ background: 'var(--panel-2)' }}>
+                                                <JobMessageThread jobId={j.id} />
+                                            </td>
+                                        </tr>
+                                    )}
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>

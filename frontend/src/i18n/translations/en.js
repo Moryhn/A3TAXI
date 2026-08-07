@@ -535,6 +535,14 @@ export default {
             confirmSend: 'Send',
             sent: 'Message sent.',
         },
+        jobMessages: {
+            toggle: '💬 Message the customer',
+            placeholder: 'Write your message…',
+            send: 'Send',
+            sending: 'Sending…',
+            empty: 'No messages yet.',
+            failed: 'failed',
+        },
         photoCrop: {
             takePhoto: '📷 Take a photo',
             chooseFromGallery: '🖼️ Choose from gallery',
