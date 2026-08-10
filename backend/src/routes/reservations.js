@@ -127,6 +127,80 @@ async function notifyAdminsOfNewReservation(reservation) {
     await sendReservationNotification(reservation);
 }
 
+// Public — called by an AI phone agent (Vapi's "tool" webhook), not a
+// browser. Same reservation-creation path as the public form above (POST /),
+// wired to Vapi's request/response envelope instead of a flat JSON body —
+// see https://docs.vapi.ai/tools/custom-tools. Guarded by a shared secret
+// (set as a custom header on the tool's server config in Vapi's dashboard)
+// since, unlike the form, there's no browser/CORS boundary limiting who can
+// call this — it creates a real reservation and sends a real SMS.
+router.post('/voice-booking', async (req, res) => {
+    const toolCall = req.body?.message?.toolCallList?.[0];
+    if (!toolCall) return res.status(400).json({ error: 'No tool call in request' });
+
+    const reply = (result) => res.json({ results: [{ toolCallId: toolCall.id, result }] });
+
+    if (process.env.VAPI_TOOL_SECRET && req.headers['x-vapi-secret'] !== process.env.VAPI_TOOL_SECRET) {
+        return reply("Erreur d'authentification — je ne peux pas compléter la réservation.");
+    }
+
+    const { clientName, clientPhone, pickupLocation, dropoffLocation, requestedTime, isRoundTrip } = toolCall.arguments || {};
+    if (!clientName || !clientPhone || !pickupLocation || !dropoffLocation || !requestedTime) {
+        return reply('Il manque des informations pour compléter la réservation — le nom, le téléphone, le départ, la destination et l\'heure sont tous nécessaires.');
+    }
+
+    try {
+        const quote = await getRideEstimate({ pickupLocation, dropoffLocation, requestedTime, isRoundTrip: !!isRoundTrip, serviceType: 'ride' });
+        const reservation = await createReservation({
+            clientName,
+            clientPhone,
+            clientEmail: null,
+            pickupLocation,
+            dropoffLocation,
+            requestedTime,
+            serviceType: 'ride',
+            passengerCount: 1,
+            carryOnCount: 0,
+            checkedLuggageCount: 0,
+            isRoundTrip: !!isRoundTrip,
+            distanceKm: quote.distanceKm,
+            isNightRate: quote.isNightRate,
+            estimatedPrice: quote.estimatedPrice,
+            destinationCategory: 'local',
+            vehicleType: null,
+            returnFlightNumber: null,
+            returnArrivalTime: null,
+        });
+
+        try {
+            const formattedTime = new Date(requestedTime).toLocaleString('en-US', {
+                timeZone: 'America/Toronto',
+                dateStyle: 'medium',
+                timeStyle: 'short',
+            });
+            await sendSms(
+                clientPhone,
+                `Hi ${clientName}, your ride request for ${formattedTime} has been received. We'll confirm shortly.`
+            );
+            await markReservationSmsSent(reservation.id);
+        } catch (err) {
+            console.error('Failed to send reservation SMS (voice booking):', err.message);
+        }
+
+        notifyAdminsOfNewReservation(reservation).catch((err) => console.error('Admin reservation notification failed (voice booking):', err.message));
+
+        const formattedTimeFr = new Date(requestedTime).toLocaleString('fr-CA', {
+            timeZone: 'America/Toronto',
+            dateStyle: 'full',
+            timeStyle: 'short',
+        });
+        reply(`Réservation confirmée pour ${clientName}, de ${pickupLocation} à ${dropoffLocation}, le ${formattedTimeFr}. Un texto de confirmation sera envoyé au ${clientPhone}.`);
+    } catch (err) {
+        console.error('Voice booking failed:', err.message);
+        reply("Désolé, une erreur est survenue et je n'ai pas pu compléter la réservation. Un agent va rappeler le client.");
+    }
+});
+
 // Admin calendar view
 router.get('/', requireAuth('admin'), async (req, res) => {
     const { dateFrom, dateTo } = req.query;
