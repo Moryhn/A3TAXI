@@ -128,23 +128,31 @@ async function notifyAdminsOfNewReservation(reservation) {
 }
 
 // Public — called by an AI phone agent (Vapi's "tool" webhook), not a
-// browser. Same reservation-creation path as the public form above (POST /),
-// wired to Vapi's request/response envelope instead of a flat JSON body —
-// see https://docs.vapi.ai/tools/custom-tools. Guarded by a shared secret
-// (set as a custom header on the tool's server config in Vapi's dashboard)
-// since, unlike the form, there's no browser/CORS boundary limiting who can
-// call this — it creates a real reservation and sends a real SMS.
+// browser. Same reservation-creation path as the public form above (POST /).
+// Vapi's dashboard has two tool types that could call this: a "Function"
+// tool sends { message: { toolCallList: [{ id, arguments }] } } and expects
+// { results: [{ toolCallId, result }] } back; an "API Request" tool just
+// posts the schema fields as a flat JSON body and reads whatever JSON comes
+// back (mapped via that tool's "Response Body" field). Support both instead
+// of assuming one — see https://docs.vapi.ai/tools/custom-tools. Guarded by
+// a shared secret (set as a custom header on the tool's server config in
+// Vapi's dashboard) since, unlike the form, there's no browser/CORS boundary
+// limiting who can call this — it creates a real reservation and sends a
+// real SMS.
 router.post('/voice-booking', async (req, res) => {
     const toolCall = req.body?.message?.toolCallList?.[0];
-    if (!toolCall) return res.status(400).json({ error: 'No tool call in request' });
+    const args = toolCall ? (toolCall.arguments || {}) : (req.body || {});
 
-    const reply = (result) => res.json({ results: [{ toolCallId: toolCall.id, result }] });
+    const reply = (result) => {
+        if (toolCall) return res.json({ results: [{ toolCallId: toolCall.id, result }] });
+        return res.json({ message: result });
+    };
 
     if (process.env.VAPI_TOOL_SECRET && req.headers['x-vapi-secret'] !== process.env.VAPI_TOOL_SECRET) {
         return reply("Erreur d'authentification — je ne peux pas compléter la réservation.");
     }
 
-    const { clientName, clientPhone, pickupLocation, dropoffLocation, requestedTime, isRoundTrip } = toolCall.arguments || {};
+    const { clientName, clientPhone, pickupLocation, dropoffLocation, requestedTime, isRoundTrip } = args;
     if (!clientName || !clientPhone || !pickupLocation || !dropoffLocation || !requestedTime) {
         return reply('Il manque des informations pour compléter la réservation — le nom, le téléphone, le départ, la destination et l\'heure sont tous nécessaires.');
     }
