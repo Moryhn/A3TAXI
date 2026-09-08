@@ -66,7 +66,11 @@ export default function QuickMessageSender({ phone: initialPhone = '', jobId = n
                         key={b.position}
                         type="button"
                         className="btn btn--ghost"
-                        style={{ flex: '1 1 45%', padding: '12px 14px', fontSize: 13 }}
+                        // Fixed two-up width (no flex-grow) so a lone button
+                        // left on the last row — any odd button count, e.g. 5 —
+                        // stays the same size as the others instead of
+                        // stretching to fill the whole row.
+                        style={{ flex: '0 0 calc(50% - 4px)', padding: '12px 14px', fontSize: 13 }}
                         disabled={!phoneReady || sending}
                         onClick={() => setPending(b)}
                     >
