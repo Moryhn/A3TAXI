@@ -92,6 +92,15 @@ export default {
         returnArrivalTimeLabel: 'Expected arrival date & time at the airport',
         returnTransportQuestion: 'Would you like transportation for the return?',
     },
+    airportPickup: {
+        title: 'Airport pickup',
+        subtitle: 'Coming back from the airport? Fill this in and we\'ll be there when you land.',
+        pickupFixedValue: 'Montréal-Trudeau International Airport (YUL)',
+        dateTimeLabel: 'Arrival date & time at the airport',
+        notesLabel: 'Note (optional)',
+        notesPlaceholder: 'e.g. 3 large suitcases, call on arrival…',
+        submit: 'Request pickup',
+    },
     bookNow: {
         title: 'Book now',
         subtitle: 'Get a taxi right away — a driver will be assigned shortly.',
@@ -385,6 +394,7 @@ export default {
             passengersShort: '{{count}} passenger(s)',
             luggageShort: '{{carryOn}} carry-on, {{checked}} checked',
             returnFlightEyebrow: 'Return flight',
+            notesEyebrow: 'Client note',
             notifications: {
                 toggle: 'Notifications',
                 eyebrow: 'Instant alert for every new reservation',

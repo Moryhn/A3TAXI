@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import ReservationForm from './pages/public/ReservationForm.jsx';
 import BookNow from './pages/public/BookNow.jsx';
+import AirportPickup from './pages/public/AirportPickup.jsx';
 import TrackRide from './pages/public/TrackRide.jsx';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/book" element={<ReservationForm />} />
                         <Route path="/book-now" element={<BookNow />} />
+                        <Route path="/airport-pickup" element={<AirportPickup />} />
                         <Route path="/track/:token" element={<TrackRide />} />
                         <Route path="/login" element={<Login />} />
                         <Route

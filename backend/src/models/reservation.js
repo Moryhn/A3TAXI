@@ -6,6 +6,7 @@ export async function createReservation({
     serviceType = 'ride', passengerCount = 1, carryOnCount = 0, checkedLuggageCount = 0,
     isRoundTrip = false, distanceKm = null, isNightRate = null, estimatedPrice = null,
     destinationCategory = 'local', vehicleType = null, returnFlightNumber = null, returnArrivalTime = null,
+    notes = null,
 }) {
     // Every reservation gets a private single-event calendar link (see
     // GET /reservations/event/:token.ics) — generated unconditionally, not
@@ -17,14 +18,14 @@ export async function createReservation({
             client_name, client_phone, client_email, pickup_location, dropoff_location, requested_time,
             service_type, passenger_count, carry_on_count, checked_luggage_count,
             is_round_trip, distance_km, is_night_rate, estimated_price, destination_category,
-            vehicle_type, return_flight_number, return_arrival_time, event_token
+            vehicle_type, return_flight_number, return_arrival_time, notes, event_token
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *`,
         [
             clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
             isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
-            vehicleType, returnFlightNumber, returnArrivalTime, eventToken,
+            vehicleType, returnFlightNumber, returnArrivalTime, notes, eventToken,
         ]
     );
     return rows[0];
@@ -63,7 +64,7 @@ export async function updateReservation(id, {
     clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
     serviceType, passengerCount, carryOnCount, checkedLuggageCount,
     isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
-    vehicleType, returnFlightNumber, returnArrivalTime,
+    vehicleType, returnFlightNumber, returnArrivalTime, notes,
 }) {
     const { rows } = await query(
         `UPDATE reservations SET
@@ -85,13 +86,14 @@ export async function updateReservation(id, {
             destination_category = COALESCE($17, destination_category),
             vehicle_type = COALESCE($18, vehicle_type),
             return_flight_number = COALESCE($19, return_flight_number),
-            return_arrival_time = COALESCE($20, return_arrival_time)
+            return_arrival_time = COALESCE($20, return_arrival_time),
+            notes = COALESCE($21, notes)
          WHERE id = $1 RETURNING *`,
         [
             id, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime, status,
             serviceType, passengerCount, carryOnCount, checkedLuggageCount,
             isRoundTrip, distanceKm, isNightRate, estimatedPrice, destinationCategory,
-            vehicleType, returnFlightNumber, returnArrivalTime,
+            vehicleType, returnFlightNumber, returnArrivalTime, notes,
         ]
     );
     return rows[0] || null;

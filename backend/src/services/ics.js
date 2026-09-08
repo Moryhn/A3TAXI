@@ -40,6 +40,7 @@ function buildEvent(reservation) {
         reservation.estimated_price != null ? `Estimated: $${Number(reservation.estimated_price).toFixed(2)}` : null,
         reservation.return_flight_number ? `Return flight: ${reservation.return_flight_number}` : null,
         reservation.return_arrival_time ? `Return arrival: ${formatDisplayDateTime(reservation.return_arrival_time)}` : null,
+        reservation.notes ? `Note: ${reservation.notes}` : null,
     ].filter(Boolean);
 
     return [

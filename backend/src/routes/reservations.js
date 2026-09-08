@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
     const {
         clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType = 'ride', passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip,
-        destinationCategory, vehicleType, returnFlightNumber, returnArrivalTime,
+        destinationCategory, vehicleType, returnFlightNumber, returnArrivalTime, notes,
     } = req.body;
 
     if (!SERVICE_TYPES.includes(serviceType)) {
@@ -79,6 +79,7 @@ router.post('/', async (req, res) => {
         vehicleType: vehicleType || null,
         returnFlightNumber: returnFlightNumber || null,
         returnArrivalTime: returnArrivalTime || null,
+        notes: notes || null,
     });
 
     try {
@@ -119,7 +120,8 @@ async function notifyAdminsOfNewReservation(reservation) {
     const route = reservation.dropoff_location
         ? `${reservation.pickup_location} → ${reservation.dropoff_location}`
         : reservation.pickup_location;
-    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}. Touchez ce lien, puis « Ajouter à mon calendrier » : ${eventUrl}`;
+    const noteSuffix = reservation.notes ? ` Note du client : ${reservation.notes}` : '';
+    const message = `Nouvelle réservation A3TAXI : ${reservation.client_name} — ${route} — ${formattedTime}.${noteSuffix} Touchez ce lien, puis « Ajouter à mon calendrier » : ${eventUrl}`;
 
     const phones = await listActivePhones();
     await Promise.all(phones.map((p) => sendSms(p.phone, message).catch((err) => console.error(`Admin SMS to ${p.phone} failed:`, err.message))));
@@ -220,7 +222,7 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const {
         status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip, destinationCategory,
-        vehicleType, returnFlightNumber, returnArrivalTime,
+        vehicleType, returnFlightNumber, returnArrivalTime, notes,
     } = req.body;
     if (status && !['pending', 'confirmed', 'cancelled'].includes(status)) {
         return res.status(400).json({ error: 'status must be pending, confirmed, or cancelled' });
@@ -231,7 +233,7 @@ router.patch('/:id', requireAuth('admin'), async (req, res) => {
     const reservation = await updateReservation(req.params.id, {
         status, clientName, clientPhone, clientEmail, pickupLocation, dropoffLocation, requestedTime,
         serviceType, passengerCount, carryOnCount, checkedLuggageCount, isRoundTrip, destinationCategory,
-        vehicleType, returnFlightNumber, returnArrivalTime,
+        vehicleType, returnFlightNumber, returnArrivalTime, notes,
     });
     if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
     res.json(reservation);

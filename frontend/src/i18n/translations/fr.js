@@ -92,6 +92,15 @@ export default {
         returnArrivalTimeLabel: "Date et heure d'arrivée prévue à l'aéroport",
         returnTransportQuestion: 'Désirez-vous le transport pour le retour ?',
     },
+    airportPickup: {
+        title: "Retour de l'aéroport",
+        subtitle: "Vous revenez de l'aéroport ? Remplissez ce formulaire et on sera là à votre arrivée.",
+        pickupFixedValue: "Aéroport international Montréal-Trudeau (YUL)",
+        dateTimeLabel: "Date et heure d'arrivée à l'aéroport",
+        notesLabel: 'Note (optionnel)',
+        notesPlaceholder: "ex : 3 grosses valises, appeler à l'arrivée…",
+        submit: 'Demander la prise en charge',
+    },
     bookNow: {
         title: 'Commander maintenant',
         subtitle: 'Obtenez un taxi tout de suite — un chauffeur vous sera assigné sous peu.',
@@ -385,6 +394,7 @@ export default {
             passengersShort: '{{count}} passager(s)',
             luggageShort: '{{carryOn}} bagage(s) à main, {{checked}} enregistré(s)',
             returnFlightEyebrow: 'Vol de retour',
+            notesEyebrow: 'Note du client',
             notifications: {
                 toggle: 'Notifications',
                 eyebrow: 'Alerte instantanée pour chaque nouvelle réservation',

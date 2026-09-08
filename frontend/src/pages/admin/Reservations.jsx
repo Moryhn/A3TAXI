@@ -438,6 +438,12 @@ export default function Reservations() {
                                         {selected.return_arrival_time && formatDateTime(selected.return_arrival_time, lang)}
                                     </p>
                                 )}
+                                {selected.notes && (
+                                    <p className="subtle" style={{ lineHeight: 1.6, marginBottom: 8 }}>
+                                        <strong>{t('admin.reservations.notesEyebrow')}</strong><br />
+                                        {selected.notes}
+                                    </p>
+                                )}
                                 {selected.estimated_price != null && (
                                     <div className="meter meter--sm" style={{ marginBottom: 8 }}>{formatCurrency(selected.estimated_price, lang)}</div>
                                 )}
