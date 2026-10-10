@@ -8,6 +8,7 @@ import {
 } from '../models/invoice.js';
 import { findActiveTemplateForClient, findTemplateById } from '../models/invoiceTemplate.js';
 import { loadWorkbookFromBuffer, fillInvoiceTemplate } from '../services/invoiceTemplateFill.js';
+import { buildGenericInvoiceWorkbook } from '../services/invoiceGenericExport.js';
 
 const router = Router();
 
@@ -83,34 +84,53 @@ router.get('/:id', requireAuth('admin'), async (req, res) => {
 
 // Fills the invoice's attached client template with its current trip data
 // and streams the result — generated on demand, not stored, so it always
-// reflects the invoice's latest state right up until it's finalized.
+// reflects the invoice's latest state right up until it's finalized. Clients
+// with no template of their own get a plain generic invoice workbook instead
+// (same content as the Print view), so every invoice can be exported.
 router.get('/:id/export.xlsx', requireAuth('admin'), async (req, res) => {
     const invoice = await findInvoiceById(req.params.id);
     if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
-    if (!invoice.template_id) {
-        return res.status(404).json({ error: 'This invoice has no Excel template attached — use Print instead' });
-    }
 
-    const template = await findTemplateById(invoice.template_id);
-    const fileRes = await fetch(template.file_url);
-    if (!fileRes.ok) return res.status(502).json({ error: 'Could not load the stored template file' });
-    const buffer = Buffer.from(await fileRes.arrayBuffer());
-
-    const workbook = await loadWorkbookFromBuffer(buffer);
     const trips = await invoiceTrips(invoice.id);
-    const periodLabel = `${new Date(invoice.period_start).toISOString().slice(0, 10)} — ${new Date(invoice.period_end).toISOString().slice(0, 10)}`;
+    const periodStart = new Date(invoice.period_start).toISOString().slice(0, 10);
+    const periodEnd = new Date(invoice.period_end).toISOString().slice(0, 10);
     const clientCityLine = [invoice.client_city, invoice.client_postal_code].filter(Boolean).join(', ');
-    fillInvoiceTemplate(workbook, {
-        clientName: invoice.client_name,
-        periodLabel,
-        trips,
-        clientAddress: invoice.client_address,
-        clientCityLine,
-        clientInvoiceDescription: invoice.client_invoice_description,
-        clientPhone: invoice.client_phone,
-        invoiceNumber: invoice.invoice_number,
-        invoiceDate: invoice.invoice_date ? new Date(invoice.invoice_date).toISOString().slice(0, 10) : null,
-    }, template.field_mapping);
+    const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date).toISOString().slice(0, 10) : null;
+
+    let workbook;
+    if (invoice.template_id) {
+        const template = await findTemplateById(invoice.template_id);
+        const fileRes = await fetch(template.file_url);
+        if (!fileRes.ok) return res.status(502).json({ error: 'Could not load the stored template file' });
+        const buffer = Buffer.from(await fileRes.arrayBuffer());
+
+        workbook = await loadWorkbookFromBuffer(buffer);
+        fillInvoiceTemplate(workbook, {
+            clientName: invoice.client_name,
+            periodLabel: `${periodStart} — ${periodEnd}`,
+            trips,
+            clientAddress: invoice.client_address,
+            clientCityLine,
+            clientInvoiceDescription: invoice.client_invoice_description,
+            clientPhone: invoice.client_phone,
+            invoiceNumber: invoice.invoice_number,
+            invoiceDate,
+        }, template.field_mapping);
+    } else {
+        workbook = buildGenericInvoiceWorkbook({
+            clientName: invoice.client_name,
+            clientAddress: invoice.client_address,
+            clientCityLine,
+            clientPhone: invoice.client_phone,
+            clientInvoiceDescription: invoice.client_invoice_description,
+            periodStart,
+            periodEnd,
+            invoiceNumber: invoice.invoice_number || `#${String(invoice.id).padStart(4, '0')}`,
+            invoiceDate: invoiceDate || new Date(invoice.generated_at).toISOString().slice(0, 10),
+            trips,
+            totalAmount: invoice.total_amount,
+        });
+    }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="facture-${invoice.client_name}-${invoice.id}.xlsx"`);

@@ -8,7 +8,7 @@ const COL_REF = /^[A-Z]{1,3}$/;
 // trip logged late evening can fall on the *next* UTC day. The server runs
 // in UTC (Render), so a plain toISOString().slice(0,10) would silently
 // disagree with what Print already shows for the same trip.
-function toEasternDateString(value) {
+export function toEasternDateString(value) {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto' }).format(new Date(value));
 }
 
