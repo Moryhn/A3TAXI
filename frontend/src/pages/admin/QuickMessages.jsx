@@ -5,9 +5,10 @@ import { useLanguage } from '../../i18n/LanguageContext.jsx';
 import { formatDateTime } from '../../lib/format.js';
 import ToggleChip from '../../components/ToggleChip.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import { composeQuickMessage } from '../../lib/quickMessage.js';
 
 function composePreview(draft) {
-    return (draft.message_template || '').replaceAll('{lien}', draft.google_review_link || '');
+    return composeQuickMessage(draft);
 }
 
 export default function QuickMessages() {

@@ -4,10 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import JobMessageThread from './JobMessageThread.jsx';
-
-function composeMessage(button) {
-    return (button.message_template || '').replaceAll('{lien}', button.google_review_link || '');
-}
+import { composeQuickMessage } from '../lib/quickMessage.js';
 
 // One-tap canned SMS to a customer. Used both with a dispatch job attached
 // (phone pre-filled, job recorded for traceability) and standalone, since
@@ -115,7 +112,7 @@ export default function QuickMessageSender({ phone: initialPhone = '', jobId = n
             <ConfirmDialog
                 open={!!pending}
                 title={t('driver.quickMessages.confirmTitle', { phone })}
-                message={pending ? composeMessage(pending) : ''}
+                message={pending ? composeQuickMessage(pending) : ''}
                 confirmLabel={t('driver.quickMessages.confirmSend')}
                 variant="primary"
                 onConfirm={confirmSend}

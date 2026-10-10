@@ -6,8 +6,18 @@ import { sendSms } from '../services/sms.js';
 
 const router = Router();
 
+// The text actually texted to the customer. {lien} marks where the button's
+// link goes; if the message doesn't use it, a configured link is still sent
+// (added at the end) unless the admin already typed that link into the text —
+// a filled-in link field that silently never gets sent is the trap this avoids.
+// Mirrored in frontend/src/lib/quickMessage.js so the admin preview and the
+// driver's confirmation show exactly what will be sent.
 function composeMessage(button) {
-    return button.message_template.replaceAll('{lien}', button.google_review_link);
+    const template = button.message_template || '';
+    const link = (button.google_review_link || '').trim();
+    if (template.includes('{lien}')) return template.replaceAll('{lien}', link);
+    if (link && !template.includes(link)) return `${template}\n\n${link}`;
+    return template;
 }
 
 router.get('/buttons', requireAuth('admin', 'driver'), async (req, res) => {
