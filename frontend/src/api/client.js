@@ -119,6 +119,7 @@ export const api = {
     trackRide: (token) => request(`/dispatch/track/${token}`),
     listJobMessages: (token, jobId) => request(`/dispatch/jobs/${jobId}/messages`, { token }),
     sendJobMessage: (token, jobId, text) => request(`/dispatch/jobs/${jobId}/messages`, { method: 'POST', body: { text }, token }),
+    deleteJobMessages: (token, jobId) => request(`/dispatch/jobs/${jobId}/messages`, { method: 'DELETE', token }),
 
     listQuickMessageButtons: (token) => request('/quick-messages/buttons', { token }),
     createQuickMessageButton: (token) => request('/quick-messages/buttons', { method: 'POST', token }),

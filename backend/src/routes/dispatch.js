@@ -17,7 +17,7 @@ import {
     markTrackingSmsSent,
 } from '../models/dispatch.js';
 import { setAutoDispatchEnabled, findAdminWithAutoDispatchEnabled } from '../models/adminUser.js';
-import { listMessagesForJob, createOutboundMessage } from '../models/jobMessage.js';
+import { listMessagesForJob, createOutboundMessage, deleteMessagesForJob } from '../models/jobMessage.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
 import { findNearestAvailableDriver } from '../services/autoDispatch.js';
@@ -263,6 +263,20 @@ router.post('/jobs/:id/messages', requireAuth('admin', 'driver'), async (req, re
     } catch (err) {
         res.status(502).json(await createOutboundMessage(req.params.id, text, 'failed', err.message));
     }
+});
+
+// The assigned driver can wipe a job's conversation once the ride is over.
+// Hard delete — it disappears from the admin's view of the job too. Limited
+// to completed jobs so an in-progress conversation can't be erased by accident.
+router.delete('/jobs/:id/messages', requireAuth('driver'), async (req, res) => {
+    const job = await findDispatchJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (job.driver_id !== req.user.sub) return res.status(403).json({ error: 'Not your job' });
+    if (job.status !== 'completed') {
+        return res.status(400).json({ error: 'The conversation can only be deleted once the ride is completed' });
+    }
+    await deleteMessagesForJob(req.params.id);
+    res.status(204).end();
 });
 
 export default router;

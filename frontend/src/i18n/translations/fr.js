@@ -551,6 +551,9 @@ export default {
             sending: 'Envoi…',
             empty: 'Aucun message pour le moment.',
             failed: 'échec',
+            deleteThread: 'Effacer la discussion',
+            confirmDeleteTitle: 'Effacer cette discussion ?',
+            confirmDeleteMessage: "Tous les messages de cette course seront supprimés définitivement, y compris pour l'administrateur.",
         },
         photoCrop: {
             takePhoto: '📷 Prendre une photo',

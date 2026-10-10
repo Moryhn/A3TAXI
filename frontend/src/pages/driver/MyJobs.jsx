@@ -236,7 +236,7 @@ export default function MyJobs() {
                                     </button>
                                     {expandedMessagesJobId === j.id && (
                                         <div style={{ marginTop: 10 }}>
-                                            <JobMessageThread jobId={j.id} />
+                                            <JobMessageThread jobId={j.id} canDelete={j.status === 'completed'} />
                                         </div>
                                     )}
                                 </div>

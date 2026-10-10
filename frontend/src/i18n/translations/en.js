@@ -551,6 +551,9 @@ export default {
             sending: 'Sending…',
             empty: 'No messages yet.',
             failed: 'failed',
+            deleteThread: 'Delete conversation',
+            confirmDeleteTitle: 'Delete this conversation?',
+            confirmDeleteMessage: 'All messages for this ride will be permanently deleted, including for the admin.',
         },
         photoCrop: {
             takePhoto: '📷 Take a photo',

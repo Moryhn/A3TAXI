@@ -8,6 +8,10 @@ export async function listMessagesForJob(jobId) {
     return rows;
 }
 
+export async function deleteMessagesForJob(jobId) {
+    await query('DELETE FROM job_messages WHERE dispatch_job_id = $1', [jobId]);
+}
+
 export async function createOutboundMessage(jobId, body, status = 'sent', error = null) {
     const { rows } = await query(
         `INSERT INTO job_messages (dispatch_job_id, direction, body, status, error)

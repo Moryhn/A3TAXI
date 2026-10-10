@@ -3,6 +3,7 @@ import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import { formatDateTime } from '../lib/format.js';
+import ConfirmDialog from './ConfirmDialog.jsx';
 
 const POLL_MS = 10000;
 
@@ -10,13 +11,15 @@ const POLL_MS = 10000;
 // separate from QuickMessageSender's canned templates. Outbound rows are the
 // driver typing here; inbound rows arrive via the SMS Gate webhook
 // (backend/src/routes/smsGateWebhook.js) and show up on the next poll.
-export default function JobMessageThread({ jobId }) {
+// canDelete (driver view, completed jobs only) adds an "erase conversation" button.
+export default function JobMessageThread({ jobId, canDelete = false }) {
     const { auth } = useAuth();
     const { t, lang } = useLanguage();
     const [messages, setMessages] = useState([]);
     const [text, setText] = useState('');
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
     const bottomRef = useRef(null);
     const loadedOnce = useRef(false);
 
@@ -56,6 +59,17 @@ export default function JobMessageThread({ jobId }) {
             setError(err.message);
         } finally {
             setSending(false);
+        }
+    }
+
+    async function confirmDelete() {
+        setConfirmingDelete(false);
+        setError('');
+        try {
+            await api.deleteJobMessages(auth.token, jobId);
+            setMessages([]);
+        } catch (err) {
+            setError(err.message);
         }
     }
 
@@ -126,6 +140,21 @@ export default function JobMessageThread({ jobId }) {
                 </button>
             </div>
             {error && <p className="subtle" style={{ color: 'var(--danger)', fontSize: 12 }}>{error}</p>}
+
+            {canDelete && messages.length > 0 && (
+                <button type="button" className="btn btn--danger" style={{ width: '100%', fontSize: 12 }} onClick={() => setConfirmingDelete(true)}>
+                    {t('driver.jobMessages.deleteThread')}
+                </button>
+            )}
+
+            <ConfirmDialog
+                open={confirmingDelete}
+                title={t('driver.jobMessages.confirmDeleteTitle')}
+                message={t('driver.jobMessages.confirmDeleteMessage')}
+                confirmLabel={t('driver.jobMessages.deleteThread')}
+                onConfirm={confirmDelete}
+                onCancel={() => setConfirmingDelete(false)}
+            />
         </div>
     );
 }
