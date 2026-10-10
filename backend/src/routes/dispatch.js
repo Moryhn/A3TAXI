@@ -17,7 +17,10 @@ import {
     markTrackingSmsSent,
 } from '../models/dispatch.js';
 import { setAutoDispatchEnabled, findAdminWithAutoDispatchEnabled } from '../models/adminUser.js';
-import { listMessagesForJob, createOutboundMessage, deleteMessagesForJob } from '../models/jobMessage.js';
+import {
+    listMessagesForJob, createOutboundMessage, deleteMessagesForJob,
+    listPhoneMessages, createOutboundPhoneMessage, deletePhoneMessages, last10Digits,
+} from '../models/jobMessage.js';
 import { sendJobNotification } from '../services/push.js';
 import { getRideEstimate } from '../services/quote.js';
 import { findNearestAvailableDriver } from '../services/autoDispatch.js';
@@ -276,6 +279,42 @@ router.delete('/jobs/:id/messages', requireAuth('driver'), async (req, res) => {
         return res.status(400).json({ error: 'The conversation can only be deleted once the ride is completed' });
     }
     await deleteMessagesForJob(req.params.id);
+    res.status(204).end();
+});
+
+// ---- Conversations by phone number, no job ------------------------------
+// A driver can text any customer by typing their number and discuss the same
+// way as on a job (replies come back through the SMS Gate webhook). Scoped to
+// the logged-in driver — nobody else sees or deletes these. The admin's
+// dispatch view only lists job conversations, so these stay private to the
+// driver who wrote them.
+function requirePhone(req, res, next) {
+    const phone = req.query.phone ?? req.body?.phone;
+    if (last10Digits(phone).length < 10) {
+        return res.status(400).json({ error: 'A valid customer phone number is required' });
+    }
+    req.customerPhone = String(phone);
+    next();
+}
+
+router.get('/conversations', requireAuth('driver'), requirePhone, async (req, res) => {
+    res.json(await listPhoneMessages(req.user.sub, req.customerPhone));
+});
+
+router.post('/conversations', requireAuth('driver'), requirePhone, async (req, res) => {
+    const { text } = req.body;
+    if (!text || !text.trim()) return res.status(400).json({ error: 'text is required' });
+
+    try {
+        await sendSms(req.customerPhone, text);
+        res.status(201).json(await createOutboundPhoneMessage(req.user.sub, req.customerPhone, text, 'sent'));
+    } catch (err) {
+        res.status(502).json(await createOutboundPhoneMessage(req.user.sub, req.customerPhone, text, 'failed', err.message));
+    }
+});
+
+router.delete('/conversations', requireAuth('driver'), requirePhone, async (req, res) => {
+    await deletePhoneMessages(req.user.sub, req.customerPhone);
     res.status(204).end();
 });
 

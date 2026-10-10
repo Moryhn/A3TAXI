@@ -554,6 +554,7 @@ export default {
             deleteThread: 'Effacer la discussion',
             confirmDeleteTitle: 'Effacer cette discussion ?',
             confirmDeleteMessage: "Tous les messages de cette course seront supprimés définitivement, y compris pour l'administrateur.",
+            confirmDeletePhoneMessage: 'Tous les messages échangés avec ce numéro seront supprimés définitivement.',
         },
         photoCrop: {
             takePhoto: '📷 Prendre une photo',

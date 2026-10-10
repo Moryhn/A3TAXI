@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import { verifyWebhookSignature } from '../services/smsGateWebhook.js';
-import { createInboundMessageOnce, findJobForReplyByPhone } from '../models/jobMessage.js';
+import {
+    createInboundMessageOnce, findJobForReplyByPhone, findRecentPhoneConversation, last10Digits,
+} from '../models/jobMessage.js';
 import { sendJobMessageNotification } from '../services/push.js';
 
 const router = Router();
+
+const ACTIVE_STATUSES = ['pending', 'accepted'];
 
 // Public — called only by SMS Gate itself, never a logged-in user. Protected
 // by the HMAC signature (see services/smsGateWebhook.js), not requireAuth.
@@ -23,24 +27,44 @@ router.post('/webhook', async (req, res) => {
         return res.status(200).json({ ok: true });
     }
 
-    // No job matches (cancelled, completed more than a week ago, or a reply
-    // to a number that was never dispatched) — nothing to attach it to, so
-    // it's dropped rather than stored orphaned.
+    // A reply belongs either to a dispatch job (active, or completed in the
+    // last week) or to a phone-number conversation a driver started without
+    // a job. An active job always wins; otherwise whichever was written to
+    // most recently.
     const job = await findJobForReplyByPhone(payload.sender);
-    if (!job) {
-        console.log(`SMS Gate webhook: no matching job for sender ${payload.sender}, dropping reply`);
+    const phoneConvo = await findRecentPhoneConversation(payload.sender);
+
+    let target = null;
+    let driverId = null;
+    let label = '';
+    const useJob = job && (ACTIVE_STATUSES.includes(job.status) || !phoneConvo || new Date(job.updated_at) >= new Date(phoneConvo.created_at));
+    if (useJob) {
+        target = { jobId: job.id };
+        driverId = job.driver_id;
+        label = `job ${job.id} (${job.status})`;
+    } else if (phoneConvo) {
+        target = { driverId: phoneConvo.driver_id, phone: payload.sender };
+        driverId = phoneConvo.driver_id;
+        label = `phone conversation of driver ${phoneConvo.driver_id}`;
+    }
+
+    // Nothing to attach it to (cancelled, completed over a week ago, or a
+    // number nobody here has written to) — dropped rather than stored orphaned.
+    if (!target) {
+        console.log(`SMS Gate webhook: no matching job or conversation for sender ${payload.sender}, dropping reply`);
         return res.status(200).json({ ok: true });
     }
 
-    const saved = await createInboundMessageOnce(job.id, payload.message);
+    const saved = await createInboundMessageOnce(target, payload.message);
     if (!saved) {
-        console.log(`SMS Gate webhook: duplicate delivery for job ${job.id}, skipped`);
+        console.log(`SMS Gate webhook: duplicate delivery for ${label}, skipped`);
         return res.status(200).json({ ok: true });
     }
-    console.log(`SMS Gate webhook: reply stored on job ${job.id} (${job.status})`);
+    console.log(`SMS Gate webhook: reply stored on ${label}`);
 
-    if (job.driver_id) {
-        sendJobMessageNotification(job.driver_id, job.id, payload.message)
+    if (driverId) {
+        const notificationTag = target.jobId != null ? target.jobId : `phone-${last10Digits(payload.sender)}`;
+        sendJobMessageNotification(driverId, notificationTag, payload.message)
             .catch((err) => console.error('sendJobMessageNotification failed:', err.message));
     }
 

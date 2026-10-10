@@ -554,6 +554,7 @@ export default {
             deleteThread: 'Delete conversation',
             confirmDeleteTitle: 'Delete this conversation?',
             confirmDeleteMessage: 'All messages for this ride will be permanently deleted, including for the admin.',
+            confirmDeletePhoneMessage: 'All messages exchanged with this number will be permanently deleted.',
         },
         photoCrop: {
             takePhoto: '📷 Take a photo',

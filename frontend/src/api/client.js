@@ -120,6 +120,9 @@ export const api = {
     listJobMessages: (token, jobId) => request(`/dispatch/jobs/${jobId}/messages`, { token }),
     sendJobMessage: (token, jobId, text) => request(`/dispatch/jobs/${jobId}/messages`, { method: 'POST', body: { text }, token }),
     deleteJobMessages: (token, jobId) => request(`/dispatch/jobs/${jobId}/messages`, { method: 'DELETE', token }),
+    listPhoneMessages: (token, phone) => request(`/dispatch/conversations?phone=${encodeURIComponent(phone)}`, { token }),
+    sendPhoneMessage: (token, phone, text) => request('/dispatch/conversations', { method: 'POST', body: { phone, text }, token }),
+    deletePhoneMessages: (token, phone) => request(`/dispatch/conversations?phone=${encodeURIComponent(phone)}`, { method: 'DELETE', token }),
 
     listQuickMessageButtons: (token) => request('/quick-messages/buttons', { token }),
     createQuickMessageButton: (token) => request('/quick-messages/buttons', { method: 'POST', token }),

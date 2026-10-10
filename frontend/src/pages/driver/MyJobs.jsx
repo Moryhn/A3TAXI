@@ -192,7 +192,7 @@ export default function MyJobs() {
 
             <div className="card" style={{ marginBottom: 20 }}>
                 <div className="eyebrow" style={{ marginBottom: 10 }}>{t('driver.quickMessages.eyebrow')}</div>
-                <QuickMessageSender />
+                <QuickMessageSender showChat />
             </div>
 
             {jobs.length === 0 ? (

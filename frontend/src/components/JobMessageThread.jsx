@@ -11,8 +11,10 @@ const POLL_MS = 10000;
 // separate from QuickMessageSender's canned templates. Outbound rows are the
 // driver typing here; inbound rows arrive via the SMS Gate webhook
 // (backend/src/routes/smsGateWebhook.js) and show up on the next poll.
-// canDelete (driver view, completed jobs only) adds an "erase conversation" button.
-export default function JobMessageThread({ jobId, canDelete = false }) {
+// canDelete adds an "erase conversation" button (driver view: completed jobs,
+// and phone conversations). Pass `phone` instead of `jobId` for a
+// conversation with a customer number typed in by hand, with no job behind it.
+export default function JobMessageThread({ jobId, phone, canDelete = false }) {
     const { auth } = useAuth();
     const { t, lang } = useLanguage();
     const [messages, setMessages] = useState([]);
@@ -23,10 +25,28 @@ export default function JobMessageThread({ jobId, canDelete = false }) {
     const bottomRef = useRef(null);
     const loadedOnce = useRef(false);
 
+    const byPhone = phone != null;
+    const conversationKey = byPhone ? `phone:${phone}` : `job:${jobId}`;
+    const activeKey = useRef(conversationKey);
+    activeKey.current = conversationKey;
+    const apiCalls = byPhone
+        ? {
+            list: () => api.listPhoneMessages(auth.token, phone),
+            send: (body) => api.sendPhoneMessage(auth.token, phone, body),
+            remove: () => api.deletePhoneMessages(auth.token, phone),
+        }
+        : {
+            list: () => api.listJobMessages(auth.token, jobId),
+            send: (body) => api.sendJobMessage(auth.token, jobId, body),
+            remove: () => api.deleteJobMessages(auth.token, jobId),
+        };
+
     async function refresh() {
+        const requestedKey = conversationKey;
         try {
-            const rows = await api.listJobMessages(auth.token, jobId);
-            setMessages(rows);
+            const rows = await apiCalls.list();
+            // The driver may have switched number while this was in flight.
+            if (activeKey.current === requestedKey) setMessages(rows);
         } catch {
             // Transient poll failure — keep showing the last known messages
             // rather than clearing the thread.
@@ -36,11 +56,13 @@ export default function JobMessageThread({ jobId, canDelete = false }) {
     }
 
     useEffect(() => {
+        setMessages([]);
+        setError('');
         refresh();
         const interval = setInterval(refresh, POLL_MS);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [jobId]);
+    }, [conversationKey]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ block: 'nearest' });
@@ -52,7 +74,7 @@ export default function JobMessageThread({ jobId, canDelete = false }) {
         setSending(true);
         setError('');
         try {
-            const saved = await api.sendJobMessage(auth.token, jobId, body);
+            const saved = await apiCalls.send(body);
             setMessages((all) => [...all, saved]);
             setText('');
         } catch (err) {
@@ -66,7 +88,7 @@ export default function JobMessageThread({ jobId, canDelete = false }) {
         setConfirmingDelete(false);
         setError('');
         try {
-            await api.deleteJobMessages(auth.token, jobId);
+            await apiCalls.remove();
             setMessages([]);
         } catch (err) {
             setError(err.message);
@@ -150,7 +172,7 @@ export default function JobMessageThread({ jobId, canDelete = false }) {
             <ConfirmDialog
                 open={confirmingDelete}
                 title={t('driver.jobMessages.confirmDeleteTitle')}
-                message={t('driver.jobMessages.confirmDeleteMessage')}
+                message={t(byPhone ? 'driver.jobMessages.confirmDeletePhoneMessage' : 'driver.jobMessages.confirmDeleteMessage')}
                 confirmLabel={t('driver.jobMessages.deleteThread')}
                 onConfirm={confirmDelete}
                 onCancel={() => setConfirmingDelete(false)}

@@ -3,6 +3,7 @@ import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useLanguage } from '../i18n/LanguageContext.jsx';
 import ConfirmDialog from './ConfirmDialog.jsx';
+import JobMessageThread from './JobMessageThread.jsx';
 
 function composeMessage(button) {
     return (button.message_template || '').replaceAll('{lien}', button.google_review_link || '');
@@ -11,12 +12,15 @@ function composeMessage(button) {
 // One-tap canned SMS to a customer. Used both with a dispatch job attached
 // (phone pre-filled, job recorded for traceability) and standalone, since
 // drivers also pick up rides outside the app and still want to send the
-// review link — the phone field stays editable either way.
-export default function QuickMessageSender({ phone: initialPhone = '', jobId = null }) {
+// review link — the phone field stays editable either way. With showChat
+// (the standalone, no-job panel) it also offers a free-text conversation with
+// whatever number is typed, the same chat the driver gets on a job.
+export default function QuickMessageSender({ phone: initialPhone = '', jobId = null, showChat = false }) {
     const { auth } = useAuth();
     const { t } = useLanguage();
     const [buttons, setButtons] = useState([]);
     const [phone, setPhone] = useState(initialPhone);
+    const [chatOpen, setChatOpen] = useState(false);
     const [pending, setPending] = useState(null);
     const [sending, setSending] = useState(false);
     const [status, setStatus] = useState(null);
@@ -42,7 +46,7 @@ export default function QuickMessageSender({ phone: initialPhone = '', jobId = n
         }
     }
 
-    if (buttons.length === 0) return null;
+    if (buttons.length === 0 && !showChat) return null;
 
     const phoneReady = phone.replace(/\D/g, '').length >= 10;
 
@@ -78,6 +82,21 @@ export default function QuickMessageSender({ phone: initialPhone = '', jobId = n
                     </button>
                 ))}
             </div>
+
+            {showChat && (
+                <>
+                    <button
+                        type="button"
+                        className="btn btn--ghost"
+                        style={{ width: '100%' }}
+                        disabled={!phoneReady}
+                        onClick={() => setChatOpen((open) => !open)}
+                    >
+                        {t('driver.jobMessages.toggle')}
+                    </button>
+                    {chatOpen && phoneReady && <JobMessageThread phone={phone} canDelete />}
+                </>
+            )}
 
             {status && (
                 <div
