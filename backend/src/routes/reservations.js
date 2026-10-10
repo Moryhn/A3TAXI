@@ -93,7 +93,7 @@ router.post('/', async (req, res) => {
         });
         await sendSms(
             clientPhone,
-            `Hi ${clientName}, your ride request for ${formattedTime} has been received. We'll confirm shortly.`
+            `Hi ${clientName}, your ride request for ${formattedTime} has been received.`
         );
         await markReservationSmsSent(reservation.id);
     } catch (err) {
@@ -190,7 +190,7 @@ router.post('/voice-booking', async (req, res) => {
             });
             await sendSms(
                 clientPhone,
-                `Hi ${clientName}, your ride request for ${formattedTime} has been received. We'll confirm shortly.`
+                `Hi ${clientName}, your ride request for ${formattedTime} has been received.`
             );
             await markReservationSmsSent(reservation.id);
         } catch (err) {
