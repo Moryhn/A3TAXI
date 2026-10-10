@@ -9,21 +9,22 @@ import { localInputToUtcIso } from '../../lib/time.js';
 import PlaceAutocompleteInput from '../../components/PlaceAutocompleteInput.jsx';
 import RecentAddressChips from '../../components/booking/RecentAddressChips.jsx';
 
-// Fixed pickup point for this dedicated link — the whole point is that the
-// client doesn't have to type it. Geocodable as-is by the Routes API call
-// the backend makes for the price estimate (getRideEstimate).
+// Pre-filled pickup point for this dedicated link, so the client doesn't have
+// to type it — but still editable (e.g. a different terminal or pickup spot).
+// Geocodable as-is by the Routes API call the backend makes for the price
+// estimate (getRideEstimate).
 const AIRPORT_ADDRESS = 'Aéroport international Montréal-Trudeau (YUL), Montréal, QC';
 
 const INITIAL_FORM = {
-    clientName: '', clientPhone: '', dropoffLocation: '', requestedTime: '',
+    clientName: '', clientPhone: '', pickupLocation: AIRPORT_ADDRESS, dropoffLocation: '', requestedTime: '',
     returnFlightNumber: '', notes: '',
 };
 
 // A single-purpose variant of ReservationForm — one link (/airport-pickup)
-// to text a client who's landing and needs a ride out. Pickup is always the
-// airport, so it's fixed instead of asked for; everything else still goes
-// through the same POST /reservations pipeline (SMS confirmation to the
-// client, "add to calendar" text to admin) as every other booking channel.
+// to text a client who's landing and needs a ride out. Pickup defaults to the
+// airport; everything else still goes through the same POST /reservations
+// pipeline (SMS confirmation to the client, "add to calendar" text to admin)
+// as every other booking channel.
 export default function AirportPickup() {
     const [theme, toggleTheme] = useTheme('a3taxi-home-theme', 'light');
     const { t, lang, toggleLang } = useLanguage();
@@ -39,10 +40,10 @@ export default function AirportPickup() {
             await api.createReservation({
                 ...form,
                 serviceType: 'ride',
-                pickupLocation: AIRPORT_ADDRESS,
                 requestedTime: localInputToUtcIso(form.requestedTime),
                 destinationCategory: 'local',
             });
+            addRecentAddress(form.pickupLocation);
             addRecentAddress(form.dropoffLocation);
             setStatus({ ok: true, message: t('booking.successMessage') });
             setForm(INITIAL_FORM);
@@ -81,7 +82,7 @@ export default function AirportPickup() {
                     <form onSubmit={handleSubmit} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
                         <div className="field">
                             <label><MapPin size={12} style={{ verticalAlign: -2, marginRight: 4 }} />{t('booking.pickupLabel')}</label>
-                            <div className="input" style={{ opacity: 0.8, cursor: 'default' }}>{t('airportPickup.pickupFixedValue')}</div>
+                            <PlaceAutocompleteInput id="pickup" className="input" value={form.pickupLocation} onChange={(v) => setForm({ ...form, pickupLocation: v })} required />
                         </div>
 
                         <div className="field">

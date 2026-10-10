@@ -95,7 +95,6 @@ export default {
     airportPickup: {
         title: "Retour de l'aéroport",
         subtitle: "Vous revenez de l'aéroport ? Remplissez ce formulaire et on sera là à votre arrivée.",
-        pickupFixedValue: "Aéroport international Montréal-Trudeau (YUL)",
         dateTimeLabel: "Date et heure d'arrivée à l'aéroport",
         notesLabel: 'Note (optionnel)',
         notesPlaceholder: "ex : 3 grosses valises, appeler à l'arrivée…",

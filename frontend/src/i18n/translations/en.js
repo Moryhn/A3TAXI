@@ -95,7 +95,6 @@ export default {
     airportPickup: {
         title: 'Airport pickup',
         subtitle: 'Coming back from the airport? Fill this in and we\'ll be there when you land.',
-        pickupFixedValue: 'Montréal-Trudeau International Airport (YUL)',
         dateTimeLabel: 'Arrival date & time at the airport',
         notesLabel: 'Note (optional)',
         notesPlaceholder: 'e.g. 3 large suitcases, call on arrival…',
