@@ -20,6 +20,20 @@ const router = Router();
 
 const SERVICE_TYPES = ['ride', 'battery_boost', 'lockout'];
 
+// Bilingual (French first, then English) confirmation text sent to the
+// client right after any reservation — web form and phone agent alike.
+// Explicit timeZone — the server (Render) runs in UTC, so a plain
+// toLocaleString() would show the customer a time that doesn't match what
+// they picked or what the admin calendar displays.
+function buildReservationConfirmationSms(clientName, requestedTime) {
+    const when = new Date(requestedTime);
+    const options = { timeZone: 'America/Toronto', dateStyle: 'medium', timeStyle: 'short' };
+    const timeFr = when.toLocaleString('fr-CA', options);
+    const timeEn = when.toLocaleString('en-US', options);
+    return `Bonjour ${clientName}, votre demande de course pour le ${timeFr} a bien été reçue.\n`
+        + `Hi ${clientName}, your ride request for ${timeEn} has been received.`;
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -83,18 +97,7 @@ router.post('/', async (req, res) => {
     });
 
     try {
-        // Explicit timeZone — the server (Render) runs in UTC, so a plain
-        // toLocaleString() would show the customer a time that doesn't match
-        // what they picked or what the admin calendar displays.
-        const formattedTime = new Date(requestedTime).toLocaleString('en-US', {
-            timeZone: 'America/Toronto',
-            dateStyle: 'medium',
-            timeStyle: 'short',
-        });
-        await sendSms(
-            clientPhone,
-            `Hi ${clientName}, your ride request for ${formattedTime} has been received.`
-        );
+        await sendSms(clientPhone, buildReservationConfirmationSms(clientName, requestedTime));
         await markReservationSmsSent(reservation.id);
     } catch (err) {
         console.error('Failed to send reservation SMS:', err);
@@ -183,15 +186,7 @@ router.post('/voice-booking', async (req, res) => {
         });
 
         try {
-            const formattedTime = new Date(requestedTime).toLocaleString('en-US', {
-                timeZone: 'America/Toronto',
-                dateStyle: 'medium',
-                timeStyle: 'short',
-            });
-            await sendSms(
-                clientPhone,
-                `Hi ${clientName}, your ride request for ${formattedTime} has been received.`
-            );
+            await sendSms(clientPhone, buildReservationConfirmationSms(clientName, requestedTime));
             await markReservationSmsSent(reservation.id);
         } catch (err) {
             console.error('Failed to send reservation SMS (voice booking):', err.message);
