@@ -36,8 +36,20 @@ export async function ensureWebhookRegistered() {
         const listRes = await fetch(`${baseUrl}/webhooks`, {
             headers: { Authorization: `Basic ${auth}` },
         });
-        const existing = listRes.ok ? await listRes.json() : [];
-        if (Array.isArray(existing) && existing.some((w) => w.url === webhookUrl && w.event === 'sms:received')) {
+        // If listing fails we can't know whether ours exists — registering
+        // anyway would pile up a duplicate (every duplicate delivers every
+        // reply again), so bail out and let the next boot retry.
+        if (!listRes.ok) {
+            throw new Error(`could not list SMS Gate webhooks (status ${listRes.status})`);
+        }
+        const existing = await listRes.json();
+        const ours = Array.isArray(existing)
+            ? existing.filter((w) => w.url === webhookUrl && w.event === 'sms:received')
+            : [];
+        if (ours.length > 0) {
+            if (ours.length > 1) {
+                console.warn(`SMS Gate: ${ours.length} duplicate webhooks registered for ${webhookUrl} — each reply is delivered ${ours.length} times`);
+            }
             return;
         }
 
